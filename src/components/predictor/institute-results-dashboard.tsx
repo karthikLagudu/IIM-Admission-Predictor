@@ -1,0 +1,318 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Check, ChevronDown, ChevronUp, Circle, Database, X } from "lucide-react";
+import type { CandidateInput } from "@/types/iima";
+import type { InstitutePredictionResult, InstituteScoreComponent } from "@/types/institutes";
+import { SourceBadge } from "@/components/ui/source-badge";
+import { formatProbability, formatScore, humanize } from "@/lib/utils";
+
+type StepState = "pass" | "fail" | "current" | "neutral";
+
+function PipelineStep({ label, value, state }: { label: string; value: string; state: StepState }) {
+  return (
+    <div className={`pipeline-step ${state}`}>
+      <div className="pipeline-dot" aria-hidden="true">
+        {state === "pass" ? <Check size={13} /> : state === "fail" ? <X size={13} /> : <Circle size={9} />}
+      </div>
+      <strong title={label}>{label}</strong>
+      <small>{value}</small>
+    </div>
+  );
+}
+
+function Metric({ label, value, note, tone }: { label: string; value: string; note?: string; tone?: string }) {
+  return (
+    <div className={`metric-card ${tone ?? ""}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {note && <small>{note}</small>}
+    </div>
+  );
+}
+
+function AuditRow({ label, value, explanation, state = "info" }: { label: string; value: string; explanation: string; state?: "pass" | "fail" | "info" }) {
+  return (
+    <div className={`audit-row ${state}`}>
+      <div><strong>{label}</strong><p>{explanation}</p></div>
+      <span>{value}</span>
+    </div>
+  );
+}
+
+function ComponentList({ components }: { components: InstituteScoreComponent[] }) {
+  if (components.length === 0) return <p className="detail-empty">This stage was not reached because an earlier hard gate failed.</p>;
+  return (
+    <div className="component-list">
+      {components.map((component) => (
+        <article className={`component-row ${component.status === "DATA_REQUIRED" ? "missing" : ""}`} key={component.key}>
+          <div><div className="component-row-heading"><strong>{component.label}</strong><SourceBadge source={component.sourceType} /></div><p>{component.formula}</p><small>{component.detail}</small></div>
+          <span>{component.score == null ? "Required" : `${formatScore(component.score, 2)} / ${component.maxScore}`}</span>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function TextInsightList({ title, emptyMessage, items, tone }: { title: string; emptyMessage: string; items: string[]; tone: "strength" | "gap" }) {
+  return (
+    <article className={`insight-column ${tone}`}>
+      <div className="insight-column-heading">
+        <span className="insight-icon" aria-hidden="true">{tone === "strength" ? <Check size={15} /> : <X size={15} />}</span>
+        <div><h4>{title}</h4><p>{tone === "strength" ? "Factors that support the prediction" : "Failed, uncertain or binding conditions"}</p></div>
+      </div>
+      {items.length > 0 ? (
+        <div className="insight-list">
+          {items.map((item, index) => (
+            <div className="insight-item" key={`${index}-${item}`}>
+              <div><strong>{item}</strong></div>
+              <span className={`insight-metric ${tone === "strength" ? "medium" : "high"}`}>{tone === "strength" ? "Supports" : "Attention"}</span>
+            </div>
+          ))}
+        </div>
+      ) : <div className="insight-empty"><Check size={14} aria-hidden="true" />{emptyMessage}</div>}
+    </article>
+  );
+}
+
+export function InstituteResultsDashboard({ candidate, result }: { candidate: CandidateInput; result: InstitutePredictionResult }) {
+  const [showMore, setShowMore] = useState(false);
+  useEffect(() => setShowMore(false), [result]);
+
+  const callPredicted = result.call.status === "PREDICTED_CALL";
+  const callNegative = result.call.status === "NO_CALL";
+  const directMerit = result.selectionStages.directMerit;
+  const callLabel = callPredicted
+    ? "CALL PREDICTED"
+    : result.call.status === "ELIGIBLE_FOR_RANKING"
+      ? directMerit ? "ELIGIBLE FOR DIRECT MERIT" : "ELIGIBLE FOR RANKING"
+      : result.call.status === "DATA_REQUIRED" ? "DATA REQUIRED" : result.call.status === "SPECIAL_CASE_REVIEW_REQUIRED" ? "REVIEW REQUIRED" : "LESS LIKELY";
+  const topStrength = result.strengths[0] ?? "No confirmed strength yet.";
+  const topGap = result.gaps[0] ?? "No blocking deficiency is currently identified.";
+  const preUsesModel = result.preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION");
+  const preSource = preUsesModel ? "MODEL_ASSUMPTION" as const : result.preInterview.status === "CALCULATED" ? "CALCULATED" as const : "OFFICIAL_POLICY" as const;
+  const currentCallScore = result.preInterview.score;
+  const scoreFallback = result.preInterview.status === "DATA_REQUIRED" ? "Needs cycle data" : "Not calculated";
+  const probabilityFallback = "Not estimated yet";
+  const marginFallback = result.call.benchmarkValue == null ? "No benchmark" : "Not calculated";
+  const modelCallBenchmark = result.call.benchmarkType === "MODEL" ? result.call.benchmarkValue : null;
+  const modelCallGap = currentCallScore != null && modelCallBenchmark != null ? currentCallScore - modelCallBenchmark : null;
+  const probability = result.prediction.probability;
+  const historicalReference = result.institute === "IIMB"
+    ? { batch: "PGP 2025-27", catYear: 2024, sourceUrl: "https://www.iimb.ac.in/sites/default/files/inline-files/PGP-2025-admissions-process_0.pdf", subtitle: "IIMB does not publish the previous minimum pre-PI composite score.", studentScoreLabel: "Student's current pre-PI estimate" }
+    : result.institute === "IIMC"
+      ? { batch: "MBA 2024-26", catYear: 2023, sourceUrl: "https://application.iimcal.ac.in/check-results/interview-shortlist--mba-202426-batch", subtitle: "IIMC does not publish the previous minimum Stage-II composite score.", studentScoreLabel: "Student's current CS" }
+      : { batch: "Previous cycle", catYear: 2024, sourceUrl: result.sourceUrl, subtitle: "No fixed previous-cycle composite boundary is configured for this institute.", studentScoreLabel: "Student's current score" };
+
+  const cutoffText = (value: number | null) => value == null ? "Not applicable" : value.toFixed(2);
+
+  const pipeline: Array<{ label: string; value: string; state: StepState }> = [
+    { label: "Eligibility", value: result.eligibility.bachelorPass ? "Passed" : "Failed", state: result.eligibility.bachelorPass ? "pass" : "fail" },
+    { label: "CAT screen", value: result.eligibility.passed ? "Passed" : "Failed", state: result.eligibility.passed ? "pass" : "fail" },
+    { label: "Academic profile", value: result.preInterview.status === "CALCULATED" ? "Evaluated" : humanize(result.preInterview.status), state: result.preInterview.status === "CALCULATED" ? "pass" : "neutral" },
+    { label: result.scoreLabel, value: currentCallScore == null ? scoreFallback : `${formatScore(currentCallScore, 2)}/${result.preInterview.maxScore}`, state: currentCallScore == null ? "neutral" : "pass" },
+    ...(result.selectionStages.interview ? [
+      { label: "Call benchmark", value: result.call.benchmarkValue == null ? "Not published" : formatScore(result.call.benchmarkValue, 2), state: result.call.benchmarkValue == null ? "neutral" as StepState : callPredicted ? "pass" as StepState : callNegative ? "fail" as StepState : "current" as StepState },
+      { label: "Interview call", value: callPredicted ? "Call predicted" : humanize(result.call.status), state: callPredicted ? "pass" as StepState : callNegative ? "fail" as StepState : "current" as StepState },
+    ] : [
+      { label: "Direct merit ranking", value: humanize(result.call.status), state: result.eligibility.passed ? "current" as StepState : "fail" as StepState },
+    ]),
+    { label: "Final score", value: result.final.score == null ? humanize(result.final.status) : `${formatScore(result.final.score, 2)}/${result.final.maxScore}`, state: result.final.score == null ? "neutral" : "pass" },
+    { label: "Seat model", value: probability == null ? probabilityFallback : humanize(result.prediction.band ?? "BORDERLINE"), state: probability == null ? callNegative ? "fail" : "neutral" : "current" },
+  ];
+
+  return (
+    <div className="results-stack" aria-live="polite">
+      <section className="panel result-hero">
+        <div className="result-hero-main">
+          <div className={`result-call ${callNegative ? "negative" : ""}`}>
+            <p className="eyebrow">{result.instituteName} · {result.programme}</p>
+            <h2>{callLabel}</h2>
+            <p>{result.call.reason}</p>
+            <div className="result-seat-chance" aria-label="Estimated seat chance">
+              <div><span>Estimated seat chance (model)</span><strong className={probability == null ? "seat-chance-unavailable" : ""}>{probability == null ? probabilityFallback : formatProbability(probability)}</strong></div>
+              <small>{result.prediction.disclaimer}</small>
+            </div>
+          </div>
+          <div className="result-score">
+            <span className="result-score-label">{result.scoreLabel}</span>
+            <strong>{currentCallScore == null ? scoreFallback : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong>
+            <SourceBadge source={preSource} />
+            <div className="score-comparison">
+              <div><span>Benchmark</span><b>{result.call.benchmarkValue == null ? "Not configured" : formatScore(result.call.benchmarkValue, 2)}</b></div>
+              <div><span>Margin</span><b className={(result.call.margin ?? -1) >= 0 ? "positive-delta" : ""}>{result.call.margin == null ? marginFallback : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`}</b></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="panel feedback-summary" aria-labelledby="institute-feedback-heading">
+        <div className="section-heading compact-heading"><div><h3 id="institute-feedback-heading">At a glance</h3><p>The most important strength and concern in this profile.</p></div></div>
+        <div className="feedback-snapshot-grid">
+          <article className="feedback-snapshot strength">
+            <span className="feedback-snapshot-label"><Check size={14} aria-hidden="true" /> Strongest area</span>
+            <strong>{topStrength}</strong>
+            <p>{result.eligibility.passed ? "This supports progression through the institute's official first-screen gates." : "The profile has positive evidence, but an earlier hard gate remains binding."}</p>
+          </article>
+          <article className={`feedback-snapshot ${result.gaps.length ? "gap" : "clear"}`}>
+            <span className="feedback-snapshot-label">{result.gaps.length ? <X size={14} aria-hidden="true" /> : <Check size={14} aria-hidden="true" />} Main concern</span>
+            <strong>{topGap}</strong>
+            <p>{result.gaps.length ? "This is the most important limitation or uncertainty in the current result." : "No deficiency currently blocks the predicted interview-call route."}</p>
+          </article>
+        </div>
+      </section>
+
+      <div className="feedback-disclosure">
+        <button type="button" className="feedback-toggle" aria-expanded={showMore} aria-controls="institute-detailed-feedback" onClick={() => setShowMore((current) => !current)}>
+          <span>{showMore ? "Show less feedback" : "More feedback"}</span>
+          {showMore ? <ChevronUp size={17} aria-hidden="true" /> : <ChevronDown size={17} aria-hidden="true" />}
+        </button>
+      </div>
+
+      {showMore && (
+        <div className="detailed-feedback" id="institute-detailed-feedback">
+          <section className="panel insight-panel" aria-labelledby="institute-insight-heading">
+            <div className="section-heading"><div><h3 id="institute-insight-heading">Profile strengths and gaps</h3><p>{callPredicted ? "The strongest evidence supporting this qualification" : "The exact conditions helping and blocking this profile"}</p></div><SourceBadge source="CALCULATED" /></div>
+            <div className="insight-grid">
+              <TextInsightList title="Where this profile is strong" emptyMessage="No measurable strength was reached before the failed hard gate." items={result.strengths} tone="strength" />
+              <TextInsightList title="What is lacking or blocking" emptyMessage="No blocking deficiency was found in the interview-call criteria." items={result.gaps} tone="gap" />
+            </div>
+            {result.nextSteps.length > 0 && <div className="next-steps"><h4>{callPredicted ? "What to focus on next" : "How to improve this profile"}</h4><ol>{result.nextSteps.map((step) => <li key={step}>{step}</li>)}</ol></div>}
+          </section>
+
+          <section className="panel pipeline-panel" aria-labelledby="institute-pipeline-heading">
+            <div className="section-heading"><div><h3 id="institute-pipeline-heading">Candidate journey</h3><p>Every earlier gate remains binding.</p></div><SourceBadge source="OFFICIAL_POLICY" /></div>
+            <div className="pipeline">{pipeline.map((step) => <PipelineStep key={step.label} {...step} />)}</div>
+            {callNegative && result.gaps.length > 0 && (
+              <div className="journey-gaps" role="group" aria-labelledby="institute-journey-gaps-heading">
+                <div className="journey-gaps-heading"><span aria-hidden="true"><X size={14} /></span><div><h4 id="institute-journey-gaps-heading">Where this profile is lagging</h4><p>Exact failed conditions that prevented progression to an interview call</p></div></div>
+                <div className="journey-gap-list">{result.gaps.map((gap) => <div className="journey-gap-item" key={gap}><div><strong>{gap}</strong><p>This condition remains binding for the current result.</p></div><span>Attention</span></div>)}</div>
+              </div>
+            )}
+          </section>
+
+          <div className="metric-grid">
+            <Metric label={result.scoreLabel} value={currentCallScore == null ? scoreFallback : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`} note="Current selection-stage calculation" />
+            <Metric label="Overall CAT percentile" value={candidate.catOverallPercentile.toFixed(2)} note={`Required ${cutoffText(result.eligibility.cutoff.overall)}`} tone={result.eligibility.overallPass ? "success" : "warning"} />
+            <Metric label="Call benchmark" value={result.call.benchmarkValue == null ? "Not published" : formatScore(result.call.benchmarkValue, 2)} note={humanize(result.call.benchmarkType)} />
+            <Metric label="Call margin" value={result.call.margin == null ? marginFallback : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`} note="Current score minus benchmark" tone={(result.call.margin ?? -1) >= 0 ? "success" : "warning"} />
+          </div>
+
+          <section className="panel detail-panel" aria-labelledby="pre-score-heading">
+            <div className="section-heading">
+              <div><h3 id="pre-score-heading">{result.scoreLabel} breakdown</h3><p>{preUsesModel ? `Official ${result.institute} weights with clearly labelled synthetic normalization inputs and model benchmarks.` : result.institute === "IIMC" && result.call.benchmarkType === "MODEL" ? "Official IIMC 85-point score components; only the interview-call benchmark is a mock-model assumption." : "Every available official score component and formula."}</p></div>
+              <SourceBadge source={preSource} />
+            </div>
+            {result.preInterview.missingRuntimeData.length > 0 && <div className="missing-data-box"><Database size={19} aria-hidden="true" /><div><strong>Normalization data required</strong><ul>{result.preInterview.missingRuntimeData.map((item) => <li key={item}>{item}</li>)}</ul></div></div>}
+            <ComponentList components={result.preInterview.components} />
+            <div className="generic-total"><span>{result.scoreLabel}</span><strong>{currentCallScore == null ? humanize(result.preInterview.status) : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong></div>
+            <div className="call-summary-grid prepi-benchmark-summary">
+              <div><span>Call benchmark</span><strong>{result.call.benchmarkValue == null ? "Not configured" : `${formatScore(result.call.benchmarkValue, 2)} / ${result.preInterview.maxScore}`}</strong></div>
+              <div><span>Margin</span><strong>{result.call.margin == null ? marginFallback : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`}</strong></div>
+              <div><span>Interpretation</span><strong>{callPredicted ? "Call predicted" : humanize(result.call.status)}</strong></div>
+            </div>
+          </section>
+
+          <section className="panel detail-panel" aria-labelledby="institute-audit-heading">
+            <div className="section-heading"><div><h3 id="institute-audit-heading">Detailed decision audit</h3><p>Every input, comparison and formula used in the result</p></div><SourceBadge source="CALCULATED" /></div>
+            <div className="audit-grid">
+              <article className="audit-card">
+                <h4>1. Basic eligibility</h4>
+                <AuditRow label="Bachelor marks" value={`${candidate.bachelorPercent.toFixed(2)}% / ${result.eligibility.bachelorRequired.toFixed(0)}%`} explanation="The applicable bachelor minimum is based on the institute's published category rules." state={result.eligibility.bachelorPass ? "pass" : "fail"} />
+                <AuditRow label="Section score condition" value={result.eligibility.rawScoreGatePass ? "Satisfied" : "Failed"} explanation={result.institute === "IIMB" ? "All three CAT sections require positive raw scores." : "All three CAT sections must satisfy the institute's non-negative score condition."} state={result.eligibility.rawScoreGatePass ? "pass" : "fail"} />
+                <AuditRow label="Official minimums" value={result.eligibility.passed ? "Passed" : "Failed"} explanation="Degree and CAT minimums are binding before later-stage scoring matters." state={result.eligibility.passed ? "pass" : "fail"} />
+              </article>
+              <article className="audit-card">
+                <h4>2. CAT hard-gate screen</h4>
+                <AuditRow label="Overall percentile" value={`${candidate.catOverallPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.overall)}`} explanation="The overall CAT percentile is checked when the institute publishes a threshold." state={result.eligibility.overallPass ? "pass" : "fail"} />
+                <AuditRow label="VARC percentile" value={`${candidate.catVarcPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.varc)}`} explanation="VARC is checked independently when a sectional threshold exists." state={result.eligibility.varcPass ? "pass" : "fail"} />
+                <AuditRow label="DILR percentile" value={`${candidate.catDilrPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.dilr)}`} explanation="DILR is checked independently when a sectional threshold exists." state={result.eligibility.dilrPass ? "pass" : "fail"} />
+                <AuditRow label="QA percentile" value={`${candidate.catQaPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.qa)}`} explanation="QA is checked independently when a sectional threshold exists." state={result.eligibility.qaPass ? "pass" : "fail"} />
+              </article>
+              {result.preInterview.components.length > 0 && (
+                <article className="audit-card">
+                  <h4>3. Shortlist score construction</h4>
+                  {result.preInterview.components.map((component) => <AuditRow key={component.key} label={component.label} value={component.score == null ? "Required" : `${formatScore(component.score, 2)} / ${component.maxScore}`} explanation={`${component.formula}. ${component.detail}`} state={component.status === "CALCULATED" ? "pass" : component.status === "DATA_REQUIRED" ? "fail" : "info"} />)}
+                </article>
+              )}
+              <article className="audit-card outcome-audit-card">
+                <h4>4. Overall selection conclusion</h4>
+                <AuditRow label={directMerit ? "Direct merit status" : "Interview call"} value={callPredicted ? "YES · predicted" : humanize(result.call.status)} explanation={result.call.reason} state={callPredicted ? "pass" : callNegative ? "fail" : "info"} />
+                <AuditRow label="Applicable benchmark" value={result.call.benchmarkValue == null ? "Not published" : formatScore(result.call.benchmarkValue, 2)} explanation={`Benchmark source: ${humanize(result.call.benchmarkType)}.`} state={result.call.benchmarkValue == null ? "info" : "pass"} />
+                <AuditRow label="Applicable margin" value={result.call.margin == null ? "Unavailable" : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`} explanation="Positive means the current shortlist score is above the configured boundary." state={result.call.margin == null ? "info" : result.call.margin >= 0 ? "pass" : "fail"} />
+              </article>
+            </div>
+          </section>
+
+          <div className="two-column-panels">
+            <section className="panel detail-panel" aria-labelledby="score-source-heading">
+              <div className="section-heading"><div><h3 id="score-source-heading">Score components</h3><p>Official component breakdown</p></div><SourceBadge source={preSource} /></div>
+              <div className="rating-list">{result.preInterview.components.map((component) => (
+                <div className="rating-row" key={component.key}>
+                  <div><div className="rating-label"><span>{component.label}</span><span>max {component.maxScore}</span></div><div className="rating-track"><div className="rating-fill" style={{ width: `${component.score == null || component.maxScore === 0 ? 0 : Math.min(100, component.score / component.maxScore * 100)}%` }} /></div></div>
+                  <span className="rating-value">{component.score == null ? "—" : formatScore(component.score, 2)}</span>
+                </div>
+              ))}</div>
+            </section>
+            <section className="panel detail-panel" aria-labelledby="call-heading">
+                <div className="section-heading"><div><h3 id="call-heading">{directMerit ? "Direct-merit decision" : "Interview-call decision"}</h3><p>Eligibility, benchmark and margin</p></div><SourceBadge source={result.call.benchmarkType === "MODEL" ? "MODEL_ASSUMPTION" : "OFFICIAL_POLICY"} /></div>
+              <div className="call-detail">
+                <div className="call-detail-row"><span>Official minimums</span><strong>{result.call.officialMinimumsPassed ? "Passed" : "Failed"}</strong></div>
+                <div className="call-detail-row"><span>{result.scoreLabel}</span><strong>{currentCallScore == null ? scoreFallback : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong></div>
+                <div className="call-detail-row"><span>Benchmark</span><strong>{result.call.benchmarkValue == null ? "Not published" : formatScore(result.call.benchmarkValue, 2)}</strong></div>
+                <div className="call-detail-row"><span>Benchmark type</span><strong>{humanize(result.call.benchmarkType)}</strong></div>
+                <div className="call-detail-row"><span>Margin</span><strong>{result.call.margin == null ? marginFallback : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`}</strong></div>
+                <div className="call-detail-row"><span>{directMerit ? "Merit result" : "Call result"}</span><strong>{callLabel}</strong></div>
+              </div>
+            </section>
+          </div>
+
+          <section className="panel final-panel" aria-labelledby="institute-final-heading">
+            <div className="final-top">
+              <div className="probability-gauge">
+                <div className="probability-ring" style={{ "--p": `${Math.min(100, (probability ?? 0) * 100)}%` } as React.CSSProperties}><strong>{probability == null ? "—" : formatProbability(probability)}</strong></div>
+                <span>{probability == null ? "Seat chance not estimated yet" : `${humanize(result.prediction.band ?? "BORDERLINE")} model estimate`}</span>
+              </div>
+              <div className="final-details">
+                <div className="section-heading"><div><h3 id="institute-final-heading">Final selection planning</h3><p>Official final-score layer; predictive benchmark kept separate</p></div><SourceBadge source={result.prediction.benchmarkType === "MODEL" ? "MODEL_ASSUMPTION" : "OFFICIAL_POLICY"} /></div>
+                <div className="metric-grid">
+                  <Metric label="Final composite score" value={result.final.score == null ? humanize(result.final.status) : `${formatScore(result.final.score, 2)} / ${result.final.maxScore}`} />
+                  <Metric label="Seat benchmark" value={result.prediction.benchmarkValue == null ? "Not configured" : formatScore(result.prediction.benchmarkValue, 2)} note={humanize(result.prediction.benchmarkType)} />
+                  <Metric label="Prediction band" value={result.prediction.band == null ? probabilityFallback : humanize(result.prediction.band)} />
+                  <Metric label="Expected seat chance" value={probability == null ? probabilityFallback : formatProbability(probability)} />
+                </div>
+                <div className="disclosure"><strong>Model estimate—not an admission guarantee.</strong> {result.prediction.disclaimer}</div>
+                <ComponentList components={result.final.components} />
+                <div className="generic-total"><span>Final-selection total</span><strong>{result.final.score == null ? humanize(result.final.status) : `${formatScore(result.final.score, 2)} / ${result.final.maxScore}`}</strong></div>
+              </div>
+            </div>
+          </section>
+
+          <section className="panel detail-panel" aria-labelledby="institute-why-heading">
+            <div className="section-heading"><div><h3 id="institute-why-heading">Why this result?</h3><p>Generated from the exact gate sequence</p></div><SourceBadge source="CALCULATED" /></div>
+            <ol className="explain-list">{result.explanation.map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</ol>
+          </section>
+
+          <section className="panel detail-panel historical-call-panel" aria-labelledby={`${result.institute.toLowerCase()}-historical-call-heading`}>
+            <div className="section-heading"><div><h3 id={`${result.institute.toLowerCase()}-historical-call-heading`}>{directMerit ? "Previous selection records and this profile" : "Previous interview-call scores vs this profile"}</h3><p>{historicalReference.subtitle} The active mock benchmark is shown separately.</p></div><SourceBadge source="MODEL_ASSUMPTION" /></div>
+            <div className={`historical-call-grid ${modelCallBenchmark == null ? "single" : ""}`}>
+              <article className="historical-call-card">
+                <div className="historical-call-card-heading"><div><span>{historicalReference.batch}</span><small>CAT {historicalReference.catYear}</small></div><a href={historicalReference.sourceUrl} target="_blank" rel="noreferrer">Official process</a></div>
+                <div className="historical-call-score-row"><div><span>Previous minimum CS</span><strong className="historical-call-not-published">Not published</strong></div><div><span>{historicalReference.studentScoreLabel}</span><strong>{currentCallScore == null ? "—" : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong></div></div>
+                <div className="historical-call-gap unavailable">An official historical gap cannot be calculated because the previous minimum score was not published.</div>
+              </article>
+              {modelCallBenchmark != null && (
+                <article className="historical-call-card model-reference-card">
+                  <div className="historical-call-card-heading"><div><span>Current mock model</span><small>Testing reference only</small></div><span className="benchmark-badge benchmark-model">Model</span></div>
+                  <div className="historical-call-score-row"><div><span>Model call benchmark</span><strong>{formatScore(modelCallBenchmark, 2)} / {result.preInterview.maxScore}</strong></div><div><span>{historicalReference.studentScoreLabel}</span><strong>{currentCallScore == null ? "—" : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong></div></div>
+                  <div className={`historical-call-gap ${modelCallGap == null ? "unavailable" : modelCallGap >= 0 ? "above" : "below"}`}>{modelCallGap == null ? "Comparison unavailable because the current score was not calculated." : `${modelCallGap >= 0 ? "+" : ""}${modelCallGap.toFixed(2)} · ${Math.abs(modelCallGap).toFixed(2)} ${modelCallGap >= 0 ? "above" : "below"} this model benchmark`}</div>
+                </article>
+              )}
+            </div>
+            <div className="historical-call-note"><strong>What this comparison means:</strong> the previous-cycle card reports the publication status honestly; it does not convert CAT minimum percentiles into a composite-score cutoff. The numeric gap uses the active mock benchmark only and is neither an official nor a historical interview-call cutoff.</div>
+          </section>
+        </div>
+      )}
+    </div>
+  );
+}

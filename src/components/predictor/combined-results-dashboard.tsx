@@ -6,6 +6,11 @@ import type { CandidateInput, IimaPolicyConfig, IimaPredictionResult } from "@/t
 import type { InstituteKey, InstitutePredictionResult } from "@/types/institutes";
 import { formatProbability, formatScore } from "@/lib/utils";
 import { callStatusLabel } from "@/lib/institutes/cat2025_2026_28/shared";
+import {
+  IIMA_HISTORICAL_STAGE2_CALL_RECORDS,
+  iimaHistoricalCallCategoryLabel,
+  iimaHistoricalCallThreshold,
+} from "@/lib/iima/historical-call-records";
 import { ResultsDashboard } from "./results-dashboard";
 import { InstituteResultsDashboard } from "./institute-results-dashboard";
 
@@ -31,6 +36,18 @@ interface ResultSummary {
   callTiming: string;
   callBasis: string;
   callBasisDetail: string;
+}
+
+interface HistoricalComparisonSummary {
+  key: InstituteKey;
+  name: string;
+  reference: string | null;
+  referenceDetail: string;
+  studentScore: string;
+  gap: number | null;
+  gapPrecision: number;
+  sourceUrl: string;
+  sourceLabel: string;
 }
 
 function seatChanceBand(probability: number | null | undefined): ChanceBand {
@@ -147,6 +164,39 @@ export function CombinedResultsDashboard({
     MEDIUM: summaries.filter((summary) => summary.chanceBand === "MEDIUM").length,
     LOW: summaries.filter((summary) => summary.chanceBand === "LOW").length,
   };
+  const latestIimaHistory = IIMA_HISTORICAL_STAGE2_CALL_RECORDS[0];
+  const latestIimaThreshold = iimaHistoricalCallThreshold(latestIimaHistory, candidate);
+  const historicalComparisons: HistoricalComparisonSummary[] = [
+    {
+      key: "IIMA",
+      name: "IIM Ahmedabad",
+      reference: latestIimaThreshold.toFixed(6),
+      referenceDetail: `Official PGP ${latestIimaHistory.batch} Stage-2 minimum CS · ${iimaHistoricalCallCategoryLabel(candidate)}`,
+      studentScore: results.IIMA.compositeScore == null ? "Not calculated" : formatScore(results.IIMA.compositeScore, 6),
+      gap: results.IIMA.compositeScore == null ? null : results.IIMA.compositeScore - latestIimaThreshold,
+      gapPrecision: 6,
+      sourceUrl: latestIimaHistory.sourceUrl,
+      sourceLabel: "Official record",
+    },
+    ...results.institutes.map((result): HistoricalComparisonSummary => {
+      const hasHistoricalNumber = (result.call.benchmarkType === "HISTORICAL" || result.call.benchmarkType === "OFFICIAL_RESULT")
+        && result.call.benchmarkValue != null;
+      const studentScore = result.preInterview.score;
+      return {
+        key: result.institute,
+        name: result.instituteName,
+        reference: hasHistoricalNumber ? formatScore(result.call.benchmarkValue, 2) : null,
+        referenceDetail: hasHistoricalNumber
+          ? `Published ${result.call.benchmarkType.toLowerCase().replaceAll("_", " ")} call-score reference`
+          : "No fixed previous-cycle interview-call score is publicly configured",
+        studentScore: studentScore == null ? "Not calculated" : `${formatScore(studentScore, 2)} / ${result.preInterview.maxScore}`,
+        gap: hasHistoricalNumber && studentScore != null ? studentScore - result.call.benchmarkValue! : null,
+        gapPrecision: 2,
+        sourceUrl: result.sourceUrl,
+        sourceLabel: hasHistoricalNumber ? "Official record" : "Official process",
+      };
+    }),
+  ];
 
   useEffect(() => {
     if (!activeDetail) return;
@@ -309,6 +359,52 @@ export function CombinedResultsDashboard({
           </table>
         </div>
         <p className="call-window-disclaimer">Call windows are planning estimates for the CAT 2025 / 2026–28 cycle. Actual shortlist dates and decisions come only from each IIM through its official portal or registered communication channels.</p>
+      </section>
+
+      <section className="panel all-history-panel" aria-labelledby="all-history-heading">
+        <div className="all-history-heading">
+          <div>
+            <span>Historical reference</span>
+            <h2 id="all-history-heading">Previous interview-call scores vs this student</h2>
+            <p>The student&apos;s current shortlist score is compared only where a compatible published previous-cycle score is available.</p>
+          </div>
+        </div>
+        <div className="all-history-table-wrap">
+          <table className="all-history-table">
+            <thead>
+              <tr>
+                <th scope="col">Institute</th>
+                <th scope="col">Previous-cycle reference</th>
+                <th scope="col">Student&apos;s current score</th>
+                <th scope="col">Difference</th>
+                <th scope="col">Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historicalComparisons.map((comparison) => (
+                <tr key={comparison.key}>
+                  <th scope="row"><span>{comparison.key}</span><strong>{comparison.name}</strong></th>
+                  <td>
+                    <strong className={comparison.reference == null ? "history-unavailable" : ""}>{comparison.reference ?? "Not publicly published"}</strong>
+                    <small>{comparison.referenceDetail}</small>
+                  </td>
+                  <td className="history-student-score">{comparison.studentScore}</td>
+                  <td>
+                    {comparison.gap == null ? (
+                      <span className="history-unavailable">Official comparison unavailable</span>
+                    ) : (
+                      <strong className={comparison.gap >= 0 ? "history-above" : "history-below"}>
+                        {comparison.gap >= 0 ? "+" : ""}{comparison.gap.toFixed(comparison.gapPrecision)} · {Math.abs(comparison.gap).toFixed(comparison.gapPrecision)} {comparison.gap >= 0 ? "above" : "below"}
+                      </strong>
+                    )}
+                  </td>
+                  <td><a href={comparison.sourceUrl} target="_blank" rel="noreferrer">{comparison.sourceLabel}</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="all-history-note"><strong>Important:</strong> “Not publicly published” is not a zero and does not indicate rejection. Mock planning benchmarks are excluded from this historical table. Scores from different IIMs use different formulas and are shown institute-by-institute, not as a cross-IIM ranking.</p>
       </section>
 
     </div>

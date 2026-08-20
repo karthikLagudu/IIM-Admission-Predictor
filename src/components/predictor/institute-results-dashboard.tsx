@@ -170,34 +170,6 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
         </div>
       </section>
 
-      {result.selectionStages.interview && (
-        <PiScoreSimulator
-          instituteName={result.instituteName}
-          simulatorKey={`${result.policyVersion}-${result.final.score ?? "none"}`}
-          initialPercent={initialPiPercent}
-          piMaxScore={piComponent?.maxScore ?? 0}
-          finalMaxScore={result.final.maxScore}
-          benchmarkLabel={result.prediction.benchmarkValue == null ? "No final-selection benchmark is configured, so a seat percentage cannot be estimated." : `Uses the active ${humanize(result.prediction.benchmarkType).toLowerCase()} final benchmark of ${formatScore(result.prediction.benchmarkValue, 2)}.`}
-          unavailableReason={!piComponent ? "The published/configured final formula does not provide a numeric PI weight that can be varied safely." : nonPiTotal == null ? "One or more non-PI final-score components are still unavailable." : undefined}
-          simulate={(piPercent) => {
-            const piPoints = piComponent == null ? 0 : piPercent / 100 * piComponent.maxScore;
-            const finalScore = piComponent == null || nonPiTotal == null ? null : nonPiTotal + piPoints;
-            const callGate = result.call.status === "PREDICTED_CALL";
-            const seatProbability = finalScore == null || result.prediction.benchmarkValue == null
-              ? null
-              : callGate
-                ? 1 / (1 + Math.exp(-0.35 * (finalScore - result.prediction.benchmarkValue)))
-                : 0;
-            return {
-              piPoints,
-              finalScore,
-              seatProbability,
-              band: seatProbability == null ? null : institutePredictionBand(seatProbability),
-            };
-          }}
-        />
-      )}
-
       <div className="feedback-disclosure">
         <button type="button" className="feedback-toggle" aria-expanded={showMore} aria-controls="institute-detailed-feedback" onClick={() => setShowMore((current) => !current)}>
           <span>{showMore ? "Show less feedback" : "More feedback"}</span>
@@ -348,6 +320,34 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
             <div className="historical-call-note"><strong>What this comparison means:</strong> the previous-cycle card reports the publication status honestly; it does not convert CAT minimum percentiles into a composite-score cutoff. The numeric gap uses the active mock benchmark only and is neither an official nor a historical interview-call cutoff.</div>
           </section>
         </div>
+      )}
+
+      {result.selectionStages.interview && (
+        <PiScoreSimulator
+          instituteName={result.instituteName}
+          simulatorKey={`${result.policyVersion}-${result.final.score ?? "none"}`}
+          initialPercent={initialPiPercent}
+          piMaxScore={piComponent?.maxScore ?? 0}
+          finalMaxScore={result.final.maxScore}
+          benchmarkLabel={result.prediction.benchmarkValue == null ? "No final-selection benchmark is configured, so a seat percentage cannot be estimated." : `Uses the active ${humanize(result.prediction.benchmarkType).toLowerCase()} final benchmark of ${formatScore(result.prediction.benchmarkValue, 2)}.`}
+          unavailableReason={!piComponent ? "The published/configured final formula does not provide a numeric PI weight that can be varied safely." : nonPiTotal == null ? "One or more non-PI final-score components are still unavailable." : undefined}
+          simulate={(piPercent) => {
+            const piPoints = piComponent == null ? 0 : piPercent / 100 * piComponent.maxScore;
+            const finalScore = piComponent == null || nonPiTotal == null ? null : nonPiTotal + piPoints;
+            const callGate = result.call.status === "PREDICTED_CALL";
+            const seatProbability = finalScore == null || result.prediction.benchmarkValue == null
+              ? null
+              : callGate
+                ? 1 / (1 + Math.exp(-0.35 * (finalScore - result.prediction.benchmarkValue)))
+                : 0;
+            return {
+              piPoints,
+              finalScore,
+              seatProbability,
+              band: seatProbability == null ? null : institutePredictionBand(seatProbability),
+            };
+          }}
+        />
       )}
     </div>
   );

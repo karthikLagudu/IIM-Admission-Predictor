@@ -6,6 +6,8 @@ import type { CandidateInput } from "@/types/iima";
 import type { InstitutePredictionResult, InstituteScoreComponent } from "@/types/institutes";
 import { SourceBadge } from "@/components/ui/source-badge";
 import { formatProbability, formatScore, humanize } from "@/lib/utils";
+import { institutePredictionBand } from "@/lib/institutes/prediction";
+import { PiScoreSimulator } from "./pi-score-simulator";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
 
@@ -103,6 +105,12 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
     : result.institute === "IIMC"
       ? { batch: "MBA 2024-26", catYear: 2023, sourceUrl: "https://application.iimcal.ac.in/check-results/interview-shortlist--mba-202426-batch", subtitle: "IIMC does not publish the previous minimum Stage-II composite score.", studentScoreLabel: "Student's current CS" }
       : { batch: "Previous cycle", catYear: 2024, sourceUrl: result.sourceUrl, subtitle: "No fixed previous-cycle composite boundary is configured for this institute.", studentScoreLabel: "Student's current score" };
+  const piComponent = result.final.components.find((component) => component.key === "pi" || /personal interview/i.test(component.label));
+  const nonPiComponents = result.final.components.filter((component) => component !== piComponent);
+  const nonPiTotal = nonPiComponents.length > 0 && nonPiComponents.every((component) => component.score != null)
+    ? nonPiComponents.reduce((sum, component) => sum + (component.score ?? 0), 0)
+    : null;
+  const initialPiPercent = Math.round((candidate.normalizedPi ?? (piComponent?.score != null && piComponent.maxScore > 0 ? piComponent.score / piComponent.maxScore : 0.75)) * 100);
 
   const cutoffText = (value: number | null) => value == null ? "Not applicable" : value.toFixed(2);
 
@@ -161,6 +169,34 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
           </article>
         </div>
       </section>
+
+      {result.selectionStages.interview && (
+        <PiScoreSimulator
+          instituteName={result.instituteName}
+          simulatorKey={`${result.policyVersion}-${result.final.score ?? "none"}`}
+          initialPercent={initialPiPercent}
+          piMaxScore={piComponent?.maxScore ?? 0}
+          finalMaxScore={result.final.maxScore}
+          benchmarkLabel={result.prediction.benchmarkValue == null ? "No final-selection benchmark is configured, so a seat percentage cannot be estimated." : `Uses the active ${humanize(result.prediction.benchmarkType).toLowerCase()} final benchmark of ${formatScore(result.prediction.benchmarkValue, 2)}.`}
+          unavailableReason={!piComponent ? "The published/configured final formula does not provide a numeric PI weight that can be varied safely." : nonPiTotal == null ? "One or more non-PI final-score components are still unavailable." : undefined}
+          simulate={(piPercent) => {
+            const piPoints = piComponent == null ? 0 : piPercent / 100 * piComponent.maxScore;
+            const finalScore = piComponent == null || nonPiTotal == null ? null : nonPiTotal + piPoints;
+            const callGate = result.call.status === "PREDICTED_CALL";
+            const seatProbability = finalScore == null || result.prediction.benchmarkValue == null
+              ? null
+              : callGate
+                ? 1 / (1 + Math.exp(-0.35 * (finalScore - result.prediction.benchmarkValue)))
+                : 0;
+            return {
+              piPoints,
+              finalScore,
+              seatProbability,
+              band: seatProbability == null ? null : institutePredictionBand(seatProbability),
+            };
+          }}
+        />
+      )}
 
       <div className="feedback-disclosure">
         <button type="button" className="feedback-toggle" aria-expanded={showMore} aria-controls="institute-detailed-feedback" onClick={() => setShowMore((current) => !current)}>

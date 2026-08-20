@@ -309,17 +309,17 @@ function withSensitivity(
     {
       key: "pi-plus-005",
       label: "PI +0.05 normalized",
-      candidate: { ...candidate, normalizedPi: (candidate.normalizedPi ?? 0) + 0.05 },
+      candidate: { ...candidate, normalizedPi: Math.min(1, (candidate.normalizedPi ?? 0) + 0.05) },
     },
     {
       key: "pi-plus-010",
       label: "PI +0.10 normalized",
-      candidate: { ...candidate, normalizedPi: (candidate.normalizedPi ?? 0) + 0.1 },
+      candidate: { ...candidate, normalizedPi: Math.min(1, (candidate.normalizedPi ?? 0) + 0.1) },
     },
     {
       key: "awt-plus-005",
       label: "AWT +0.05 normalized",
-      candidate: { ...candidate, normalizedAwt: (candidate.normalizedAwt ?? 0) + 0.05 },
+      candidate: { ...candidate, normalizedAwt: Math.min(1, (candidate.normalizedAwt ?? 0) + 0.05) },
     },
     {
       key: "workex-plus-6",

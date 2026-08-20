@@ -14,6 +14,51 @@ import { PiScoreSimulator } from "./pi-score-simulator";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
 
+function sensitivityScenarioDetail(key: string, candidate: CandidateInput, policy: IimaPolicyConfig) {
+  const currentPi = candidate.normalizedPi ?? 0;
+  const currentAwt = candidate.normalizedAwt ?? 0;
+  switch (key) {
+    case "cat-plus-5": {
+      const next = Math.min(policy.catNormalizationDenominator, candidate.catOverallScaledScore + 5);
+      return {
+        change: `CAT overall scaled score changes from ${candidate.catOverallScaledScore.toFixed(2)} to ${next.toFixed(2)}.`,
+        basis: "CAT contributes 25% to IIMA's final Composite Score. Sectional percentiles, academics, PI and AWT stay unchanged.",
+      };
+    }
+    case "cat-plus-10": {
+      const next = Math.min(policy.catNormalizationDenominator, candidate.catOverallScaledScore + 10);
+      return {
+        change: `CAT overall scaled score changes from ${candidate.catOverallScaledScore.toFixed(2)} to ${next.toFixed(2)}.`,
+        basis: "This is the larger CAT scenario. The gain is capped at the configured CAT normalization denominator; every non-CAT input stays fixed.",
+      };
+    }
+    case "pi-plus-005":
+      return {
+        change: `Normalized PI changes from ${currentPi.toFixed(2)} to ${Math.min(1, currentPi + 0.05).toFixed(2)} (${(currentPi * 100).toFixed(0)}% to ${(Math.min(1, currentPi + 0.05) * 100).toFixed(0)}%).`,
+        basis: "PI carries the largest final-selection weight at 50%, so even a small normalized improvement can materially change the final score.",
+      };
+    case "pi-plus-010":
+      return {
+        change: `Normalized PI changes from ${currentPi.toFixed(2)} to ${Math.min(1, currentPi + 0.10).toFixed(2)} (${(currentPi * 100).toFixed(0)}% to ${(Math.min(1, currentPi + 0.10) * 100).toFixed(0)}%).`,
+        basis: "This is the stronger PI scenario. The value is capped at 1.00 and all CAT, academic, AWT and work-experience inputs stay fixed.",
+      };
+    case "awt-plus-005":
+      return {
+        change: `Normalized AWT changes from ${currentAwt.toFixed(2)} to ${Math.min(1, currentAwt + 0.05).toFixed(2)} (${(currentAwt * 100).toFixed(0)}% to ${(Math.min(1, currentAwt + 0.05) * 100).toFixed(0)}%).`,
+        basis: "AWT contributes 10% to the final Composite Score. The scenario isolates writing-test improvement and leaves PI and the profile unchanged.",
+      };
+    case "workex-plus-6": {
+      const next = Math.min(36, candidate.workExperienceMonths + 6);
+      return {
+        change: `Eligible work experience changes from ${candidate.workExperienceMonths} to ${next} completed months.`,
+        basis: "Work experience can change the Application Rating and therefore both shortlist and final-score contributions. The scenario is capped at 36 rated months.",
+      };
+    }
+    default:
+      return { change: "One candidate input changes while all others stay fixed.", basis: "The model recalculates the complete result using the same gates, weights and planning benchmarks." };
+  }
+}
+
 function PipelineStep({ label, value, state }: { label: string; value: string; state: StepState }) {
   return (
     <div className={`pipeline-step ${state}`}>
@@ -498,15 +543,28 @@ export function ResultsDashboard({
 
       {final && result.sensitivity.length > 0 && (
         <section className="panel detail-panel" aria-labelledby="sensitivity-heading">
-          <div className="section-heading"><div><h3 id="sensitivity-heading">What improves my chance?</h3><p>One-variable sensitivity from the current scenario</p></div><SourceBadge source="MODEL_ASSUMPTION" /></div>
+          <div className="section-heading"><div><h3 id="sensitivity-heading">What improves my chance?</h3><p>Each scenario changes one input only and recalculates the complete result</p></div><SourceBadge source="MODEL_ASSUMPTION" /></div>
+          <div className="sensitivity-intro"><strong>Current baseline</strong><span>Final Composite Score {formatScore(final.finalCompositeScore)} · Estimated seat chance {formatProbability(final.seatProbability)}</span><p>Use these scenarios to see which improvement has the greatest modelled effect. They are planning comparisons, not promises of admission.</p></div>
           <div className="sensitivity-list">
-            {result.sensitivity.map((scenario) => (
-              <div className="sensitivity-row" key={scenario.key}>
-                <span>{scenario.label}</span>
-                <div className="sensitivity-track"><div className="sensitivity-fill" style={{ width: `${scenario.probability * 100}%` }} /></div>
-                <span className="sensitivity-value">{formatProbability(scenario.probability)} <small className={scenario.probabilityDelta >= 0 ? "positive-delta" : ""}>({scenario.probabilityDelta >= 0 ? "+" : ""}{(scenario.probabilityDelta * 100).toFixed(1)} pp)</small></span>
-              </div>
-            ))}
+            {result.sensitivity.map((scenario) => {
+              const detail = sensitivityScenarioDetail(scenario.key, candidate, policy);
+              const finalScoreDelta = scenario.finalCompositeScore == null ? null : scenario.finalCompositeScore - final.finalCompositeScore;
+              const probabilityDeltaPoints = scenario.probabilityDelta * 100;
+              const impact = probabilityDeltaPoints >= 5 ? "Strong impact" : probabilityDeltaPoints >= 2 ? "Moderate impact" : probabilityDeltaPoints > 0 ? "Small impact" : "No modelled gain";
+              return (
+                <article className="sensitivity-card" key={scenario.key}>
+                  <div className="sensitivity-card-heading"><div><h4>{scenario.label}</h4><span>{impact}</span></div><strong>{scenario.probabilityDelta >= 0 ? "+" : ""}{probabilityDeltaPoints.toFixed(1)} percentage points</strong></div>
+                  <p>{detail.change}</p>
+                  <div className="sensitivity-card-metrics">
+                    <div><span>New final score</span><strong>{formatScore(scenario.finalCompositeScore)}</strong><small>{finalScoreDelta == null ? "Change unavailable" : `${finalScoreDelta >= 0 ? "+" : ""}${finalScoreDelta.toFixed(6)} vs current`}</small></div>
+                    <div><span>New seat chance</span><strong>{formatProbability(scenario.probability)}</strong><small>Current: {formatProbability(final.seatProbability)}</small></div>
+                    <div><span>Chance improvement</span><strong className={scenario.probabilityDelta > 0 ? "positive-delta" : ""}>{scenario.probabilityDelta >= 0 ? "+" : ""}{probabilityDeltaPoints.toFixed(1)} pp</strong><small>{impact}</small></div>
+                  </div>
+                  <div className="sensitivity-track" role="img" aria-label={`${scenario.label} produces ${formatProbability(scenario.probability)} estimated seat chance`}><div className="sensitivity-fill" style={{ width: `${Math.min(100, scenario.probability * 100)}%` }} /></div>
+                  <small className="sensitivity-basis"><strong>Why it matters:</strong> {detail.basis}</small>
+                </article>
+              );
+            })}
           </div>
         </section>
       )}

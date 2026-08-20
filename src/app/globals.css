@@ -481,11 +481,28 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .historical-call-gap.unavailable { background: #e8eef2; color: #425867; }
 .historical-call-note { padding: 12px 14px; border-left: 3px solid var(--blue-600); background: #eef6fa; color: #405563; font-size: 10px; line-height: 1.55; }
 .historical-call-note strong { color: var(--navy-900); }
-.sensitivity-list { display: grid; gap: 8px; }
-.sensitivity-row { display: grid; grid-template-columns: minmax(140px,1fr) 2fr auto; gap: 12px; align-items: center; font-size: 10px; }
+.sensitivity-intro { margin-bottom: 14px; padding: 14px 16px; background: #f6f9fa; color: var(--navy-800); }
+.sensitivity-intro strong, .sensitivity-intro span { display: block; }
+.sensitivity-intro strong { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+.sensitivity-intro span { margin-top: 4px; font-family: Georgia, serif; font-size: 16px; }
+.sensitivity-intro p { margin: 5px 0 0; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.sensitivity-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+.sensitivity-card { min-width: 0; padding: 16px; background: white; border: 1px solid var(--line); border-radius: 11px; }
+.sensitivity-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.sensitivity-card-heading h4 { margin: 0; color: var(--navy-900); font-size: 12px; }
+.sensitivity-card-heading div > span { display: block; margin-top: 3px; color: var(--green); font-size: 8px; font-weight: 800; }
+.sensitivity-card-heading > strong { color: var(--green); font-size: 9px; text-align: right; }
+.sensitivity-card > p { min-height: 32px; margin: 10px 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.sensitivity-card-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 -4px 11px; }
+.sensitivity-card-metrics > div { min-width: 0; padding: 7px 8px; }
+.sensitivity-card-metrics > div + div { border-left: 1px solid var(--line); }
+.sensitivity-card-metrics span, .sensitivity-card-metrics small { display: block; color: var(--muted); font-size: 7px; }
+.sensitivity-card-metrics span { font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.sensitivity-card-metrics strong { display: block; margin: 4px 0 2px; color: var(--navy-900); font-family: Georgia, serif; font-size: 15px; font-variant-numeric: tabular-nums; }
 .sensitivity-track { height: 7px; border-radius: 999px; background: #e8eef1; overflow: hidden; }
 .sensitivity-fill { height: 100%; background: linear-gradient(90deg, var(--blue-600), var(--green)); border-radius: inherit; }
-.sensitivity-value { min-width: 78px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
+.sensitivity-basis { display: block; margin-top: 9px; color: var(--muted); font-size: 8px; line-height: 1.45; }
+.sensitivity-basis strong { color: var(--navy-800); }
 .positive-delta { color: var(--green); }
 
 /* Semantic states use colored text and outlines on white surfaces. */
@@ -652,8 +669,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .pipeline-step:nth-child(2n)::after { display: none; }
   .final-details .metric-grid { grid-template-columns: repeat(2, 1fr); }
   .slider-grid { grid-template-columns: 1fr; }
-  .sensitivity-row { grid-template-columns: 1fr auto; }
-  .sensitivity-track { grid-column: 1 / -1; grid-row: 2; }
+  .sensitivity-list { grid-template-columns: 1fr; }
   .methodology-layout { grid-template-columns: 1fr; }
   .method-nav { position: static; display: flex; flex-wrap: wrap; gap: 4px; }
   .footer-inner { flex-direction: column; }
@@ -669,6 +685,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .report-cover-stats { grid-template-columns: 1fr; }
   .pi-simulator-heading { flex-direction: column; }
   .pi-simulator-heading button { width: 100%; justify-content: center; }
+  .sensitivity-card-heading { flex-direction: column; }
+  .sensitivity-card-heading > strong { text-align: left; }
+  .sensitivity-card-metrics { grid-template-columns: 1fr; }
+  .sensitivity-card-metrics > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .result-call, .result-score, .pipeline-panel, .insight-panel, .detail-panel, .final-details, .scenario-panel { padding: 18px; }
   .hero-pills span:nth-child(n+4) { display: none; }
 }

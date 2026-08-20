@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronRight, ListChecks, Sparkles } from "lucide-react";
 import type { CandidateInput, IimaPolicyConfig, IimaPredictionResult } from "@/types/iima";
 import type { InstituteKey, InstitutePredictionResult } from "@/types/institutes";
 import { formatProbability, formatScore } from "@/lib/utils";
@@ -28,12 +28,54 @@ interface ResultSummary {
   chanceBand: ChanceBand;
   tone: "positive" | "negative" | "pending";
   note: string;
+  callTiming: string;
+  callBasis: string;
+  callBasisDetail: string;
 }
 
 function seatChanceBand(probability: number | null | undefined): ChanceBand {
   if (probability != null && probability >= 0.7) return "HIGH";
   if (probability != null && probability >= 0.4) return "MEDIUM";
   return "LOW";
+}
+
+function iimaCallTiming(result: IimaPredictionResult): string {
+  return result.callPrediction
+    ? "At IIMA's shortlist release · Jan–Mar 2026 planning window"
+    : "No call expected from the current profile";
+}
+
+function iimaCallBasis(result: IimaPredictionResult): { short: string; detail: string } {
+  const route = result.callRoute === "STAGE_1" ? "Stage 1" : result.callRoute === "STAGE_2" ? "Stage 2" : "shortlist";
+  const threshold = result.applicableCallThreshold == null ? "the applicable boundary" : result.applicableCallThreshold.toFixed(6);
+  const margin = result.callMargin == null ? "not available" : `${result.callMargin >= 0 ? "+" : ""}${result.callMargin.toFixed(6)}`;
+  return {
+    short: `CAT gates + academic profile + ${route} composite`,
+    detail: `IIMA first checks degree eligibility and CAT overall/sectional cut-offs. It then applies academic-category rules, Application Rating and the ${route} Composite Score. This profile is compared with ${threshold}; its calculated margin is ${margin}.`,
+  };
+}
+
+function instituteCallTiming(result: InstitutePredictionResult): string {
+  if (result.selectionStages.directMerit) return "No interview call · watch the category merit-list release";
+  if (result.call.status === "PREDICTED_CALL") return "At the institute shortlist release · Jan–Mar 2026 planning window";
+  if (result.call.status === "NO_CALL") return "No call expected from the current profile";
+  if (result.call.status === "SPECIAL_CASE_REVIEW_REQUIRED") return "After the institute completes its special-case review";
+  if (result.call.status === "DATA_REQUIRED") return "After the institute publishes the required shortlist data";
+  return "At the official shortlist release · timing depends on applicant-pool ranking";
+}
+
+function instituteCallBasis(result: InstitutePredictionResult): { short: string; detail: string } {
+  const componentLabels = result.preInterview.components
+    .filter((component) => component.score != null)
+    .map((component) => component.label);
+  const shortComponents = componentLabels.slice(0, 3).join(" + ") || "CAT and published eligibility gates";
+  const benchmark = result.call.benchmarkValue == null
+    ? "No fixed current-cycle call boundary is configured, so the final decision depends on the institute's published shortlist or applicant-pool ranking."
+    : `The calculated score is compared with ${formatScore(result.call.benchmarkValue, 2)} (${result.call.benchmarkType.toLowerCase().replaceAll("_", " ")}); the margin is ${result.call.margin == null ? "not available" : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`}.`;
+  return {
+    short: shortComponents,
+    detail: `The institute first applies category-specific CAT overall and sectional cut-offs plus its published eligibility gates. The shortlist score uses ${componentLabels.join(", ") || "the available policy inputs"}. ${benchmark} ${result.call.reason}`,
+  };
 }
 
 export function CombinedResultsDashboard({
@@ -51,6 +93,7 @@ export function CombinedResultsDashboard({
   const [chanceFilter, setChanceFilter] = useState<"ALL" | ChanceBand>("ALL");
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
   const iimaChance = results.IIMA.finalSelection?.seatProbability ?? 0;
+  const iimaBasis = iimaCallBasis(results.IIMA);
   const summaries: ResultSummary[] = [
     {
       key: "IIMA",
@@ -64,26 +107,35 @@ export function CombinedResultsDashboard({
       chanceBand: seatChanceBand(iimaChance),
       tone: results.IIMA.callPrediction ? "positive" : "negative",
       note: results.IIMA.callPrediction ? "Observed-boundary planning model" : "An official hard gate or shortlist boundary was not cleared",
+      callTiming: iimaCallTiming(results.IIMA),
+      callBasis: iimaBasis.short,
+      callBasisDetail: iimaBasis.detail,
     },
-    ...results.institutes.map((result): ResultSummary => ({
-      key: result.institute,
-      name: result.instituteName,
-      programme: result.programme,
-      status: callStatusLabel(result.call.status, result.selectionStages.directMerit),
-      scoreLabel: result.scoreLabel,
-      score: result.preInterview.score == null
-        ? result.preInterview.status === "DATA_REQUIRED" ? "Needs cycle data" : "Not calculated"
-        : `${formatScore(result.preInterview.score, 2)} / ${result.preInterview.maxScore}`,
-      chanceLabel: "Expected seat chance (model)",
-      chance: result.prediction.probability == null ? "Not estimated yet" : formatProbability(result.prediction.probability),
-      chanceBand: seatChanceBand(result.prediction.probability),
-      tone: result.call.status === "NO_CALL" ? "negative" : result.call.status === "DATA_REQUIRED" ? "pending" : "positive",
-      note: result.institute === "IIMB" && result.preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION")
-        ? "Test model; synthetic normalization inputs"
-        : result.prediction.benchmarkType === "MODEL"
-          ? "Test model; official score with mock planning benchmarks"
-          : result.call.reason,
-    })),
+    ...results.institutes.map((result): ResultSummary => {
+      const basis = instituteCallBasis(result);
+      return {
+        key: result.institute,
+        name: result.instituteName,
+        programme: result.programme,
+        status: callStatusLabel(result.call.status, result.selectionStages.directMerit),
+        scoreLabel: result.scoreLabel,
+        score: result.preInterview.score == null
+          ? result.preInterview.status === "DATA_REQUIRED" ? "Needs cycle data" : "Not calculated"
+          : `${formatScore(result.preInterview.score, 2)} / ${result.preInterview.maxScore}`,
+        chanceLabel: "Expected seat chance (model)",
+        chance: result.prediction.probability == null ? "Not estimated yet" : formatProbability(result.prediction.probability),
+        chanceBand: seatChanceBand(result.prediction.probability),
+        tone: result.call.status === "NO_CALL" ? "negative" : result.call.status === "DATA_REQUIRED" ? "pending" : "positive",
+        note: result.institute === "IIMB" && result.preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION")
+          ? "Test model; synthetic normalization inputs"
+          : result.prediction.benchmarkType === "MODEL"
+            ? "Test model; official score with mock planning benchmarks"
+            : result.call.reason,
+        callTiming: instituteCallTiming(result),
+        callBasis: basis.short,
+        callBasisDetail: basis.detail,
+      };
+    }),
   ];
   const activeSummary = summaries.find((summary) => summary.key === activeDetail) ?? null;
   const activeInstituteResult = activeDetail === "IIMA" ? null : results.institutes.find((result) => result.institute === activeDetail) ?? null;
@@ -144,6 +196,31 @@ export function CombinedResultsDashboard({
           <p>Start with the concise result below. Open <strong>More feedback</strong> only when you want the complete calculation and comparison.</p>
         </section>
 
+        <section className="panel call-outlook-panel" aria-labelledby="call-outlook-heading">
+          <div className="call-outlook-heading">
+            <span>Interview-call outlook</span>
+            <h2 id="call-outlook-heading">When could this student get a call—and why?</h2>
+          </div>
+          <div className="call-outlook-grid">
+            <article>
+              <CalendarClock size={21} aria-hidden="true" />
+              <div>
+                <span>Expected timing</span>
+                <strong>{activeSummary.callTiming}</strong>
+                <p>The month range is a planning estimate, not an official announcement. Always verify the institute portal and registered email.</p>
+              </div>
+            </article>
+            <article>
+              <ListChecks size={21} aria-hidden="true" />
+              <div>
+                <span>Basis for this result</span>
+                <strong>{activeSummary.callBasis}</strong>
+                <p>{activeSummary.callBasisDetail}</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
         <section className="institute-focus-content" aria-label={`${activeDetail} detailed result`}>
           {activeDetail === "IIMA"
             ? <ResultsDashboard candidate={candidate} result={results.IIMA} policy={policy} />
@@ -191,6 +268,8 @@ export function CombinedResultsDashboard({
                 <th scope="col">Result</th>
                 <th scope="col">Pre-PI / shortlist score</th>
                 <th scope="col">Expected seat chance</th>
+                <th scope="col">Expected call window</th>
+                <th scope="col">Call basis</th>
                 <th scope="col"><span className="sr-only">Open detailed report</span></th>
               </tr>
             </thead>
@@ -208,6 +287,8 @@ export function CombinedResultsDashboard({
                     <span>{summary.chance}</span>
                     <small className={`seat-chance-band ${summary.chanceBand.toLowerCase()}`}>{summary.chanceBand.toLowerCase()}</small>
                   </td>
+                  <td className="result-table-timing">{summary.callTiming}</td>
+                  <td className="result-table-basis">{summary.callBasis}</td>
                   <td>
                     <button
                       type="button"
@@ -222,11 +303,12 @@ export function CombinedResultsDashboard({
                 </tr>
               ))}
               {filteredSummaries.length === 0 && (
-                <tr><td className="chance-filter-empty" colSpan={6}>No IIM currently falls in this seat-chance group.</td></tr>
+                <tr><td className="chance-filter-empty" colSpan={8}>No IIM currently falls in this seat-chance group.</td></tr>
               )}
             </tbody>
           </table>
         </div>
+        <p className="call-window-disclaimer">Call windows are planning estimates for the CAT 2025 / 2026–28 cycle. Actual shortlist dates and decisions come only from each IIM through its official portal or registered communication channels.</p>
       </section>
 
     </div>

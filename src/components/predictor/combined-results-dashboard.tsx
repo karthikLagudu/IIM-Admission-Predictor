@@ -320,7 +320,6 @@ export function CombinedResultsDashboard({
                 <th scope="col">Expected seat chance</th>
                 <th scope="col">Expected call window</th>
                 <th scope="col">Call basis</th>
-                <th scope="col"><span className="sr-only">Open detailed report</span></th>
               </tr>
             </thead>
             <tbody>
@@ -329,6 +328,15 @@ export function CombinedResultsDashboard({
                   <th scope="row">
                     <span>{summary.key}</span>
                     <strong>{summary.name}</strong>
+                    <button
+                      type="button"
+                      className="result-table-detail-button"
+                      onClick={() => setActiveDetail(summary.key)}
+                      aria-label={`View more details for ${summary.name}`}
+                    >
+                      <span>View more</span>
+                      <ChevronRight size={15} aria-hidden="true" />
+                    </button>
                   </th>
                   <td>{summary.programme}</td>
                   <td><span className="result-table-status">{summary.status}</span></td>
@@ -339,21 +347,10 @@ export function CombinedResultsDashboard({
                   </td>
                   <td className="result-table-timing">{summary.callTiming}</td>
                   <td className="result-table-basis">{summary.callBasis}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="result-table-detail-button"
-                      onClick={() => setActiveDetail(summary.key)}
-                      aria-label={`View more details for ${summary.name}`}
-                    >
-                      <span>View more</span>
-                      <ChevronRight size={15} aria-hidden="true" />
-                    </button>
-                  </td>
                 </tr>
               ))}
               {filteredSummaries.length === 0 && (
-                <tr><td className="chance-filter-empty" colSpan={8}>No IIM currently falls in this seat-chance group.</td></tr>
+                <tr><td className="chance-filter-empty" colSpan={7}>No IIM currently falls in this seat-chance group.</td></tr>
               )}
             </tbody>
           </table>

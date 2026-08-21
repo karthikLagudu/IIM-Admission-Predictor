@@ -309,11 +309,36 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
           <section className="panel detail-panel historical-call-panel" aria-labelledby={`${result.institute.toLowerCase()}-historical-call-heading`}>
             <div className="section-heading"><div><h3 id={`${result.institute.toLowerCase()}-historical-call-heading`}>{directMerit ? "Previous selection records and this profile" : "Previous interview-call scores vs this profile"}</h3><p>{historicalReference.recordLabel}. Historical facts and test-model assumptions are kept separate.</p></div><SourceBadge source="OFFICIAL_POLICY" /></div>
             <div className={`historical-call-grid ${modelCallBenchmark == null ? "single" : ""}`}>
-              <article className="historical-call-card">
-                <div className="historical-call-card-heading"><div><span>{historicalReference.batch}</span><small>CAT {historicalReference.catYear}</small></div><a href={historicalReference.officialUrl ?? result.sourceUrl} target="_blank" rel="noreferrer">Official source</a></div>
-                <div className="historical-call-score-row"><div><span>{historicalReference.boundaryLabel}</span><strong className={historicalBenchmark == null ? "historical-call-not-published" : ""}>{historicalBenchmark == null ? "Not publicly published" : `${formatScore(historicalBenchmark, 2)} / ${result.preInterview.maxScore}`}</strong></div><div><span>{historicalReference.studentScoreLabel}</span><strong>{currentCallScore == null ? "—" : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong></div></div>
-                <div className={`historical-call-gap ${historicalGap == null ? "unavailable" : historicalGap >= 0 ? "above" : "below"}`}>{historicalGap == null ? "A numeric historical gap cannot be calculated because a comparable official previous-cycle boundary is not available." : `${historicalGap >= 0 ? "+" : ""}${historicalGap.toFixed(2)} · ${Math.abs(historicalGap).toFixed(2)} ${historicalGap >= 0 ? "above" : "below"} the published historical boundary`}</div>
-                <p className="historical-call-publication-note">{historicalReference.publicationNote}</p>
+              <article className="historical-call-card historical-records-card">
+                <div className="historical-current-comparison">
+                  <div><span>{historicalReference.studentScoreLabel}</span><strong>{currentCallScore == null ? "—" : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong></div>
+                  <div><span>{historicalReference.boundaryLabel}</span><strong className={historicalBenchmark == null ? "historical-call-not-published" : ""}>{historicalBenchmark == null ? "Not publicly published" : `${formatScore(historicalBenchmark, 2)} / ${result.preInterview.maxScore}`}</strong></div>
+                </div>
+                {historicalGap != null && <div className={`historical-call-gap ${historicalGap >= 0 ? "above" : "below"}`}>{`${historicalGap >= 0 ? "+" : ""}${historicalGap.toFixed(2)} · ${Math.abs(historicalGap).toFixed(2)} ${historicalGap >= 0 ? "above" : "below"} the published historical boundary`}</div>}
+                <div className="historical-cycle-list">
+                  {historicalReference.cycles.map((cycle) => (
+                    <section className={`historical-cycle-row ${cycle.noPriorCycle ? "no-prior-cycle" : ""}`} key={`${cycle.batch}-${cycle.catYear}`}>
+                      <div className="historical-cycle-heading">
+                        <div><strong>{cycle.batch}</strong><span>CAT {cycle.catYear} · {cycle.recordLabel}</span></div>
+                        {cycle.officialUrl && <a href={cycle.officialUrl} target="_blank" rel="noreferrer">Official source</a>}
+                      </div>
+                      {cycle.catScreen ? (
+                        <div className="historical-screening-data">
+                          <span>Published {cycle.catScreen.category} CAT screen</span>
+                          <strong>{cycle.catScreen.overall == null ? "Overall not specified" : `Overall ${cycle.catScreen.overall}`}</strong>
+                          <small>{[
+                            cycle.catScreen.varc == null ? null : `VARC ${cycle.catScreen.varc}`,
+                            cycle.catScreen.dilr == null ? null : `DILR ${cycle.catScreen.dilr}`,
+                            cycle.catScreen.qa == null ? null : `QA ${cycle.catScreen.qa}`,
+                          ].filter(Boolean).join(" · ") || "No sectional minimum published in this record"}</small>
+                        </div>
+                      ) : (
+                        <div className="historical-screening-data unavailable"><span>Comparable numeric record</span><strong>{cycle.noPriorCycle ? "No earlier cycle exists" : "Not configured"}</strong></div>
+                      )}
+                      <p>{cycle.note}</p>
+                    </section>
+                  ))}
+                </div>
               </article>
               {modelCallBenchmark != null && (
                 <article className="historical-call-card model-reference-card">
@@ -323,7 +348,7 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
                 </article>
               )}
             </div>
-            <div className="historical-call-note"><strong>What this comparison means:</strong> the institute-specific previous-cycle card reports only a compatible published boundary when one exists. It never converts CAT minimum percentiles into a composite-score cutoff. Any mock-model comparison is shown in a separate card and is not an official historical interview-call cutoff.</div>
+            <div className="historical-call-note"><strong>How to read this history:</strong> published CAT screens are minimum eligibility or first-screen percentiles, not proof that a candidate received an interview call. The actual call depends on the institute&apos;s composite ranking and applicant pool. Any mock-model comparison is shown in a separate card and is not an official historical cutoff.</div>
           </section>
         </div>
       )}

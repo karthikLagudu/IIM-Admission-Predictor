@@ -10,13 +10,24 @@ describe("institute historical references", () => {
     ]));
   });
 
-  it("provides institute-specific previous-cycle context without inventing a cutoff", () => {
+  it("provides multi-cycle context and keeps CAT screens separate from call boundaries", () => {
     const bangalore = instituteHistoricalReference("IIMB");
     const lucknow = instituteHistoricalReference("IIML");
 
-    expect(bangalore.batch).toBe("PGP 2025-27");
-    expect(bangalore.publicationNote).toContain("not one final minimum pre-PI composite score");
-    expect(lucknow.batch).toBe("MBA 2025-27");
-    expect(lucknow.publicationNote).toContain("does not publish one fixed previous-cycle composite-score boundary");
+    expect(bangalore.cycles).toHaveLength(3);
+    expect(bangalore.cycles[0].batch).toBe("PGP 2025-27");
+    expect(bangalore.cycles[0].catScreen).toEqual({ category: "General", overall: 85, varc: 80, dilr: 75, qa: 75 });
+    expect(lucknow.cycles).toHaveLength(3);
+    expect(lucknow.cycles[1].batch).toBe("MBA 2024-26");
+    expect(lucknow.cycles[1].catScreen?.overall).toBe(90);
+    expect(lucknow.boundaryLabel).toBe("Interview-call composite boundary");
+  });
+
+  it("marks IIM Guwahati as an inaugural cycle with no fabricated history", () => {
+    const guwahati = instituteHistoricalReference("IIMG");
+
+    expect(guwahati.cycles).toHaveLength(1);
+    expect(guwahati.cycles[0].noPriorCycle).toBe(true);
+    expect(guwahati.cycles[0].note).toContain("no earlier IIM Guwahati MBA admission cycles");
   });
 });

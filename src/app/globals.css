@@ -485,6 +485,31 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .historical-call-gap.below { background: #f9e2df; color: #9a3f35; }
 .historical-call-gap.unavailable { background: #e8eef2; color: #425867; }
 .historical-call-publication-note { margin: 10px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.historical-records-card { display: grid; gap: 14px; }
+.historical-current-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding-bottom: 14px; border-bottom: 1px solid #dfe9ee; }
+.historical-current-comparison div { display: grid; gap: 5px; }
+.historical-current-comparison span { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.historical-current-comparison strong { color: var(--navy-900); font-family: Georgia, serif; font-size: 18px; }
+.historical-cycle-list { display: grid; gap: 0; }
+.historical-cycle-row { display: grid; gap: 8px; padding: 14px 0; border-top: 1px solid #dfe9ee; }
+.historical-cycle-row:first-child { padding-top: 0; border-top: 0; }
+.historical-cycle-row:last-child { padding-bottom: 0; }
+.historical-cycle-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.historical-cycle-heading div { display: grid; gap: 3px; }
+.historical-cycle-heading strong { color: var(--navy-900); font-family: Georgia, serif; font-size: 16px; }
+.historical-cycle-heading span { color: var(--muted); font-size: 9px; }
+.historical-cycle-heading a { color: var(--blue-600); font-size: 9px; font-weight: 800; text-decoration: underline; text-underline-offset: 2px; }
+.historical-screening-data { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 3px 12px; padding: 10px 12px; border: 1px solid #c8dfd4; border-radius: 9px; background: #fff; }
+.historical-screening-data span { color: var(--green); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.historical-screening-data strong { color: var(--green); font-size: 14px; }
+.historical-screening-data small { grid-column: 1 / -1; color: var(--green); font-size: 9px; }
+.historical-screening-data.unavailable { border-color: #d9e3e9; }
+.historical-screening-data.unavailable span,
+.historical-screening-data.unavailable strong { color: var(--muted); }
+.historical-cycle-row > p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.historical-cycle-row.no-prior-cycle .historical-screening-data { border-color: #b9dfcf; }
+.historical-cycle-row.no-prior-cycle .historical-screening-data span,
+.historical-cycle-row.no-prior-cycle .historical-screening-data strong { color: var(--green); }
 .historical-call-note { padding: 12px 14px; border-left: 3px solid var(--blue-600); background: #eef6fa; color: #405563; font-size: 10px; line-height: 1.55; }
 .historical-call-note strong { color: var(--navy-900); }
 .sensitivity-intro { margin-bottom: 14px; padding: 14px 16px; background: #f6f9fa; color: var(--navy-800); }
@@ -667,6 +692,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .call-summary-grid { grid-template-columns: 1fr; }
   .audit-grid { grid-template-columns: 1fr; }
   .historical-call-grid { grid-template-columns: 1fr; }
+  .historical-current-comparison { grid-template-columns: 1fr; }
   .metric-grid { grid-template-columns: repeat(2, 1fr); }
   .two-column-panels { grid-template-columns: 1fr; }
   .pipeline { grid-template-columns: repeat(2, 1fr); }
@@ -693,6 +719,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .pi-simulator-heading button { width: 100%; justify-content: center; }
   .sensitivity-card-heading { flex-direction: column; }
   .sensitivity-card-heading > strong { text-align: left; }
+  .historical-cycle-heading { flex-direction: column; }
+  .historical-screening-data { grid-template-columns: 1fr; }
+  .historical-screening-data small { grid-column: auto; }
   .sensitivity-card-metrics { grid-template-columns: 1fr; }
   .sensitivity-card-metrics > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .result-call, .result-score, .pipeline-panel, .insight-panel, .detail-panel, .final-details, .scenario-panel { padding: 18px; }

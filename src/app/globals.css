@@ -222,6 +222,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .call-outlook-grid article strong { display: block; margin-top: 5px; color: var(--navy-900); font-size: 13px; line-height: 1.4; }
 .call-outlook-grid article p { margin: 7px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
 .pi-simulator { padding: 21px; }
+.pi-simulator-disclosure { display: flex; justify-content: center; }
+.pi-simulator-disclosure .feedback-toggle { width: min(100%, 520px); }
 .pi-simulator-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .pi-simulator-heading > div > span { color: var(--blue-600); font-size: 8px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
 .pi-simulator-heading h3 { margin: 4px 0 4px; color: var(--navy-900); font-family: Georgia, serif; font-size: 21px; font-weight: 600; }

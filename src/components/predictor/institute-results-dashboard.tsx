@@ -7,6 +7,7 @@ import type { InstitutePredictionResult, InstituteScoreComponent } from "@/types
 import { SourceBadge } from "@/components/ui/source-badge";
 import { formatProbability, formatScore, humanize } from "@/lib/utils";
 import { institutePredictionBand } from "@/lib/institutes/prediction";
+import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
 import { PiScoreSimulator } from "./pi-score-simulator";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
@@ -104,11 +105,11 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
   const modelCallBenchmark = result.call.benchmarkType === "MODEL" ? result.call.benchmarkValue : null;
   const modelCallGap = currentCallScore != null && modelCallBenchmark != null ? currentCallScore - modelCallBenchmark : null;
   const probability = result.prediction.probability;
-  const historicalReference = result.institute === "IIMB"
-    ? { batch: "PGP 2025-27", catYear: 2024, sourceUrl: "https://www.iimb.ac.in/sites/default/files/inline-files/PGP-2025-admissions-process_0.pdf", subtitle: "IIMB does not publish the previous minimum pre-PI composite score.", studentScoreLabel: "Student's current pre-PI estimate" }
-    : result.institute === "IIMC"
-      ? { batch: "MBA 2024-26", catYear: 2023, sourceUrl: "https://application.iimcal.ac.in/check-results/interview-shortlist--mba-202426-batch", subtitle: "IIMC does not publish the previous minimum Stage-II composite score.", studentScoreLabel: "Student's current CS" }
-      : { batch: "Previous cycle", catYear: 2024, sourceUrl: result.sourceUrl, subtitle: "No fixed previous-cycle composite boundary is configured for this institute.", studentScoreLabel: "Student's current score" };
+  const historicalReference = instituteHistoricalReference(result.institute);
+  const historicalBenchmark = result.call.benchmarkType === "HISTORICAL" || result.call.benchmarkType === "OFFICIAL_RESULT"
+    ? result.call.benchmarkValue
+    : null;
+  const historicalGap = currentCallScore != null && historicalBenchmark != null ? currentCallScore - historicalBenchmark : null;
   const piComponent = result.final.components.find((component) => component.key === "pi" || /personal interview/i.test(component.label));
   const nonPiComponents = result.final.components.filter((component) => component !== piComponent);
   const nonPiTotal = nonPiComponents.length > 0 && nonPiComponents.every((component) => component.score != null)
@@ -306,12 +307,13 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
           </section>
 
           <section className="panel detail-panel historical-call-panel" aria-labelledby={`${result.institute.toLowerCase()}-historical-call-heading`}>
-            <div className="section-heading"><div><h3 id={`${result.institute.toLowerCase()}-historical-call-heading`}>{directMerit ? "Previous selection records and this profile" : "Previous interview-call scores vs this profile"}</h3><p>{historicalReference.subtitle} The active mock benchmark is shown separately.</p></div><SourceBadge source="MODEL_ASSUMPTION" /></div>
+            <div className="section-heading"><div><h3 id={`${result.institute.toLowerCase()}-historical-call-heading`}>{directMerit ? "Previous selection records and this profile" : "Previous interview-call scores vs this profile"}</h3><p>{historicalReference.recordLabel}. Historical facts and test-model assumptions are kept separate.</p></div><SourceBadge source="OFFICIAL_POLICY" /></div>
             <div className={`historical-call-grid ${modelCallBenchmark == null ? "single" : ""}`}>
               <article className="historical-call-card">
-                <div className="historical-call-card-heading"><div><span>{historicalReference.batch}</span><small>CAT {historicalReference.catYear}</small></div><a href={historicalReference.sourceUrl} target="_blank" rel="noreferrer">Official process</a></div>
-                <div className="historical-call-score-row"><div><span>Previous minimum CS</span><strong className="historical-call-not-published">Not published</strong></div><div><span>{historicalReference.studentScoreLabel}</span><strong>{currentCallScore == null ? "—" : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong></div></div>
-                <div className="historical-call-gap unavailable">An official historical gap cannot be calculated because the previous minimum score was not published.</div>
+                <div className="historical-call-card-heading"><div><span>{historicalReference.batch}</span><small>CAT {historicalReference.catYear}</small></div><a href={historicalReference.officialUrl ?? result.sourceUrl} target="_blank" rel="noreferrer">Official source</a></div>
+                <div className="historical-call-score-row"><div><span>{historicalReference.boundaryLabel}</span><strong className={historicalBenchmark == null ? "historical-call-not-published" : ""}>{historicalBenchmark == null ? "Not publicly published" : `${formatScore(historicalBenchmark, 2)} / ${result.preInterview.maxScore}`}</strong></div><div><span>{historicalReference.studentScoreLabel}</span><strong>{currentCallScore == null ? "—" : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong></div></div>
+                <div className={`historical-call-gap ${historicalGap == null ? "unavailable" : historicalGap >= 0 ? "above" : "below"}`}>{historicalGap == null ? "A numeric historical gap cannot be calculated because a comparable official previous-cycle boundary is not available." : `${historicalGap >= 0 ? "+" : ""}${historicalGap.toFixed(2)} · ${Math.abs(historicalGap).toFixed(2)} ${historicalGap >= 0 ? "above" : "below"} the published historical boundary`}</div>
+                <p className="historical-call-publication-note">{historicalReference.publicationNote}</p>
               </article>
               {modelCallBenchmark != null && (
                 <article className="historical-call-card model-reference-card">
@@ -321,7 +323,7 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
                 </article>
               )}
             </div>
-            <div className="historical-call-note"><strong>What this comparison means:</strong> the previous-cycle card reports the publication status honestly; it does not convert CAT minimum percentiles into a composite-score cutoff. The numeric gap uses the active mock benchmark only and is neither an official nor a historical interview-call cutoff.</div>
+            <div className="historical-call-note"><strong>What this comparison means:</strong> the institute-specific previous-cycle card reports only a compatible published boundary when one exists. It never converts CAT minimum percentiles into a composite-score cutoff. Any mock-model comparison is shown in a separate card and is not an official historical interview-call cutoff.</div>
           </section>
         </div>
       )}

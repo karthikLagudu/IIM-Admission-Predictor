@@ -484,6 +484,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .historical-call-gap.above { background: #def1e7; color: #246548; }
 .historical-call-gap.below { background: #f9e2df; color: #9a3f35; }
 .historical-call-gap.unavailable { background: #e8eef2; color: #425867; }
+.historical-call-publication-note { margin: 10px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .historical-call-note { padding: 12px 14px; border-left: 3px solid var(--blue-600); background: #eef6fa; color: #405563; font-size: 10px; line-height: 1.55; }
 .historical-call-note strong { color: var(--navy-900); }
 .sensitivity-intro { margin-bottom: 14px; padding: 14px 16px; background: #f6f9fa; color: var(--navy-800); }

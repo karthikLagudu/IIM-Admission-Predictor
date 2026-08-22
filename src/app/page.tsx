@@ -8,7 +8,11 @@ export default function HomePage() {
         <div className="shell cat-product-hero-grid">
           <div className="cat-product-copy">
             <p className="cat-product-kicker">CAT 2025 · IIM admissions intelligence</p>
-            <h1>Turn your CAT profile into a <span>clear IIM strategy.</span></h1>
+            <h1>
+              Turn your <span className="cat-gradient-word">CAT</span> profile into a{" "}
+              <span className="cat-clear-word">clear</span>{" "}
+              <span className="cat-gradient-word">IIM strategy.</span>
+            </h1>
             <p className="cat-product-lead">Enter one academic and CAT profile to understand interview-call routes, shortlist scores and modelled seat chances across all 21 IIMs.</p>
             <div className="cat-product-benefits" aria-label="Predictor benefits">
               <span><i>01</i>Official hard-gate checks</span>

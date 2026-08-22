@@ -1,9 +1,8 @@
-import { PredictorWorkbench } from "@/components/predictor/predictor-workbench";
 import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <>
+    <div className="cat-landing-page">
       <section className="cat-product-hero">
         <div className="shell cat-product-hero-grid">
           <div className="cat-product-copy">
@@ -20,7 +19,7 @@ export default function HomePage() {
               <span><i>03</i>Historical comparisons</span>
             </div>
             <div className="cat-product-actions">
-              <a className="cat-primary-cta" href="#predictor">Start your analysis</a>
+              <Link className="cat-primary-cta" href="/predictor">Start your analysis</Link>
               <Link className="cat-secondary-cta" href="/methodology">Explore methodology</Link>
             </div>
           </div>
@@ -50,16 +49,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="workspace-section application-only" id="predictor">
-        <div className="shell">
-          <div className="cat-section-intro">
-            <p>CAT admission analysis</p>
-            <h2>Build your IIM result profile</h2>
-            <span>Complete the details once. The predictor applies each institute&apos;s own route separately.</span>
-          </div>
-          <PredictorWorkbench />
-        </div>
-      </section>
-    </>
+    </div>
   );
 }

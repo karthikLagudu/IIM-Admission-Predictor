@@ -9,11 +9,10 @@ export function SiteHeader() {
         <Link className="site-wordmark" href="/" aria-label="CAT IIM Predictor home">
           <Image src={thinkplusLogo} alt="Thinkplus" priority />
         </Link>
-        <nav aria-label="Primary navigation">
-          <Link href="/">CAT Predictor</Link>
-          <Link href="/methodology">Methodology</Link>
-        </nav>
-        <Link className="header-cta" href="/predictor">Start analysis</Link>
+        <div className="header-actions">
+          <Link className="header-cta" href="/predictor">Start analysis</Link>
+          <Link className="header-methodology" href="/methodology">Methodology</Link>
+        </div>
       </div>
     </header>
   );

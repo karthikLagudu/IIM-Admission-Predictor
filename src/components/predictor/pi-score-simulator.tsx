@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { ArrowDown, RotateCcw } from "lucide-react";
 import { formatProbability, formatScore, humanize } from "@/lib/utils";
 
 export interface PiSimulationResult {
@@ -43,6 +43,8 @@ export function PiScoreSimulator({
     setPiPercent(Math.min(100, Math.max(0, value)));
   };
   const scenario = simulate(piPercent);
+  const studentPosition = Math.min(100, Math.max(0, initialPercent));
+  const studentMarkerClass = studentPosition <= 8 ? "edge-start" : studentPosition >= 92 ? "edge-end" : "";
 
   return (
     <section className="panel pi-simulator" aria-labelledby={`${sliderId}-heading`}>
@@ -64,8 +66,13 @@ export function PiScoreSimulator({
           <div className="pi-simulator-controls">
             <div className="pi-slider-field">
               <label htmlFor={sliderId}>PI performance</label>
-              <input id={sliderId} type="range" min="0" max="100" step="1" value={piPercent} onChange={(event) => updatePi(Number(event.target.value))} />
-              <div><span>0</span><strong>{piPercent.toFixed(0)}%</strong><span>100</span></div>
+              <div className="pi-range-wrap">
+                <div className={`pi-student-marker ${studentMarkerClass}`} style={{ left: `${studentPosition}%` }} aria-label={`Your current ${instituteName} PI profile is ${studentPosition.toFixed(0)} percent`}>
+                  <span>Your current profile</span><ArrowDown size={15} aria-hidden="true" />
+                </div>
+                <input id={sliderId} type="range" min="0" max="100" step="1" value={piPercent} onChange={(event) => updatePi(Number(event.target.value))} />
+              </div>
+              <div className="pi-slider-scale"><span>0</span><strong>{piPercent.toFixed(0)}%</strong><span>100</span></div>
             </div>
             <div className="pi-number-field">
               <label htmlFor={inputId}>Type PI score (%)</label>

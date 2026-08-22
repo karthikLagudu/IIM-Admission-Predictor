@@ -162,6 +162,26 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .all-history-table tbody td > strong:first-child { display: block; color: var(--navy-900); font-size: 12px; }
 .all-history-table tbody td small { display: block; max-width: 290px; margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.4; }
 .all-history-table a { color: var(--blue-600); font-weight: 800; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+.all-history-toggle { display: flex; width: 100%; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; padding: 12px 16px; border: 1px solid #bfd3df; border-radius: 10px; background: #fff; color: var(--blue-600); font-size: 11px; font-weight: 850; cursor: pointer; }
+.all-history-toggle:hover { background: #f7fafc; }
+.all-history-toggle:focus-visible { outline: 3px solid #acd4ea; outline-offset: 2px; }
+.history-years-row > td { padding: 0 15px 16px !important; background: #fbfcfd; }
+.history-years-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 2px; }
+.history-year-card { display: grid; align-content: start; gap: 9px; min-width: 0; padding: 13px; background: #fff; }
+.history-year-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.history-year-heading > div { display: grid; gap: 2px; }
+.history-year-heading strong { color: var(--navy-900); font-family: Georgia, serif; font-size: 14px; }
+.history-year-heading span { color: var(--muted); font-size: 8px; font-weight: 750; }
+.history-year-heading a { font-size: 8px; }
+.history-year-card dl { display: grid; gap: 8px; margin: 0; }
+.history-year-card dl > div { display: grid; gap: 3px; }
+.history-year-card dt { color: var(--muted); font-size: 7px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
+.history-year-card dd { margin: 0; color: var(--navy-900); font-size: 9px; font-weight: 700; line-height: 1.45; }
+.history-year-result { font-size: 9px; line-height: 1.4; }
+.history-year-result.above { color: var(--green); }
+.history-year-result.below { color: var(--red); }
+.history-year-result.unavailable { color: var(--muted); }
+.history-year-card > p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.45; }
 .history-student-score { color: var(--navy-900) !important; font-size: 12px !important; font-weight: 800; white-space: nowrap; }
 .history-above { color: var(--green) !important; }
 .history-below { color: var(--red) !important; }
@@ -692,6 +712,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .call-summary-grid { grid-template-columns: 1fr; }
   .audit-grid { grid-template-columns: 1fr; }
   .historical-call-grid { grid-template-columns: 1fr; }
+  .history-years-grid { grid-template-columns: 1fr; }
   .historical-current-comparison { grid-template-columns: 1fr; }
   .metric-grid { grid-template-columns: repeat(2, 1fr); }
   .two-column-panels { grid-template-columns: 1fr; }

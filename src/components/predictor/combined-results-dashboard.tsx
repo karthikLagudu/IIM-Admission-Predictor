@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, CalendarClock, ChevronRight, ListChecks, Sparkles } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronDown, ChevronRight, ChevronUp, ListChecks, Sparkles } from "lucide-react";
 import type { CandidateInput, IimaPolicyConfig, IimaPredictionResult } from "@/types/iima";
 import type { InstituteKey, InstitutePredictionResult } from "@/types/institutes";
 import { formatProbability, formatScore } from "@/lib/utils";
@@ -11,6 +11,7 @@ import {
   iimaHistoricalCallCategoryLabel,
   iimaHistoricalCallThreshold,
 } from "@/lib/iima/historical-call-records";
+import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
 import { ResultsDashboard } from "./results-dashboard";
 import { InstituteResultsDashboard } from "./institute-results-dashboard";
 
@@ -48,6 +49,18 @@ interface HistoricalComparisonSummary {
   gapPrecision: number;
   sourceUrl: string;
   sourceLabel: string;
+  years: HistoricalYearComparison[];
+}
+
+interface HistoricalYearComparison {
+  batch: string;
+  catYear: number;
+  reference: string;
+  studentPerformance: string;
+  comparison: string;
+  tone: "above" | "below" | "unavailable";
+  note: string;
+  sourceUrl?: string;
 }
 
 function seatChanceBand(probability: number | null | undefined): ChanceBand {
@@ -108,6 +121,7 @@ export function CombinedResultsDashboard({
 }) {
   const [activeDetail, setActiveDetail] = useState<InstituteKey | null>(null);
   const [chanceFilter, setChanceFilter] = useState<"ALL" | ChanceBand>("ALL");
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
   const iimaChance = results.IIMA.finalSelection?.seatProbability ?? 0;
   const iimaBasis = iimaCallBasis(results.IIMA);
@@ -177,11 +191,26 @@ export function CombinedResultsDashboard({
       gapPrecision: 6,
       sourceUrl: latestIimaHistory.sourceUrl,
       sourceLabel: "Official record",
+      years: IIMA_HISTORICAL_STAGE2_CALL_RECORDS.map((record) => {
+        const threshold = iimaHistoricalCallThreshold(record, candidate);
+        const gap = results.IIMA.compositeScore == null ? null : results.IIMA.compositeScore - threshold;
+        return {
+          batch: `PGP ${record.batch}`,
+          catYear: Number(record.catYear),
+          reference: `Stage-2 minimum CS ${threshold.toFixed(6)}`,
+          studentPerformance: results.IIMA.compositeScore == null ? "Current CS not calculated" : `Current CS ${formatScore(results.IIMA.compositeScore, 6)}`,
+          comparison: gap == null ? "Comparison unavailable" : `${gap >= 0 ? "+" : ""}${gap.toFixed(6)} ${gap >= 0 ? "above" : "below"}`,
+          tone: gap == null ? "unavailable" : gap >= 0 ? "above" : "below",
+          note: `Official ${iimaHistoricalCallCategoryLabel(candidate)} Stage-2 interview-call record.`,
+          sourceUrl: record.sourceUrl,
+        };
+      }),
     },
     ...results.institutes.map((result): HistoricalComparisonSummary => {
       const hasHistoricalNumber = (result.call.benchmarkType === "HISTORICAL" || result.call.benchmarkType === "OFFICIAL_RESULT")
         && result.call.benchmarkValue != null;
       const studentScore = result.preInterview.score;
+      const historicalReference = instituteHistoricalReference(result.institute);
       return {
         key: result.institute,
         name: result.instituteName,
@@ -194,9 +223,45 @@ export function CombinedResultsDashboard({
         gapPrecision: 2,
         sourceUrl: result.sourceUrl,
         sourceLabel: hasHistoricalNumber ? "Official record" : "Official process",
+        years: historicalReference.cycles.map((cycle) => {
+          const screen = cycle.catScreen;
+          const checks = screen == null ? [] : [
+            { label: "Overall", student: candidate.catOverallPercentile, cutoff: screen.overall },
+            { label: "VARC", student: candidate.catVarcPercentile, cutoff: screen.varc },
+            { label: "DILR", student: candidate.catDilrPercentile, cutoff: screen.dilr },
+            { label: "QA", student: candidate.catQaPercentile, cutoff: screen.qa },
+          ].filter((item): item is { label: string; student: number; cutoff: number } => item.cutoff != null);
+          const weakest = checks.length === 0
+            ? null
+            : checks.reduce((lowest, item) => item.student - item.cutoff < lowest.student - lowest.cutoff ? item : lowest);
+          const weakestGap = weakest == null ? null : weakest.student - weakest.cutoff;
+          const reference = screen == null
+            ? cycle.noPriorCycle ? "No earlier admission cycle" : "No compatible numeric screen configured"
+            : [
+              screen.overall == null ? null : `Overall ${screen.overall}`,
+              screen.varc == null ? null : `VARC ${screen.varc}`,
+              screen.dilr == null ? null : `DILR ${screen.dilr}`,
+              screen.qa == null ? null : `QA ${screen.qa}`,
+            ].filter(Boolean).join(" · ");
+          return {
+            batch: cycle.batch,
+            catYear: cycle.catYear,
+            reference,
+            studentPerformance: `Overall ${candidate.catOverallPercentile.toFixed(2)} · VARC ${candidate.catVarcPercentile.toFixed(2)} · DILR ${candidate.catDilrPercentile.toFixed(2)} · QA ${candidate.catQaPercentile.toFixed(2)}`,
+            comparison: weakestGap == null
+              ? "Official numeric comparison unavailable"
+              : weakestGap >= 0
+                ? `Clears every published screen · closest margin +${weakestGap.toFixed(2)} in ${weakest?.label}`
+                : `Below the ${weakest?.label} screen by ${Math.abs(weakestGap).toFixed(2)} percentile points`,
+            tone: weakestGap == null ? "unavailable" : weakestGap >= 0 ? "above" : "below",
+            note: screen == null ? cycle.note : `${cycle.note} General-category screening reference; it is not the actual interview-call composite cutoff.`,
+            sourceUrl: cycle.officialUrl,
+          };
+        }),
       };
     }),
   ];
+  const visibleHistoricalComparisons = showAllHistory ? historicalComparisons : historicalComparisons.slice(0, 5);
 
   useEffect(() => {
     if (!activeDetail) return;
@@ -366,7 +431,7 @@ export function CombinedResultsDashboard({
             <p>The student&apos;s current shortlist score is compared only where a compatible published previous-cycle score is available.</p>
           </div>
         </div>
-        <div className="all-history-table-wrap">
+        <div className="all-history-table-wrap" id="all-history-details">
           <table className="all-history-table">
             <thead>
               <tr>
@@ -378,32 +443,63 @@ export function CombinedResultsDashboard({
               </tr>
             </thead>
             <tbody>
-              {historicalComparisons.map((comparison) => (
-                <tr key={comparison.key}>
-                  <th scope="row"><span>{comparison.key}</span><strong>{comparison.name}</strong></th>
-                  <td>
-                    <strong className={comparison.reference == null ? "history-unavailable" : ""}>{comparison.reference ?? "Not publicly published"}</strong>
-                    <small>{comparison.referenceDetail}</small>
-                  </td>
-                  <td className="history-student-score">{comparison.studentScore}</td>
-                  <td>
-                    {comparison.gap == null ? (
-                      <span className="history-unavailable">Official comparison unavailable</span>
-                    ) : (
-                      <strong className={comparison.gap >= 0 ? "history-above" : "history-below"}>
-                        {comparison.gap >= 0 ? "+" : ""}{comparison.gap.toFixed(comparison.gapPrecision)} · {Math.abs(comparison.gap).toFixed(comparison.gapPrecision)} {comparison.gap >= 0 ? "above" : "below"}
-                      </strong>
-                    )}
-                  </td>
-                  <td><a href={comparison.sourceUrl} target="_blank" rel="noreferrer">{comparison.sourceLabel}</a></td>
-                </tr>
+              {visibleHistoricalComparisons.map((comparison) => (
+                <HistoricalComparisonRows comparison={comparison} expanded={showAllHistory} key={comparison.key} />
               ))}
             </tbody>
           </table>
         </div>
+        <button type="button" className="all-history-toggle" aria-expanded={showAllHistory} aria-controls="all-history-details" onClick={() => setShowAllHistory((current) => !current)}>
+          <span>{showAllHistory ? "Show less historical data" : `View more historical comparisons (${historicalComparisons.length - visibleHistoricalComparisons.length} more IIMs)`}</span>
+          {showAllHistory ? <ChevronUp size={17} aria-hidden="true" /> : <ChevronDown size={17} aria-hidden="true" />}
+        </button>
         <p className="all-history-note"><strong>Important:</strong> “Not publicly published” is not a zero and does not indicate rejection. Mock planning benchmarks are excluded from this historical table. Scores from different IIMs use different formulas and are shown institute-by-institute, not as a cross-IIM ranking.</p>
       </section>
 
     </div>
+  );
+}
+
+function HistoricalComparisonRows({ comparison, expanded }: { comparison: HistoricalComparisonSummary; expanded: boolean }) {
+  return (
+    <>
+      <tr>
+        <th scope="row"><span>{comparison.key}</span><strong>{comparison.name}</strong></th>
+        <td>
+          <strong className={comparison.reference == null ? "history-unavailable" : ""}>{comparison.reference ?? "Not publicly published"}</strong>
+          <small>{comparison.referenceDetail}</small>
+        </td>
+        <td className="history-student-score">{comparison.studentScore}</td>
+        <td>
+          {comparison.gap == null ? (
+            <span className="history-unavailable">Official comparison unavailable</span>
+          ) : (
+            <strong className={comparison.gap >= 0 ? "history-above" : "history-below"}>
+              {comparison.gap >= 0 ? "+" : ""}{comparison.gap.toFixed(comparison.gapPrecision)} · {Math.abs(comparison.gap).toFixed(comparison.gapPrecision)} {comparison.gap >= 0 ? "above" : "below"}
+            </strong>
+          )}
+        </td>
+        <td><a href={comparison.sourceUrl} target="_blank" rel="noreferrer">{comparison.sourceLabel}</a></td>
+      </tr>
+      {expanded && (
+        <tr className="history-years-row">
+          <td colSpan={5}>
+            <div className="history-years-grid" aria-label={`${comparison.name} previous-year performance comparisons`}>
+              {comparison.years.map((year) => (
+                <article className="history-year-card" key={`${comparison.key}-${year.batch}-${year.catYear}`}>
+                  <div className="history-year-heading"><div><strong>{year.batch}</strong><span>CAT {year.catYear}</span></div>{year.sourceUrl && <a href={year.sourceUrl} target="_blank" rel="noreferrer">Source</a>}</div>
+                  <dl>
+                    <div><dt>Historical reference</dt><dd>{year.reference}</dd></div>
+                    <div><dt>This student</dt><dd>{year.studentPerformance}</dd></div>
+                  </dl>
+                  <strong className={`history-year-result ${year.tone}`}>{year.comparison}</strong>
+                  <p>{year.note}</p>
+                </article>
+              ))}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   );
 }

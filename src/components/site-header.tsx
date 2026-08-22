@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import thinkplusLogo from "../../public/thinkplus-logo.png";
+import thinkplusLogo from "../../public/thinkplus-logo-clean.png";
 
 export function SiteHeader() {
   return (

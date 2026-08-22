@@ -1,13 +1,13 @@
+import Image from "next/image";
 import Link from "next/link";
+import thinkplusLogo from "../../public/thinkplus-logo.png";
 
 export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell site-header-inner">
         <Link className="site-wordmark" href="/" aria-label="CAT IIM Predictor home">
-          <span>CAT</span>
-          <strong>IIM Predictor</strong>
-          <small>2025 · 21 institutes</small>
+          <Image src={thinkplusLogo} alt="Thinkplus" priority />
         </Link>
         <nav aria-label="Primary navigation">
           <Link href="/">Predictor</Link>

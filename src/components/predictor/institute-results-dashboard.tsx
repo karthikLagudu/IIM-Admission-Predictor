@@ -80,10 +80,8 @@ function TextInsightList({ title, emptyMessage, items, tone }: { title: string; 
 
 export function InstituteResultsDashboard({ candidate, result }: { candidate: CandidateInput; result: InstitutePredictionResult }) {
   const [showMore, setShowMore] = useState(false);
-  const [showPiSimulator, setShowPiSimulator] = useState(false);
   useEffect(() => {
     setShowMore(false);
-    setShowPiSimulator(false);
   }, [result]);
 
   const callPredicted = result.call.status === "PREDICTED_CALL";
@@ -351,43 +349,31 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
           </section>
 
           {result.selectionStages.interview && (
-            <>
-              <div className="pi-simulator-disclosure">
-                <button type="button" className="feedback-toggle" aria-expanded={showPiSimulator} aria-controls="institute-pi-simulator" onClick={() => setShowPiSimulator((current) => !current)}>
-                  <span>{showPiSimulator ? "Hide PI simulator" : "View PI simulator"}</span>
-                  {showPiSimulator ? <ChevronUp size={17} aria-hidden="true" /> : <ChevronDown size={17} aria-hidden="true" />}
-                </button>
-              </div>
-              {showPiSimulator && (
-                <div id="institute-pi-simulator">
-                  <PiScoreSimulator
-                    instituteName={result.instituteName}
-                    simulatorKey={`${result.policyVersion}-${result.final.score ?? "none"}`}
-                    initialPercent={initialPiPercent}
-                    piMaxScore={piComponent?.maxScore ?? 0}
-                    finalMaxScore={result.final.maxScore}
-                    benchmarkLabel={result.prediction.benchmarkValue == null ? "No final-selection benchmark is configured, so a seat percentage cannot be estimated." : `Uses the active ${humanize(result.prediction.benchmarkType).toLowerCase()} final benchmark of ${formatScore(result.prediction.benchmarkValue, 2)}.`}
-                    unavailableReason={!piComponent ? "The published/configured final formula does not provide a numeric PI weight that can be varied safely." : nonPiTotal == null ? "One or more non-PI final-score components are still unavailable." : undefined}
-                    simulate={(piPercent) => {
-                      const piPoints = piComponent == null ? 0 : piPercent / 100 * piComponent.maxScore;
-                      const finalScore = piComponent == null || nonPiTotal == null ? null : nonPiTotal + piPoints;
-                      const callGate = result.call.status === "PREDICTED_CALL";
-                      const seatProbability = finalScore == null || result.prediction.benchmarkValue == null
-                        ? null
-                        : callGate
-                          ? 1 / (1 + Math.exp(-0.35 * (finalScore - result.prediction.benchmarkValue)))
-                          : 0;
-                      return {
-                        piPoints,
-                        finalScore,
-                        seatProbability,
-                        band: seatProbability == null ? null : institutePredictionBand(seatProbability),
-                      };
-                    }}
-                  />
-                </div>
-              )}
-            </>
+            <PiScoreSimulator
+              instituteName={result.instituteName}
+              simulatorKey={`${result.policyVersion}-${result.final.score ?? "none"}`}
+              initialPercent={initialPiPercent}
+              piMaxScore={piComponent?.maxScore ?? 0}
+              finalMaxScore={result.final.maxScore}
+              benchmarkLabel={result.prediction.benchmarkValue == null ? "No final-selection benchmark is configured, so a seat percentage cannot be estimated." : `Uses the active ${humanize(result.prediction.benchmarkType).toLowerCase()} final benchmark of ${formatScore(result.prediction.benchmarkValue, 2)}.`}
+              unavailableReason={!piComponent ? "The published/configured final formula does not provide a numeric PI weight that can be varied safely." : nonPiTotal == null ? "One or more non-PI final-score components are still unavailable." : undefined}
+              simulate={(piPercent) => {
+                const piPoints = piComponent == null ? 0 : piPercent / 100 * piComponent.maxScore;
+                const finalScore = piComponent == null || nonPiTotal == null ? null : nonPiTotal + piPoints;
+                const callGate = result.call.status === "PREDICTED_CALL";
+                const seatProbability = finalScore == null || result.prediction.benchmarkValue == null
+                  ? null
+                  : callGate
+                    ? 1 / (1 + Math.exp(-0.35 * (finalScore - result.prediction.benchmarkValue)))
+                    : 0;
+                return {
+                  piPoints,
+                  finalScore,
+                  seatProbability,
+                  band: seatProbability == null ? null : institutePredictionBand(seatProbability),
+                };
+              }}
+            />
           )}
         </div>
       )}

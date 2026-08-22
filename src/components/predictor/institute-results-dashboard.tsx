@@ -6,7 +6,9 @@ import type { CandidateInput } from "@/types/iima";
 import type { InstitutePredictionResult, InstituteScoreComponent } from "@/types/institutes";
 import { SourceBadge } from "@/components/ui/source-badge";
 import { formatProbability, formatScore, humanize } from "@/lib/utils";
+import { institutePredictionBand } from "@/lib/institutes/prediction";
 import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
+import { PiScoreSimulator } from "./pi-score-simulator";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
 
@@ -78,8 +80,10 @@ function TextInsightList({ title, emptyMessage, items, tone }: { title: string; 
 
 export function InstituteResultsDashboard({ candidate, result }: { candidate: CandidateInput; result: InstitutePredictionResult }) {
   const [showMore, setShowMore] = useState(false);
+  const [showPiSimulator, setShowPiSimulator] = useState(false);
   useEffect(() => {
     setShowMore(false);
+    setShowPiSimulator(false);
   }, [result]);
 
   const callPredicted = result.call.status === "PREDICTED_CALL";
@@ -106,6 +110,12 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
     ? result.call.benchmarkValue
     : null;
   const historicalGap = currentCallScore != null && historicalBenchmark != null ? currentCallScore - historicalBenchmark : null;
+  const piComponent = result.final.components.find((component) => component.key === "pi" || /personal interview/i.test(component.label));
+  const nonPiComponents = result.final.components.filter((component) => component !== piComponent);
+  const nonPiTotal = nonPiComponents.length > 0 && nonPiComponents.every((component) => component.score != null)
+    ? nonPiComponents.reduce((sum, component) => sum + (component.score ?? 0), 0)
+    : null;
+  const initialPiPercent = Math.round((candidate.normalizedPi ?? (piComponent?.score != null && piComponent.maxScore > 0 ? piComponent.score / piComponent.maxScore : 0.75)) * 100);
   const cutoffText = (value: number | null) => value == null ? "Not applicable" : value.toFixed(2);
 
   const pipeline: Array<{ label: string; value: string; state: StepState }> = [
@@ -339,6 +349,46 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
             </div>
             <div className="historical-call-note"><strong>How to read this history:</strong> published CAT screens are minimum eligibility or first-screen percentiles, not proof that a candidate received an interview call. The actual call depends on the institute&apos;s composite ranking and applicant pool. Any mock-model comparison is shown in a separate card and is not an official historical cutoff.</div>
           </section>
+
+          {result.selectionStages.interview && (
+            <>
+              <div className="pi-simulator-disclosure">
+                <button type="button" className="feedback-toggle" aria-expanded={showPiSimulator} aria-controls="institute-pi-simulator" onClick={() => setShowPiSimulator((current) => !current)}>
+                  <span>{showPiSimulator ? "Hide PI simulator" : "View PI simulator"}</span>
+                  {showPiSimulator ? <ChevronUp size={17} aria-hidden="true" /> : <ChevronDown size={17} aria-hidden="true" />}
+                </button>
+              </div>
+              {showPiSimulator && (
+                <div id="institute-pi-simulator">
+                  <PiScoreSimulator
+                    instituteName={result.instituteName}
+                    simulatorKey={`${result.policyVersion}-${result.final.score ?? "none"}`}
+                    initialPercent={initialPiPercent}
+                    piMaxScore={piComponent?.maxScore ?? 0}
+                    finalMaxScore={result.final.maxScore}
+                    benchmarkLabel={result.prediction.benchmarkValue == null ? "No final-selection benchmark is configured, so a seat percentage cannot be estimated." : `Uses the active ${humanize(result.prediction.benchmarkType).toLowerCase()} final benchmark of ${formatScore(result.prediction.benchmarkValue, 2)}.`}
+                    unavailableReason={!piComponent ? "The published/configured final formula does not provide a numeric PI weight that can be varied safely." : nonPiTotal == null ? "One or more non-PI final-score components are still unavailable." : undefined}
+                    simulate={(piPercent) => {
+                      const piPoints = piComponent == null ? 0 : piPercent / 100 * piComponent.maxScore;
+                      const finalScore = piComponent == null || nonPiTotal == null ? null : nonPiTotal + piPoints;
+                      const callGate = result.call.status === "PREDICTED_CALL";
+                      const seatProbability = finalScore == null || result.prediction.benchmarkValue == null
+                        ? null
+                        : callGate
+                          ? 1 / (1 + Math.exp(-0.35 * (finalScore - result.prediction.benchmarkValue)))
+                          : 0;
+                      return {
+                        piPoints,
+                        finalScore,
+                        seatProbability,
+                        band: seatProbability == null ? null : institutePredictionBand(seatProbability),
+                      };
+                    }}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 

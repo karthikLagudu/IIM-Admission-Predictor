@@ -10,6 +10,7 @@ import {
   iimaHistoricalCallThreshold,
 } from "@/lib/iima/historical-call-records";
 import { formatProbability, formatScore, humanize } from "@/lib/utils";
+import { PiScoreSimulator } from "./pi-score-simulator";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
 
@@ -151,6 +152,7 @@ export function ResultsDashboard({
   policy: IimaPolicyConfig;
 }) {
   const [showMoreFeedback, setShowMoreFeedback] = useState(false);
+  const [showPiSimulator, setShowPiSimulator] = useState(false);
   const final = result.finalSelection;
   const cat = result.catEligibility;
   const seatChance = final?.seatProbability ?? 0;
@@ -164,8 +166,11 @@ export function ResultsDashboard({
     ? policy.compositeWeights.ar * rating.total / policy.arNormalizationDenominator
     : null;
   const prePiCatContribution = policy.compositeWeights.cat * candidate.catOverallScaledScore / policy.catNormalizationDenominator;
+  const initialPiPercent = Math.round((candidate.normalizedPi ?? final?.normalizedPi ?? 0.75) * 100);
+  const iimaOtherFinalContribution = final == null ? null : final.finalCompositeScore - policy.finalWeights.pi * final.normalizedPi;
   useEffect(() => {
     setShowMoreFeedback(false);
+    setShowPiSimulator(false);
   }, [result]);
 
   const pipeline: Array<{ label: string; value: string; state: StepState }> = [
@@ -582,6 +587,40 @@ export function ResultsDashboard({
           <strong>What this comparison means:</strong> it compares the student&apos;s current shortlist Composite Score with prior scores used to issue AWT/PI interview calls. It does not compare interview performance or PI marks. Each cycle used its own CAT and Application Rating normalization, so the gap is a useful historical reference—not a guarantee that the same candidate would have received a call in that year.
         </div>
       </section>
+
+      <div className="pi-simulator-disclosure">
+        <button type="button" className="feedback-toggle" aria-expanded={showPiSimulator} aria-controls="iima-pi-simulator" onClick={() => setShowPiSimulator((current) => !current)}>
+          <span>{showPiSimulator ? "Hide PI simulator" : "View PI simulator"}</span>
+          {showPiSimulator ? <ChevronUp size={17} aria-hidden="true" /> : <ChevronDown size={17} aria-hidden="true" />}
+        </button>
+      </div>
+      {showPiSimulator && (
+        <div id="iima-pi-simulator">
+          <PiScoreSimulator
+            instituteName="IIM Ahmedabad"
+            simulatorKey={`${result.policyVersion}-${result.compositeScore ?? "none"}`}
+            initialPercent={initialPiPercent}
+            piMaxScore={policy.finalWeights.pi * 100}
+            finalMaxScore={1}
+            scorePrecision={4}
+            benchmarkLabel="Probability uses the existing historical-cycle planning model, not an official current cutoff."
+            unavailableReason={final == null || iimaOtherFinalContribution == null ? "The other final-selection inputs, including AWT, must be available before a new final score can be calculated." : undefined}
+            simulate={(piPercent) => {
+              const normalizedPi = piPercent / 100;
+              const finalScore = iimaOtherFinalContribution == null ? null : iimaOtherFinalContribution + policy.finalWeights.pi * normalizedPi;
+              const seatProbability = finalScore == null
+                ? null
+                : result.callPrediction
+                  ? final!.calibration.cycles.reduce((sum, cycle) => sum + cycle.weight * (1 / (1 + Math.exp(-policy.model.logisticSlope * (finalScore - cycle.planningTarget)))), 0)
+                  : 0;
+              const band = seatProbability == null
+                ? null
+                : policy.probabilityBands.find((item) => seatProbability < item.maxExclusive)?.band ?? "VERY_STRONG";
+              return { piPoints: normalizedPi * policy.finalWeights.pi * 100, finalScore, seatProbability, band };
+            }}
+          />
+        </div>
+      )}
         </div>
       )}
 

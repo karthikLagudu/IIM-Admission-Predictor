@@ -167,6 +167,14 @@ export function ResultsDashboard({
   const prePiCatContribution = policy.compositeWeights.cat * candidate.catOverallScaledScore / policy.catNormalizationDenominator;
   const initialPiPercent = Math.round((candidate.normalizedPi ?? final?.normalizedPi ?? 0.75) * 100);
   const iimaOtherFinalContribution = final == null ? null : final.finalCompositeScore - policy.finalWeights.pi * final.normalizedPi;
+  const iimaAcademicCriterion = result.stage1?.c2 ?? result.stage2?.c2 ?? result.academicConsistency;
+  const iimaCallCriteria = [
+    { label: "Bachelor eligibility", detail: `${candidate.bachelorPercent.toFixed(2)}% against ${result.basicEligibility.bachelorRequired.toFixed(0)}% minimum`, passed: result.basicEligibility.bachelorPass },
+    { label: "CAT overall", detail: result.catEligibility == null ? "CAT screen not reached" : `${candidate.catOverallPercentile.toFixed(2)} percentile against ${result.catEligibility.cutoff.overall.toFixed(2)}`, passed: result.catEligibility?.overallPass ?? null },
+    { label: "CAT sectionals", detail: result.catEligibility == null ? "Sectional screen not reached" : `VARC ${candidate.catVarcPercentile.toFixed(2)}/${result.catEligibility.cutoff.varc.toFixed(2)} · DILR ${candidate.catDilrPercentile.toFixed(2)}/${result.catEligibility.cutoff.dilr.toFixed(2)} · QA ${candidate.catQaPercentile.toFixed(2)}/${result.catEligibility.cutoff.qa.toFixed(2)}`, passed: result.catEligibility == null ? null : result.catEligibility.varcPass && result.catEligibility.dilrPass && result.catEligibility.qaPass },
+    { label: "Academic consistency", detail: iimaAcademicCriterion == null || iimaAcademicCriterion.required == null ? "Academic gate not reached" : `${iimaAcademicCriterion.actual.toFixed(2)}% against ${iimaAcademicCriterion.required.toFixed(2)}%`, passed: iimaAcademicCriterion?.passed ?? null },
+    { label: "Composite Score boundary", detail: result.applicableCallThreshold == null ? "No applicable shortlist boundary was reached" : `${result.compositeScore == null ? "Score unavailable" : result.compositeScore.toFixed(6)} against ${result.applicableCallThreshold.toFixed(6)}`, passed: result.callMargin == null ? null : result.callMargin >= 0 },
+  ];
   useEffect(() => {
     setShowMoreFeedback(false);
   }, [result]);
@@ -594,6 +602,10 @@ export function ResultsDashboard({
         finalMaxScore={1}
         scorePrecision={4}
         benchmarkLabel="Probability uses the existing historical-cycle planning model, not an official current cutoff."
+        callPredictionLabel={callLabel}
+        callPredictionReason={result.callPrediction ? `${route} clears the applicable shortlist boundary after all hard gates.` : diagnostics?.gaps[0]?.detail ?? "The profile does not clear every required interview-call condition."}
+        callPredictionTone={result.callPrediction ? "positive" : "negative"}
+        callCriteria={iimaCallCriteria}
         unavailableReason={final == null || iimaOtherFinalContribution == null ? "The other final-selection inputs, including AWT, must be available before a new final score can be calculated." : undefined}
         simulate={(piPercent) => {
           const normalizedPi = piPercent / 100;

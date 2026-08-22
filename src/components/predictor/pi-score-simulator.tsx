@@ -11,6 +11,12 @@ export interface PiSimulationResult {
   band: string | null;
 }
 
+export interface PiCallCriterion {
+  label: string;
+  detail: string;
+  passed: boolean | null;
+}
+
 export function PiScoreSimulator({
   instituteName,
   simulatorKey,
@@ -19,6 +25,10 @@ export function PiScoreSimulator({
   finalMaxScore,
   scorePrecision = 2,
   benchmarkLabel,
+  callPredictionLabel,
+  callPredictionReason,
+  callPredictionTone,
+  callCriteria,
   simulate,
   unavailableReason,
 }: {
@@ -29,6 +39,10 @@ export function PiScoreSimulator({
   finalMaxScore: number;
   scorePrecision?: number;
   benchmarkLabel: string;
+  callPredictionLabel: string;
+  callPredictionReason: string;
+  callPredictionTone: "positive" | "negative" | "neutral";
+  callCriteria: PiCallCriterion[];
   simulate: (piPercent: number) => PiSimulationResult;
   unavailableReason?: string;
 }) {
@@ -57,6 +71,25 @@ export function PiScoreSimulator({
         <button type="button" onClick={() => setPiPercent(initialPercent)}>
           <RotateCcw size={14} aria-hidden="true" /> Reset
         </button>
+      </div>
+
+      <div className={`pi-call-context ${callPredictionTone}`}>
+        <div className="pi-call-prediction">
+          <span>Interview-call prediction</span>
+          <strong>{callPredictionLabel}</strong>
+          <p>{callPredictionReason}</p>
+        </div>
+        <div className="pi-call-criteria">
+          <span>Criteria applied for {instituteName}</span>
+          <div>
+            {callCriteria.map((criterion) => (
+              <article className={criterion.passed == null ? "neutral" : criterion.passed ? "pass" : "fail"} key={criterion.label}>
+                <i aria-hidden="true">{criterion.passed == null ? "•" : criterion.passed ? "✓" : "×"}</i>
+                <div><strong>{criterion.label}</strong><small>{criterion.detail}</small></div>
+              </article>
+            ))}
+          </div>
+        </div>
       </div>
 
       {unavailableReason ? (

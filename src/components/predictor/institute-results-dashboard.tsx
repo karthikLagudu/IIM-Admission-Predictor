@@ -115,6 +115,13 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
     : null;
   const initialPiPercent = Math.round((candidate.normalizedPi ?? (piComponent?.score != null && piComponent.maxScore > 0 ? piComponent.score / piComponent.maxScore : 0.75)) * 100);
   const cutoffText = (value: number | null) => value == null ? "Not applicable" : value.toFixed(2);
+  const callCriteria = [
+    { label: "Bachelor eligibility", detail: `${candidate.bachelorPercent.toFixed(2)}% against ${result.eligibility.bachelorRequired.toFixed(0)}% minimum`, passed: result.eligibility.bachelorPass },
+    { label: "CAT overall", detail: `${candidate.catOverallPercentile.toFixed(2)} percentile against ${cutoffText(result.eligibility.cutoff.overall)}`, passed: result.eligibility.cutoff.overall == null ? null : result.eligibility.overallPass },
+    { label: "CAT sectionals", detail: `VARC ${candidate.catVarcPercentile.toFixed(2)}/${cutoffText(result.eligibility.cutoff.varc)} · DILR ${candidate.catDilrPercentile.toFixed(2)}/${cutoffText(result.eligibility.cutoff.dilr)} · QA ${candidate.catQaPercentile.toFixed(2)}/${cutoffText(result.eligibility.cutoff.qa)}`, passed: result.eligibility.varcPass && result.eligibility.dilrPass && result.eligibility.qaPass },
+    { label: "Section score condition", detail: result.institute === "IIMB" ? "Positive raw score required in VARC, DILR and QA" : "Institute-specific section score condition", passed: result.eligibility.rawScoreGatePass },
+    { label: `${result.scoreLabel} boundary`, detail: result.call.benchmarkValue == null ? "No fixed public call boundary; applicant-pool ranking applies" : `${currentCallScore == null ? "Score unavailable" : formatScore(currentCallScore, 2)} against ${formatScore(result.call.benchmarkValue, 2)}`, passed: result.call.benchmarkValue == null || result.call.margin == null ? null : result.call.margin >= 0 },
+  ];
 
   const pipeline: Array<{ label: string; value: string; state: StepState }> = [
     { label: "Eligibility", value: result.eligibility.bachelorPass ? "Passed" : "Failed", state: result.eligibility.bachelorPass ? "pass" : "fail" },
@@ -356,6 +363,10 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
               piMaxScore={piComponent?.maxScore ?? 0}
               finalMaxScore={result.final.maxScore}
               benchmarkLabel={result.prediction.benchmarkValue == null ? "No final-selection benchmark is configured, so a seat percentage cannot be estimated." : `Uses the active ${humanize(result.prediction.benchmarkType).toLowerCase()} final benchmark of ${formatScore(result.prediction.benchmarkValue, 2)}.`}
+              callPredictionLabel={callLabel}
+              callPredictionReason={result.call.reason}
+              callPredictionTone={callPredicted ? "positive" : callNegative ? "negative" : "neutral"}
+              callCriteria={callCriteria}
               unavailableReason={!piComponent ? "The published/configured final formula does not provide a numeric PI weight that can be varied safely." : nonPiTotal == null ? "One or more non-PI final-score components are still unavailable." : undefined}
               simulate={(piPercent) => {
                 const piPoints = piComponent == null ? 0 : piPercent / 100 * piComponent.maxScore;

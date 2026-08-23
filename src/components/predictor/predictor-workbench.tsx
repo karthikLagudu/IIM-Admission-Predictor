@@ -58,13 +58,6 @@ export function PredictorWorkbench() {
 
   return (
     <div className="institute-workbench">
-      <section className="panel multi-institute-intro" aria-labelledby="multi-institute-heading">
-        <div>
-          <span>Combined institute predictor</span>
-          <strong id="multi-institute-heading">One profile for all 21 IIMs</strong>
-        </div>
-        <p>Enter the candidate details once to generate a separate result for every institute.</p>
-      </section>
       <div className={`workspace combined-workspace ${showForm ? "form-only" : "results-only"}`}>
         {showForm && (
           <CandidateForm

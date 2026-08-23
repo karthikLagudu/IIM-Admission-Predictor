@@ -532,12 +532,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .call-detail-row span { color: var(--muted); }
 .call-detail-row strong { text-align: right; }
 .final-panel { overflow: hidden; }
-.final-top { display: grid; grid-template-columns: .72fr 1.28fr; }
-.probability-gauge { padding: 24px; background: var(--navy-900); color: white; display: grid; place-items: center; text-align: center; }
-.probability-ring { --p: 0%; width: 138px; height: 138px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(#55b78e var(--p), rgba(255,255,255,.12) 0); position: relative; }
-.probability-ring::before { content: ""; position: absolute; width: 108px; height: 108px; background: var(--navy-900); border-radius: 50%; }
-.probability-ring strong { position: relative; z-index: 1; font-family: Georgia, serif; font-size: 28px; font-weight: 500; }
-.probability-gauge span { margin-top: 10px; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: #bed0dc; }
+.final-top { display: block; }
 .final-details { padding: 24px; }
 .final-details .metric-grid { grid-template-columns: repeat(3, minmax(0,1fr)); margin-top: 15px; }
 .disclosure { margin-top: 14px; padding: 11px 12px; border-left: 3px solid var(--amber); background: var(--amber-soft); color: #73511c; font-size: 10px; }
@@ -785,7 +780,6 @@ h1, h2, h3, h4, h5, h6,
 .result-seat-chance strong,
 .result-score strong,
 .metric-card strong,
-.probability-ring strong,
 .historical-call-card-heading span,
 .historical-call-score-row strong,
 .historical-current-comparison strong,

@@ -500,10 +500,6 @@ export function ResultsDashboard({
       {final && (
         <section className="panel final-panel" aria-labelledby="final-heading">
           <div className="final-top">
-            <div className="probability-gauge">
-              <div className="probability-ring" style={{ "--p": `${Math.min(100, final.seatProbability * 100)}%` } as React.CSSProperties}><strong>{formatProbability(final.seatProbability)}</strong></div>
-              <span>3-cycle calibrated model · {humanize(final.predictionBand)}</span>
-            </div>
             <div className="final-details">
               <div className="section-heading"><div><h3 id="final-heading">Final selection planning</h3><p>Official FCS formula; predictive threshold layer</p></div><SourceBadge source="MODEL_ASSUMPTION" /></div>
               <div className="metric-grid">

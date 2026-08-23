@@ -299,10 +299,6 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
 
           <section className="panel final-panel" aria-labelledby="institute-final-heading">
             <div className="final-top">
-              <div className="probability-gauge">
-                <div className="probability-ring" style={{ "--p": `${Math.min(100, (probability ?? 0) * 100)}%` } as React.CSSProperties}><strong>{probability == null ? "—" : formatProbability(probability)}</strong></div>
-                <span>{probability == null ? "Seat chance not estimated yet" : `${humanize(result.prediction.band ?? "BORDERLINE")} model estimate`}</span>
-              </div>
               <div className="final-details">
                 <div className="section-heading"><div><h3 id="institute-final-heading">Final selection planning</h3><p>Official final-score layer; predictive benchmark kept separate</p></div><SourceBadge source={result.prediction.benchmarkType === "MODEL" ? "MODEL_ASSUMPTION" : "OFFICIAL_POLICY"} /></div>
                 <div className="metric-grid">

@@ -24,14 +24,16 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="shell site-header-inner">
-        <div className="header-brand-cluster">
-          <Link className="site-wordmark" href="/" aria-label="CAT IIM Predictor home">
-            <Image src={thinkplusLogo} alt="Thinkplus" priority />
-          </Link>
-          {showResultsTitle && <strong className="header-results-title">Your IIM results</strong>}
-        </div>
+        <Link className="site-wordmark" href="/" aria-label="CAT IIM Predictor home">
+          <Image src={thinkplusLogo} alt="Thinkplus" priority />
+        </Link>
+        {showResultsTitle ? <strong className="header-results-title">Your IIM results</strong> : <span aria-hidden="true" />}
         <div className="header-actions">
-          <Link className="header-cta" href="/predictor">Start analysis</Link>
+          {showResultsTitle ? (
+            <button type="button" className="header-cta" onClick={() => window.dispatchEvent(new Event("iim-edit-candidate"))}>Enter candidate details</button>
+          ) : (
+            <Link className="header-cta" href="/predictor">Enter candidate details</Link>
+          )}
           <Link className="header-methodology" href="/methodology">Methodology</Link>
         </div>
       </div>

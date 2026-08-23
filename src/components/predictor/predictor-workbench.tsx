@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CandidateInput, IimaPolicyConfig } from "@/types/iima";
 import { IIMA_CAT_2025_POLICY, predictIimaAdmission } from "@/lib/iima";
 import { predictAllNonIimaInstitutes } from "@/lib/institutes";
@@ -28,6 +28,15 @@ export function PredictorWorkbench() {
   const [error, setError] = useState<string | null>(null);
   const [mobileStep, setMobileStep] = useState(0);
   const [showForm, setShowForm] = useState(true);
+
+  useEffect(() => {
+    const editCandidate = () => {
+      setShowForm(true);
+      setMobileStep(0);
+    };
+    window.addEventListener("iim-edit-candidate", editCandidate);
+    return () => window.removeEventListener("iim-edit-candidate", editCandidate);
+  }, []);
 
   const analyze = async () => {
     const validated = candidateInputSchema.safeParse(candidate);

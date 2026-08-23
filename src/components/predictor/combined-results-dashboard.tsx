@@ -377,12 +377,7 @@ export function CombinedResultsDashboard({
   return (
     <div className="all-results-stack" aria-live="polite" data-iim-results-active="true">
       <section className="panel results-table-panel" aria-labelledby="all-results-heading">
-        <div className="results-table-heading">
-          <div>
-            <h2 className="sr-only" id="all-results-heading">Your IIM results</h2>
-            <p>A clean summary of each institute. Select <strong>View more</strong> for the complete report.</p>
-          </div>
-        </div>
+        <h2 className="sr-only" id="all-results-heading">Your IIM results</h2>
 
         <div className="institute-results-table-wrap">
           <table className="institute-results-table">
@@ -419,7 +414,6 @@ export function CombinedResultsDashboard({
                   <td className="result-table-score">{summary.score}</td>
                   <td className="result-table-call-chance">
                     <strong>{summary.callChance}</strong>
-                    <small>{summary.callChanceDetail}</small>
                   </td>
                   <td className="result-table-chance">
                     <span>{summary.chance}</span>

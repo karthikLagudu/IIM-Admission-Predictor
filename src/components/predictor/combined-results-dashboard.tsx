@@ -281,6 +281,13 @@ export function CombinedResultsDashboard({
     return () => window.cancelAnimationFrame(frame);
   }, [activeDetail]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("iim-results-visibility", { detail: true }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("iim-results-visibility", { detail: false }));
+    };
+  }, []);
+
   if (activeDetail && activeSummary) {
     return (
       <div className="institute-focus-shell" aria-live="polite">
@@ -368,11 +375,11 @@ export function CombinedResultsDashboard({
   }
 
   return (
-    <div className="all-results-stack" aria-live="polite">
+    <div className="all-results-stack" aria-live="polite" data-iim-results-active="true">
       <section className="panel results-table-panel" aria-labelledby="all-results-heading">
         <div className="results-table-heading">
           <div>
-            <h2 id="all-results-heading">Your IIM results</h2>
+            <h2 className="sr-only" id="all-results-heading">Your IIM results</h2>
             <p>A clean summary of each institute. Select <strong>View more</strong> for the complete report.</p>
           </div>
           {onEditDetails && <button type="button" className="edit-profile-button" onClick={onEditDetails}>Edit candidate details</button>}

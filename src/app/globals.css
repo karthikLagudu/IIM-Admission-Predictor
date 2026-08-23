@@ -164,7 +164,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .results-table-panel { padding: 14px 20px 20px; }
 .results-table-heading { position: relative; display: grid; place-items: center; min-height: 46px; margin-bottom: 8px; text-align: center; }
 .results-table-heading > div { max-width: 700px; }
-.results-table-heading .edit-profile-button { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
 .results-table-heading h2 { margin: 0; color: var(--navy-900); font-family: Georgia, serif; font-size: 25px; font-weight: 600; }
 .results-table-heading p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
 .edit-profile-button { min-height: 34px; padding: 7px 12px; border: 1px solid #b9ccd7; border-radius: 7px; background: white; color: var(--blue-700); font-size: 9px; font-weight: 800; cursor: pointer; }
@@ -954,7 +953,6 @@ h1, h2, h3, h4, h5, h6,
   .institute-selector { align-items: stretch; flex-direction: column; }
   .institute-selector label { width: 100%; }
   .results-table-heading { min-height: 0; padding-bottom: 8px; }
-  .results-table-heading .edit-profile-button { position: static; width: 100%; margin-top: 12px; transform: none; }
   .institute-focus-toolbar { align-items: stretch; flex-direction: column; }
   .institute-focus-toolbar .focus-back-button, .institute-focus-toolbar .edit-profile-button { width: 100%; }
   .institute-report-cover { min-height: 0; padding: 25px 21px; grid-template-columns: 1fr; gap: 23px; }

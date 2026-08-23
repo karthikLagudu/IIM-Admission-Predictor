@@ -382,7 +382,6 @@ export function CombinedResultsDashboard({
             <h2 className="sr-only" id="all-results-heading">Your IIM results</h2>
             <p>A clean summary of each institute. Select <strong>View more</strong> for the complete report.</p>
           </div>
-          {onEditDetails && <button type="button" className="edit-profile-button" onClick={onEditDetails}>Edit candidate details</button>}
         </div>
 
         <div className="institute-results-table-wrap">

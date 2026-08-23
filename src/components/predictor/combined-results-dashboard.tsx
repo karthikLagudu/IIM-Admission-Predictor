@@ -402,7 +402,6 @@ export function CombinedResultsDashboard({
               {summaries.map((summary) => (
                 <tr className={summary.tone} key={summary.key}>
                   <th scope="row">
-                    <span>{summary.key}</span>
                     <strong>{summary.name}</strong>
                     <button
                       type="button"

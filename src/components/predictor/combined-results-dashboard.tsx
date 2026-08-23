@@ -72,6 +72,11 @@ function seatChanceBand(probability: number | null | undefined): ChanceBand {
   return "LOW";
 }
 
+function formatScoreOutOf100(score: number, maxScore: number): string {
+  if (!Number.isFinite(maxScore) || maxScore <= 0) return "Not calculated";
+  return `${formatScore((score / maxScore) * 100, 2)} / 100`;
+}
+
 function iimaCallTiming(result: IimaPredictionResult): string {
   return result.callPrediction
     ? "At IIMA's shortlist release · Jan–Mar 2026 planning window"
@@ -140,7 +145,7 @@ export function CombinedResultsDashboard({
       programme: "PGP 2026-28",
       status: results.IIMA.callPrediction ? "CALL PREDICTED" : "LESS LIKELY",
       scoreLabel: "Pre-PI / shortlist score",
-      score: results.IIMA.compositeScore == null ? "Not calculated" : `${formatScore(results.IIMA.compositeScore, 4)} / 1`,
+      score: results.IIMA.compositeScore == null ? "Not calculated" : formatScoreOutOf100(results.IIMA.compositeScore, 1),
       chanceLabel: "Expected seat chance (model)",
       chance: formatProbability(iimaChance),
       chanceBand: seatChanceBand(iimaChance),
@@ -170,7 +175,7 @@ export function CombinedResultsDashboard({
         scoreLabel: result.scoreLabel,
         score: result.preInterview.score == null
           ? result.preInterview.status === "DATA_REQUIRED" ? "Needs cycle data" : "Not calculated"
-          : `${formatScore(result.preInterview.score, 2)} / ${result.preInterview.maxScore}`,
+          : formatScoreOutOf100(result.preInterview.score, result.preInterview.maxScore),
         chanceLabel: "Expected seat chance (model)",
         chance: result.prediction.probability == null ? "Not estimated yet" : formatProbability(result.prediction.probability),
         chanceBand: seatChanceBand(result.prediction.probability),

@@ -7,6 +7,7 @@ import type { InstitutePredictionResult, InstituteScoreComponent } from "@/types
 import { SourceBadge } from "@/components/ui/source-badge";
 import { formatProbability, formatScore, humanize } from "@/lib/utils";
 import { institutePredictionBand } from "@/lib/institutes/prediction";
+import { estimateInterviewCallChance } from "@/lib/institutes/call-probability";
 import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
 import { PiScoreSimulator } from "./pi-score-simulator";
 
@@ -103,6 +104,14 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
   const modelCallBenchmark = result.call.benchmarkType === "MODEL" ? result.call.benchmarkValue : null;
   const modelCallGap = currentCallScore != null && modelCallBenchmark != null ? currentCallScore - modelCallBenchmark : null;
   const probability = result.prediction.probability;
+  const interviewCallChance = estimateInterviewCallChance({
+    eligible: result.eligibility.passed,
+    score: result.preInterview.score,
+    maxScore: result.preInterview.maxScore,
+    benchmark: result.call.benchmarkValue,
+    status: result.call.status,
+    directMerit: result.selectionStages.directMerit,
+  });
   const historicalReference = instituteHistoricalReference(result.institute);
   const historicalBenchmark = result.call.benchmarkType === "HISTORICAL" || result.call.benchmarkType === "OFFICIAL_RESULT"
     ? result.call.benchmarkValue
@@ -146,6 +155,10 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
             <p className="eyebrow">{result.instituteName} · {result.programme}</p>
             <h2>{callLabel}</h2>
             <p>{result.call.reason}</p>
+            <div className="result-call-chance" aria-label="Expected interview-call chance">
+              <div><span>Expected interview-call chance (model)</span><strong>{interviewCallChance.label}</strong></div>
+              <small>{interviewCallChance.detail}</small>
+            </div>
             <div className="result-seat-chance" aria-label="Estimated seat chance">
               <div><span>Estimated seat chance (model)</span><strong className={probability == null ? "seat-chance-unavailable" : ""}>{probability == null ? probabilityFallback : formatProbability(probability)}</strong></div>
               <small>{result.prediction.disclaimer}</small>

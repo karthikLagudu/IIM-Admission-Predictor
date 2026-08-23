@@ -12,6 +12,7 @@ import {
   iimaHistoricalCallThreshold,
 } from "@/lib/iima/historical-call-records";
 import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
+import { estimateInterviewCallChance } from "@/lib/institutes/call-probability";
 import { ResultsDashboard } from "./results-dashboard";
 import { InstituteResultsDashboard } from "./institute-results-dashboard";
 
@@ -32,6 +33,8 @@ interface ResultSummary {
   chanceLabel: string;
   chance: string;
   chanceBand: ChanceBand;
+  callChance: string;
+  callChanceDetail: string;
   tone: "positive" | "negative" | "pending";
   note: string;
   callTiming: string;
@@ -125,6 +128,12 @@ export function CombinedResultsDashboard({
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
   const iimaChance = results.IIMA.finalSelection?.seatProbability ?? 0;
   const iimaBasis = iimaCallBasis(results.IIMA);
+  const iimaCallChance = estimateInterviewCallChance({
+    eligible: results.IIMA.basicEligibility.passed && Boolean(results.IIMA.catEligibility?.catEligible) && Boolean(results.IIMA.academicConsistency?.passed),
+    score: results.IIMA.compositeScore,
+    maxScore: 1,
+    benchmark: results.IIMA.applicableCallThreshold,
+  });
   const summaries: ResultSummary[] = [
     {
       key: "IIMA",
@@ -136,6 +145,8 @@ export function CombinedResultsDashboard({
       chanceLabel: "Expected seat chance (model)",
       chance: formatProbability(iimaChance),
       chanceBand: seatChanceBand(iimaChance),
+      callChance: iimaCallChance.label,
+      callChanceDetail: iimaCallChance.detail,
       tone: results.IIMA.callPrediction ? "positive" : "negative",
       note: results.IIMA.callPrediction ? "Observed-boundary planning model" : "An official hard gate or shortlist boundary was not cleared",
       callTiming: iimaCallTiming(results.IIMA),
@@ -144,6 +155,14 @@ export function CombinedResultsDashboard({
     },
     ...results.institutes.map((result): ResultSummary => {
       const basis = instituteCallBasis(result);
+      const callChance = estimateInterviewCallChance({
+        eligible: result.eligibility.passed,
+        score: result.preInterview.score,
+        maxScore: result.preInterview.maxScore,
+        benchmark: result.call.benchmarkValue,
+        status: result.call.status,
+        directMerit: result.selectionStages.directMerit,
+      });
       return {
         key: result.institute,
         name: result.instituteName,
@@ -156,6 +175,8 @@ export function CombinedResultsDashboard({
         chanceLabel: "Expected seat chance (model)",
         chance: result.prediction.probability == null ? "Not estimated yet" : formatProbability(result.prediction.probability),
         chanceBand: seatChanceBand(result.prediction.probability),
+        callChance: callChance.label,
+        callChanceDetail: callChance.detail,
         tone: result.call.status === "NO_CALL" ? "negative" : result.call.status === "DATA_REQUIRED" ? "pending" : "positive",
         note: result.institute === "IIMB" && result.preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION")
           ? "Test model; synthetic normalization inputs"
@@ -297,6 +318,11 @@ export function CombinedResultsDashboard({
               <strong>{activeSummary.score}</strong>
             </div>
             <div>
+              <span>Expected interview-call chance</span>
+              <strong>{activeSummary.callChance}</strong>
+              <small>{activeSummary.callChanceDetail}</small>
+            </div>
+            <div>
               <span>{activeSummary.chanceLabel}</span>
               <strong>{activeSummary.chance}</strong>
             </div>
@@ -382,6 +408,7 @@ export function CombinedResultsDashboard({
                 <th scope="col">Programme</th>
                 <th scope="col">Result</th>
                 <th scope="col">Pre-PI / shortlist score</th>
+                <th scope="col">Expected call chance</th>
                 <th scope="col">Expected seat chance</th>
                 <th scope="col">Expected call window</th>
                 <th scope="col">Call basis</th>
@@ -406,6 +433,10 @@ export function CombinedResultsDashboard({
                   <td>{summary.programme}</td>
                   <td><span className="result-table-status">{summary.status}</span></td>
                   <td className="result-table-score">{summary.score}</td>
+                  <td className="result-table-call-chance">
+                    <strong>{summary.callChance}</strong>
+                    <small>{summary.callChanceDetail}</small>
+                  </td>
                   <td className="result-table-chance">
                     <span>{summary.chance}</span>
                     <small className={`seat-chance-band ${summary.chanceBand.toLowerCase()}`}>{summary.chanceBand.toLowerCase()}</small>
@@ -415,7 +446,7 @@ export function CombinedResultsDashboard({
                 </tr>
               ))}
               {filteredSummaries.length === 0 && (
-                <tr><td className="chance-filter-empty" colSpan={7}>No IIM currently falls in this seat-chance group.</td></tr>
+                <tr><td className="chance-filter-empty" colSpan={8}>No IIM currently falls in this seat-chance group.</td></tr>
               )}
             </tbody>
           </table>

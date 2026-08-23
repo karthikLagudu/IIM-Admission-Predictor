@@ -184,7 +184,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .edit-profile-button { min-height: 34px; padding: 7px 12px; border: 1px solid #b9ccd7; border-radius: 7px; background: white; color: var(--blue-700); font-size: 9px; font-weight: 800; cursor: pointer; }
 .edit-profile-button:hover { background: #edf5f9; }
 .institute-results-table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 11px; background: white; }
-.institute-results-table { width: 100%; min-width: 1180px; border-collapse: separate; border-spacing: 0; }
+.institute-results-table { width: 100%; min-width: 1380px; border-collapse: separate; border-spacing: 0; }
 .institute-results-table th, .institute-results-table td { padding: 15px 16px; text-align: left; vertical-align: middle; }
 .institute-results-table thead th { border-bottom: 1px solid var(--line); background: #f5f8fa; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
 .institute-results-table tbody tr + tr > * { border-top: 1px solid #e6ecef; }
@@ -285,6 +285,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .report-cover-stats > div { min-width: 0; padding: 17px 18px; border-radius: 11px; background: rgba(4,20,32,.34); }
 .report-cover-stats span { display: block; margin-bottom: 5px; color: #a9c3d2; font-size: 8px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
 .report-cover-stats strong { display: block; color: white; font-family: Georgia, serif; font-size: clamp(25px, 2.7vw, 36px); line-height: 1.08; font-weight: 600; font-variant-numeric: tabular-nums; }
+.report-cover-stats small { display: block; margin-top: 6px; color: #a9c3d2; font-size: 8px; line-height: 1.4; }
 .report-cover-stats > div:last-child strong { color: #7bddb2; }
 .report-reading-guide { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 14px; background: white; overflow: hidden; box-shadow: 0 10px 28px rgba(7,21,34,.045); }
 .report-reading-guide > div { display: flex; align-items: center; gap: 9px; min-height: 58px; padding: 12px 15px; border-right: 1px solid var(--line); }
@@ -412,6 +413,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .result-call h2 { margin: 0; font-family: Georgia, serif; font-weight: 500; font-size: 36px; line-height: 1.05; }
 .result-call p { color: #bfd0dc; margin: 12px 0 0; max-width: 520px; font-size: 13px; }
 .result-seat-chance { margin-top: 20px; padding: 14px 15px; border: 1px solid rgba(133, 202, 174, .28); border-radius: 10px; background: rgba(48, 145, 105, .13); }
+.result-call-chance { margin-top: 20px; padding: 14px 15px; border: 1px solid rgba(133, 202, 174, .28); border-radius: 10px; background: #fff; }
+.result-call-chance > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.result-call-chance span { color: var(--green); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.result-call-chance strong { color: var(--green); font-family: Georgia, serif; font-size: 31px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.result-call-chance small { display: block; margin-top: 4px; color: var(--green); font-size: 8px; line-height: 1.45; }
+.result-call.negative .result-call-chance { border-color: #ebc5c8; }
+.result-call.negative .result-call-chance span,
+.result-call.negative .result-call-chance strong,
+.result-call.negative .result-call-chance small { color: var(--red); }
+.result-table-call-chance { min-width: 180px; }
+.result-table-call-chance strong { display: block; color: var(--green); font-size: 18px; font-variant-numeric: tabular-nums; }
+.result-table-call-chance small { display: block; max-width: 220px; margin-top: 4px; color: var(--muted); font-size: 8px; line-height: 1.35; }
+.institute-results-table tr.negative .result-table-call-chance strong { color: var(--red); }
 .result-seat-chance > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
 .result-seat-chance span { color: #c8e9db; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .result-seat-chance strong { color: #74d3ab; font-family: Georgia, serif; font-size: 31px; font-weight: 500; font-variant-numeric: tabular-nums; }

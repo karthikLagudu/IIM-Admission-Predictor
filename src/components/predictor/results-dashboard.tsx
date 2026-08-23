@@ -10,6 +10,7 @@ import {
   iimaHistoricalCallThreshold,
 } from "@/lib/iima/historical-call-records";
 import { formatProbability, formatScore, humanize } from "@/lib/utils";
+import { estimateInterviewCallChance } from "@/lib/institutes/call-probability";
 import { PiScoreSimulator } from "./pi-score-simulator";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
@@ -155,6 +156,12 @@ export function ResultsDashboard({
   const final = result.finalSelection;
   const cat = result.catEligibility;
   const seatChance = final?.seatProbability ?? 0;
+  const interviewCallChance = estimateInterviewCallChance({
+    eligible: result.basicEligibility.passed && Boolean(result.catEligibility?.catEligible) && Boolean(result.academicConsistency?.passed),
+    score: result.compositeScore,
+    maxScore: 1,
+    benchmark: result.applicableCallThreshold,
+  });
   const callLabel = result.callPrediction ? "CALL PREDICTED" : "LESS LIKELY";
   const route = result.callRoute ? humanize(result.callRoute) : "No route cleared";
   const rating = result.applicationRating;
@@ -198,6 +205,10 @@ export function ResultsDashboard({
             <p className="eyebrow">IIM Ahmedabad · PGP 2026-28</p>
             <h2>{callLabel}</h2>
             <p>{result.callPrediction ? `${route} route clears the applicable observed boundary after all hard gates.` : "The gated rules engine does not predict an interview call. Seat probability is therefore 0%."}</p>
+            <div className="result-call-chance" aria-label="Expected interview-call chance">
+              <div><span>Expected interview-call chance (model)</span><strong>{interviewCallChance.label}</strong></div>
+              <small>{interviewCallChance.detail}</small>
+            </div>
             <div className="result-seat-chance" aria-label="Estimated seat chance">
               <div>
                 <span>Estimated seat chance (model)</span>

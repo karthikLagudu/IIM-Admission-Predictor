@@ -100,8 +100,8 @@ export function PiScoreSimulator({
             <div className="pi-slider-field">
               <label htmlFor={sliderId}>PI performance</label>
               <div className="pi-range-wrap">
-                <div className={`pi-student-marker ${studentMarkerClass}`} style={{ left: `${studentPosition}%` }} aria-label={`Your current ${instituteName} PI profile is ${studentPosition.toFixed(0)} percent`}>
-                  <span>Your current profile</span><ArrowDown size={15} aria-hidden="true" />
+                <div className={`pi-student-marker ${studentMarkerClass}`} style={{ left: `${studentPosition}%` }} aria-label={`You may be here for ${instituteName}, at an estimated PI performance of ${studentPosition.toFixed(0)} percent`}>
+                  <span>You may be here</span><ArrowDown size={15} aria-hidden="true" />
                 </div>
                 <input id={sliderId} type="range" min="0" max="100" step="1" value={piPercent} onChange={(event) => updatePi(Number(event.target.value))} />
               </div>

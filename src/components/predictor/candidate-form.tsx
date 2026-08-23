@@ -2,7 +2,7 @@
 
 import type { CandidateInput } from "@/types/iima";
 import type { InstituteKey } from "@/types/institutes";
-import { ACADEMIC_CATEGORY_LABELS, DEGREE_OPTIONS, estimateCat2025OverallPercentile, estimateCat2025SectionScaledScore, SAMPLE_CANDIDATE } from "@/lib/iima";
+import { ACADEMIC_CATEGORY_LABELS, classifyDegreeForInstitutes, DEGREE_OPTIONS, estimateCat2025OverallPercentile, estimateCat2025SectionScaledScore, SAMPLE_CANDIDATE } from "@/lib/iima";
 import { BookOpen, BriefcaseBusiness, ChevronLeft, ChevronRight, GraduationCap, UserRound } from "lucide-react";
 
 interface CandidateFormProps {
@@ -69,10 +69,11 @@ export function CandidateForm({
   const selectDegree = (degreeName: string) => {
     const selected = DEGREE_OPTIONS.find((option) => option.value === degreeName);
     if (!selected) return;
+    const classification = classifyDegreeForInstitutes(selected);
     setCandidate((current) => ({
       ...current,
       degreeName: selected.value,
-      academicCategory: selected.academicCategory,
+      ...classification,
       professionalQualification: selected.professionalQualification ?? "NONE",
       professionalInterPercent: selected.academicCategory === "AC_2" ? current.professionalInterPercent : undefined,
       professionalFinalPercent: selected.academicCategory === "AC_2" ? current.professionalFinalPercent : undefined,
@@ -198,54 +199,12 @@ export function CandidateForm({
                   </optgroup>
                 ))}
               </select>
-              {(institute === "IIMA" || institute === "ALL") && <p className="form-help">Selecting a qualification sets its IIMA Academic Category automatically.</p>}
+              <p className="form-help">This one selection automatically sets the relevant academic classification for IIMA, IIMB and IIMC.</p>
             </div>
             <div className="field">
               <label htmlFor="bachelor">Bachelor / professional %</label>
               <input id="bachelor" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.bachelorPercent)} onFocus={replaceZeroOnFocus} onChange={(event) => number("bachelorPercent", event.target.value)} />
             </div>
-            {(institute === "IIMA" || institute === "ALL") && (
-              <div className="field field-full">
-                <label htmlFor="academic-category">IIMA Academic Category</label>
-                <select id="academic-category" value={candidate.academicCategory} onChange={(event) => update("academicCategory", event.target.value as CandidateInput["academicCategory"])}>
-                  {Object.entries(ACADEMIC_CATEGORY_LABELS).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-                </select>
-                <p className="form-help">Set from the degree selection. Verify it against IIMA&apos;s official classification if your qualification is unusual.</p>
-              </div>
-            )}
-            {(institute === "IIMB" || institute === "ALL") && (
-              <div className="field field-full">
-                <label htmlFor="iimb-discipline">IIMB academic-discipline pool</label>
-                <select id="iimb-discipline" value={candidate.iimbAcademicDiscipline ?? ""} onChange={(event) => update("iimbAcademicDiscipline", (event.target.value || undefined) as CandidateInput["iimbAcademicDiscipline"])}>
-                  <option value="">Select discipline</option>
-                  <option value="ENGINEERING_TECHNOLOGY">Engineering / Technology</option>
-                  <option value="SCIENCE">Science</option>
-                  <option value="COMMERCE">Commerce</option>
-                  <option value="ARTS_HUMANITIES">Arts / Humanities</option>
-                  <option value="OTHER">Other</option>
-                </select>
-                <p className="form-help">IIMB standardizes bachelor marks within the applicable applicant-pool discipline.</p>
-              </div>
-            )}
-            {(institute === "IIMC" || institute === "ALL") && (
-              <div className="field field-full">
-                <label htmlFor="iimc-academic-profile">IIMC academic-diversity profile</label>
-                <select id="iimc-academic-profile" value={candidate.iimcAcademicProfile ?? ""} onChange={(event) => update("iimcAcademicProfile", (event.target.value || undefined) as CandidateInput["iimcAcademicProfile"])}>
-                  <option value="">Select academic profile</option>
-                  <option value="1">1 · Engineering bachelor/master/integrated engineering</option>
-                  <option value="2">2 · Non-engineering bachelor</option>
-                  <option value="3">3 · Dual bachelor&apos;s degree in Law</option>
-                  <option value="4">4 · Engineering bachelor + non-engineering master</option>
-                  <option value="5">5 · Non-engineering bachelor + non-engineering master</option>
-                  <option value="6">6 · Integrated non-engineering bachelor + non-engineering master</option>
-                  <option value="7">7 · Integrated engineering bachelor + non-engineering master</option>
-                  <option value="8">8 · CA/ICWA/CS/FIAI without bachelor</option>
-                  <option value="9">9 · CA/ICWA/CS/FIAI with bachelor</option>
-                  <option value="10">10 · Professional qualification + non-engineering master</option>
-                  <option value="11">11 · Integrated bachelor in Law + non-engineering master</option>
-                </select>
-              </div>
-            )}
             <div className="field field-full">
               <label htmlFor="professional">Professional qualification</label>
               <select id="professional" value={candidate.professionalQualification} onChange={(event) => update("professionalQualification", event.target.value as CandidateInput["professionalQualification"])}>

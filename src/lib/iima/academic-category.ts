@@ -1,4 +1,4 @@
-import type { AcademicCategory, ProfessionalQualification } from "@/types/iima";
+import type { AcademicCategory, IimbAcademicDiscipline, IimcAcademicProfile, ProfessionalQualification } from "@/types/iima";
 
 export const ACADEMIC_CATEGORY_LABELS: Record<AcademicCategory, string> = {
   AC_1_PART_I: "AC-1 Part I — MBBS / MD (USA)",
@@ -51,6 +51,31 @@ export const DEGREE_OPTIONS: DegreeOption[] = [
   { value: "Journalism or Mass Communication degree", label: "Journalism / Mass Communication degree", academicCategory: "AC_5" },
   { value: "Other discipline not listed", label: "Other discipline / qualification not listed", academicCategory: "AC_6" },
 ];
+
+export interface InstituteAcademicClassification {
+  academicCategory: AcademicCategory;
+  iimbAcademicDiscipline: IimbAcademicDiscipline;
+  iimcAcademicProfile: IimcAcademicProfile;
+}
+
+export function classifyDegreeForInstitutes(option: DegreeOption): InstituteAcademicClassification {
+  const engineeringDegree = option.value.startsWith("B.Tech") || option.value === "Other Engineering or Technology degree";
+  const iimbAcademicDiscipline: IimbAcademicDiscipline = engineeringDegree
+    ? "ENGINEERING_TECHNOLOGY"
+    : option.academicCategory === "AC_1_PART_I" || option.academicCategory === "AC_1_PART_II" || option.academicCategory === "AC_4"
+      ? "SCIENCE"
+      : option.academicCategory === "AC_2" || option.academicCategory === "AC_3"
+        ? "COMMERCE"
+        : option.academicCategory === "AC_5"
+          ? "ARTS_HUMANITIES"
+          : "OTHER";
+
+  return {
+    academicCategory: option.academicCategory,
+    iimbAcademicDiscipline,
+    iimcAcademicProfile: option.academicCategory === "AC_2" ? "8" : engineeringDegree ? "1" : "2",
+  };
+}
 
 export function isSmallAcademicCategory(category: AcademicCategory): boolean {
   return SMALL_AC_CATEGORIES.includes(category);

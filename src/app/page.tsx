@@ -6,7 +6,7 @@ export default function HomePage() {
       <section className="cat-product-hero">
         <div className="shell cat-product-hero-grid">
           <div className="cat-product-copy">
-            <p className="cat-product-kicker">CAT 2025 · IIM admissions intelligence</p>
+            <p className="cat-product-kicker">CAT · IIM admissions intelligence</p>
             <h1>
               Turn your <span className="cat-gradient-word">CAT</span> profile into a{" "}
               <span className="cat-clear-word">clear</span>{" "}
@@ -28,7 +28,7 @@ export default function HomePage() {
             <div className="cat-intelligence-topline"><span>Admission intelligence</span><strong>LIVE MODEL</strong></div>
             <div className="cat-score-preview">
               <div><span>Profile coverage</span><strong>21 IIMs</strong><small>One candidate profile</small></div>
-              <div className="cat-score-orbit" aria-hidden="true"><strong>CAT</strong><span>2025</span></div>
+              <div className="cat-score-orbit" aria-hidden="true"><strong>CAT</strong><span>IIM</span></div>
             </div>
             <div className="cat-preview-grid">
               <article><span>Shortlist</span><strong>Pre-PI</strong><small>Official weights</small></article>

@@ -900,7 +900,7 @@ h1, h2, h3, h4, h5, h6,
   color: var(--navy-900);
   border-bottom: 1px solid #ebe9e3;
 }
-.page-hero::after { content: "CAT 2025"; position: absolute; right: 3.5vw; bottom: -28px; color: rgba(37,99,235,.055); font-size: clamp(72px, 12vw, 170px); line-height: 1; font-weight: 900; letter-spacing: -.07em; pointer-events: none; }
+.page-hero::after { content: "CAT"; position: absolute; right: 3.5vw; bottom: -28px; color: rgba(37,99,235,.055); font-size: clamp(72px, 12vw, 170px); line-height: 1; font-weight: 900; letter-spacing: -.07em; pointer-events: none; }
 .page-hero .shell { position: relative; z-index: 1; }
 .page-hero .page-title { color: var(--navy-900); font-size: clamp(38px, 5vw, 58px); }
 .page-hero p { color: var(--muted); }

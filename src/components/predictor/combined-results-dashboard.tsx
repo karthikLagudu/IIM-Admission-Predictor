@@ -420,7 +420,7 @@ export function CombinedResultsDashboard({
             </tbody>
           </table>
         </div>
-        <p className="call-window-disclaimer">Call windows are planning estimates for the CAT 2025 / 2026–28 cycle. Actual shortlist dates and decisions come only from each IIM through its official portal or registered communication channels.</p>
+        <p className="call-window-disclaimer">Call windows are planning estimates for the active admissions cycle. Actual shortlist dates and decisions come only from each IIM through its official portal or registered communication channels.</p>
       </section>
 
       <section className="panel all-history-panel" aria-labelledby="all-history-heading">

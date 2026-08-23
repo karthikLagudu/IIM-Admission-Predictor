@@ -10,9 +10,9 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "CAT 2025 IIM Admission Predictor",
+  title: "CAT IIM Admission Predictor",
   description:
-    "Explainable CAT 2025 call and seat analysis across all 21 IIMs.",
+    "Explainable CAT call and seat analysis across all 21 IIMs.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

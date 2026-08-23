@@ -31,7 +31,7 @@ const inputGroups = [
   ["Personal", "Admission category, PwD status, gender and date of birth", "Selects the applicable official eligibility and CAT thresholds; diversity points are applied only where policy provides them."],
   ["Academic", "Class 10, Class 12, stream, boards, bachelor degree and marks", "Feeds institute-specific academic slabs, normalization, discipline groups and minimum-degree rules."],
   ["Experience", "Completed full-time work-experience months and professional qualification", "Feeds only published work/professional components; internships and overlapping periods are not automatically treated as eligible work."],
-  ["CAT 2025", "Overall and VARC, DILR and QA percentiles, plus positive-score confirmation", "Applies overall, sectional and raw-score gates. Internal scaled-score proxies are estimated only where an institute formula requires them."],
+  ["CAT", "Overall and VARC, DILR and QA percentiles, plus positive-score confirmation", "Applies overall, sectional and raw-score gates. Internal scaled-score proxies are estimated only where an institute formula requires them."],
   ["Interview scenario", "PI and WAT/AWT performance", "Used only in the individual result simulator after a call-stage result; it cannot repair a failed earlier gate."],
 ] as const;
 
@@ -40,7 +40,7 @@ export default function MethodologyPage() {
     <>
       <section className="page-hero methodology-hero">
         <div className="shell">
-          <p className="eyebrow">Complete methodology · CAT 2025 · 21 IIMs</p>
+          <p className="eyebrow">Complete methodology · CAT · 21 IIMs</p>
           <h1 className="page-title">How every result is calculated</h1>
           <p>This page separates published admission rules, observed historical results, candidate inputs and planning assumptions—then shows exactly where each one enters the predictor.</p>
           <div className="method-hero-facts" aria-label="Methodology coverage">
@@ -99,8 +99,8 @@ export default function MethodologyPage() {
 
             <article className="panel method-card" id="cat">
               <div className="method-card-heading"><div><p className="eyebrow">CAT data treatment</p><h2>Percentiles shown; scaled scores estimated only when required</h2></div><SourceBadge source="MODEL_ASSUMPTION" /></div>
-              <p>The candidate enters the overall and three sectional percentiles. If an institute&apos;s published formula requires a scaled CAT score, the engine converts percentile to a planning score through piecewise-linear CAT 2025 anchor points. A sectional proxy uses one-third of the equivalent overall score.</p>
-              <div className="formula">score(p) = linear interpolation between the two nearest CAT-2025 planning anchors</div>
+              <p>The candidate enters the overall and three sectional percentiles. If an institute&apos;s published formula requires a scaled CAT score, the engine converts percentile to a planning score through piecewise-linear active-cycle anchor points. A sectional proxy uses one-third of the equivalent overall score.</p>
+              <div className="formula">score(p) = linear interpolation between the two nearest active-cycle planning anchors</div>
               <div className="notice"><strong>The CAT scorecard is authoritative.</strong> Percentile-to-score conversion is not fixed across slots or years. The internal proxy is marked as a model assumption and can differ from the official normalized scaled score.</div>
             </article>
 
@@ -111,7 +111,7 @@ export default function MethodologyPage() {
                 <div className="method-table-wrap"><table className="policy-table"><thead><tr><th>Candidate group</th><th>Overall</th><th>VARC</th><th>DILR</th><th>QA</th></tr></thead><tbody>{Object.entries(policy.catCutoffs).map(([key, cutoff]) => <tr key={key}><td>{humanize(key)}</td><td>{cutoff.overall}</td><td>{cutoff.varc}</td><td>{cutoff.dilr}</td><td>{cutoff.qa}</td></tr>)}</tbody></table></div>
                 <div className="formula">AR = Class 10 (10) + Class 12 (10) + Bachelor/professional (10) + Work experience (5) + Gender diversity (3)</div>
                 <div className="formula">CS = 0.35 × (AR / 38) + 0.65 × (CAT scaled score / 204)</div>
-                <p>Stage 1 applies academic-category/discipline consistency routes and observed boundaries. Stage 2 is an additional category-wise route requiring the published academic criteria and the observed CAT-2025 composite boundary.</p>
+                <p>Stage 1 applies academic-category/discipline consistency routes and observed boundaries. Stage 2 is an additional category-wise route requiring the published academic criteria and the observed CAT-cycle composite boundary.</p>
                 <div className="method-table-wrap"><table className="policy-table"><thead><tr><th>Stage-2 group</th><th>Observed minimum CS</th><th>Evidence</th></tr></thead><tbody>{Object.entries(policy.stage2Thresholds).map(([key, value]) => <tr key={key}><td>{humanize(key)}</td><td>{value.toFixed(6)}</td><td><SourceBadge source="OFFICIAL_OBSERVED_RESULT" /></td></tr>)}</tbody></table></div>
               </div></details>
               <details><summary>Final score and seat-chance model</summary><div className="method-detail-body">

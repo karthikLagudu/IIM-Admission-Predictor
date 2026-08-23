@@ -38,6 +38,12 @@ export function PredictorWorkbench() {
     return () => window.removeEventListener("iim-edit-candidate", editCandidate);
   }, []);
 
+  useEffect(() => {
+    if (!showForm && results) {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  }, [showForm, results]);
+
   const analyze = async () => {
     const validated = candidateInputSchema.safeParse(candidate);
     if (!validated.success) {

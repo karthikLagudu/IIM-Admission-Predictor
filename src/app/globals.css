@@ -140,7 +140,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .trust-item span { color: var(--muted); font-size: 11px; }
 
 .workspace-section { padding: 42px 0 80px; }
-.application-only { padding-top: 24px; }
+.application-only { padding-top: 8px; }
 .institute-workbench { display: flex; flex-direction: column; gap: 16px; }
 .institute-selector { min-height: 66px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .institute-selector > div span { display: block; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
@@ -160,24 +160,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .combined-workspace.results-only { display: block; }
 .results-only .all-results-stack { width: 100%; }
 .all-results-stack { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-.results-table-panel { padding: 20px; }
-.results-table-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; margin-bottom: 17px; }
+.results-table-panel { padding: 14px 20px 20px; }
+.results-table-heading { position: relative; display: grid; place-items: center; min-height: 66px; margin-bottom: 10px; text-align: center; }
+.results-table-heading > div { max-width: 700px; }
+.results-table-heading .edit-profile-button { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
 .results-table-heading h2 { margin: 0; color: var(--navy-900); font-family: Georgia, serif; font-size: 25px; font-weight: 600; }
 .results-table-heading p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
-.chance-filter-panel { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 18px; padding: 8px 0; border: 0; background: transparent; }
-.chance-filter-copy strong { display: block; color: var(--navy-900); font-size: 12px; }
-.chance-filter-copy span { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
-.chance-filter-list { display: flex; align-items: center; gap: 10px; }
-.chance-filter-list button { min-width: 94px; min-height: 48px; padding: 10px 17px; border: 0; border-radius: 13px; background: white; color: var(--navy-700); font-size: 11px; font-weight: 850; cursor: pointer; box-shadow: 0 3px 12px rgba(7,21,34,.07); }
-.chance-filter-list button span { display: inline; min-width: 0; height: auto; margin-left: 8px; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font-size: 11px; font-weight: 900; }
-.chance-filter-list button:hover, .chance-filter-list button.active { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(7,21,34,.11); }
-.chance-filter-list button.all.active { color: var(--blue-600); box-shadow: inset 0 -3px var(--blue-600), 0 8px 20px rgba(7,21,34,.09); }
-.chance-filter-list button.high { color: var(--green); }
-.chance-filter-list button.medium { color: #976d18; }
-.chance-filter-list button.low { color: var(--red); }
-.chance-filter-list button.high.active { box-shadow: inset 0 -3px var(--green), 0 8px 20px rgba(7,21,34,.09); }
-.chance-filter-list button.medium.active { box-shadow: inset 0 -3px #b27a1c, 0 8px 20px rgba(7,21,34,.09); }
-.chance-filter-list button.low.active { box-shadow: inset 0 -3px var(--red), 0 8px 20px rgba(7,21,34,.09); }
 .edit-profile-button { min-height: 34px; padding: 7px 12px; border: 1px solid #b9ccd7; border-radius: 7px; background: white; color: var(--blue-700); font-size: 9px; font-weight: 800; cursor: pointer; }
 .edit-profile-button:hover { background: #edf5f9; }
 .institute-results-table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 11px; background: white; }
@@ -250,7 +238,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .seat-chance-band.low { color: var(--red) !important; }
 .institute-results-table tr.negative .result-table-chance { color: var(--red) !important; }
 .institute-results-table tr.pending .result-table-chance { color: #976d18 !important; }
-.chance-filter-empty { padding: 34px 16px !important; color: var(--muted) !important; font-size: 10px !important; text-align: center !important; }
 .result-table-detail-button { min-height: 34px; padding: 7px 10px; border: 1px solid #b9ccd7; border-radius: 7px; background: white; color: var(--blue-700); font-size: 9px; font-weight: 800; white-space: nowrap; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .result-table-detail-button:hover { border-color: var(--blue-600); background: #edf5f9; transform: translateX(1px); }
 .institute-results-table tbody th .result-table-detail-button { min-height: 29px; margin-top: 9px; padding: 5px 8px; border: 0; color: var(--blue-600); box-shadow: 0 3px 10px rgba(7,21,34,.08); }
@@ -772,12 +759,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .institute-map td { line-height: 1.45; }
 .institute-map td:first-child span { display: block; margin-bottom: 3px; color: #1470ad; font-size: 8px; font-weight: 900; letter-spacing: .08em; }
 .institute-map td:first-child strong { color: var(--navy-900); font-family: Georgia, serif; font-size: 13px; }
-.chance-band-method { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0 12px; }
-.chance-band-method span { padding: 14px 16px; background: #fff; font-size: 11px; }
-.chance-band-method strong { display: block; margin-bottom: 4px; font-size: 15px; }
-.chance-band-method .high { color: #087d58; border-left: 3px solid #15966d; }
-.chance-band-method .medium { color: #8a5b00; border-left: 3px solid #c78b16; }
-.chance-band-method .low { color: #b12f3e; border-left: 3px solid #c83f4d; }
 .method-list { margin: 14px 0 0; padding-left: 18px; color: #4c5e6d; font-size: 12px; line-height: 1.65; }
 .method-list li + li { margin-top: 6px; }
 .limitation-list { columns: 2; column-gap: 32px; }
@@ -868,7 +849,6 @@ h1, h2, h3, h4, h5, h6,
 .all-history-toggle:hover,
 .feedback-toggle:hover,
 .focus-back-button:hover { border-color: var(--blue-500); background: #eff6ff; color: var(--blue-600); }
-.chance-filter-list button { border-radius: 12px; box-shadow: 0 7px 22px rgba(15,23,42,.08); }
 .institute-results-table-wrap,
 .all-history-table-wrap { border-color: #e5e3dc; border-radius: 12px; }
 .institute-results-table thead th,
@@ -931,8 +911,7 @@ h1, h2, h3, h4, h5, h6,
   .result-table-detail-button,
   .all-history-toggle,
   .feedback-toggle,
-  .focus-back-button,
-  .chance-filter-list button { transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease, border-color .18s ease, color .18s ease; }
+  .focus-back-button { transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease, border-color .18s ease, color .18s ease; }
 }
 
 @media (max-width: 1060px) {
@@ -972,11 +951,8 @@ h1, h2, h3, h4, h5, h6,
   .workspace-header { align-items: flex-start; flex-direction: column; }
   .institute-selector { align-items: stretch; flex-direction: column; }
   .institute-selector label { width: 100%; }
-  .results-table-heading { align-items: flex-start; flex-direction: column; }
-  .results-table-heading .edit-profile-button { width: 100%; }
-  .chance-filter-panel { align-items: flex-start; flex-direction: column; }
-  .chance-filter-list { width: 100%; overflow-x: auto; padding-bottom: 2px; }
-  .chance-filter-list button { flex: 1; min-width: max-content; }
+  .results-table-heading { min-height: 0; padding-bottom: 8px; }
+  .results-table-heading .edit-profile-button { position: static; width: 100%; margin-top: 12px; transform: none; }
   .institute-focus-toolbar { align-items: stretch; flex-direction: column; }
   .institute-focus-toolbar .focus-back-button, .institute-focus-toolbar .edit-profile-button { width: 100%; }
   .institute-report-cover { min-height: 0; padding: 25px 21px; grid-template-columns: 1fr; gap: 23px; }
@@ -1028,7 +1004,6 @@ h1, h2, h3, h4, h5, h6,
   .principle-grid, .source-legend, .result-state-grid { grid-template-columns: 1fr; }
   .pipeline-list { grid-template-columns: 1fr; }
   .pipeline-list > div { min-height: 0; }
-  .chance-band-method { grid-template-columns: 1fr; }
   .limitation-list { columns: 1; }
   .method-card-heading { align-items: flex-start; flex-direction: column; }
   .footer-inner { flex-direction: column; }

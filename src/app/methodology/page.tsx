@@ -161,9 +161,6 @@ export default function MethodologyPage() {
               <p>When a compatible shortlist benchmark is configured, the dashboard converts the student&apos;s normalized distance above or below that benchmark into a planning percentage. The benchmark itself is 50%; the estimate rises above 50% as the score clears it and falls below 50% when the score trails it.</p>
               <div className="formula">P(Call) = Hard gates × 1 / (1 + exp(−16 × ((shortlist score − benchmark) / score maximum)))</div>
               <p>If a hard gate fails, call chance is 0%. If the institute ranks the applicant pool without publishing a compatible fixed boundary, the result says <strong>Pool-dependent</strong> instead of inventing a percentage. Direct-merit programmes show <strong>Not applicable</strong> because there is no interview call.</p>
-              <h3>Seat-chance filters</h3>
-              <div className="chance-band-method"><span className="high"><strong>High</strong>70% and above</span><span className="medium"><strong>Medium</strong>40%–69.9%</span><span className="low"><strong>Low</strong>Below 40% or not estimated</span></div>
-              <p>These three filters organize the table; they are product labels, not institute admission categories. “Not estimated” is grouped under Low for filtering but does not mean a calculated zero.</p>
             </article>
 
             <article className="panel method-card" id="history">

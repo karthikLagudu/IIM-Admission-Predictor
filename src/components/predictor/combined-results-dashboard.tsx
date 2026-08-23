@@ -123,7 +123,6 @@ export function CombinedResultsDashboard({
   onEditDetails?: () => void;
 }) {
   const [activeDetail, setActiveDetail] = useState<InstituteKey | null>(null);
-  const [chanceFilter, setChanceFilter] = useState<"ALL" | ChanceBand>("ALL");
   const [showAllHistory, setShowAllHistory] = useState(false);
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
   const iimaChance = results.IIMA.finalSelection?.seatProbability ?? 0;
@@ -191,14 +190,6 @@ export function CombinedResultsDashboard({
   ];
   const activeSummary = summaries.find((summary) => summary.key === activeDetail) ?? null;
   const activeInstituteResult = activeDetail === "IIMA" ? null : results.institutes.find((result) => result.institute === activeDetail) ?? null;
-  const filteredSummaries = chanceFilter === "ALL"
-    ? summaries
-    : summaries.filter((summary) => summary.chanceBand === chanceFilter);
-  const chanceCounts = {
-    HIGH: summaries.filter((summary) => summary.chanceBand === "HIGH").length,
-    MEDIUM: summaries.filter((summary) => summary.chanceBand === "MEDIUM").length,
-    LOW: summaries.filter((summary) => summary.chanceBand === "LOW").length,
-  };
   const latestIimaHistory = IIMA_HISTORICAL_STAGE2_CALL_RECORDS[0];
   const latestIimaThreshold = iimaHistoricalCallThreshold(latestIimaHistory, candidate);
   const historicalComparisons: HistoricalComparisonSummary[] = [
@@ -387,19 +378,6 @@ export function CombinedResultsDashboard({
           {onEditDetails && <button type="button" className="edit-profile-button" onClick={onEditDetails}>Edit candidate details</button>}
         </div>
 
-        <div className="chance-filter-panel">
-          <div className="chance-filter-copy">
-            <strong>Filter by expected seat chance</strong>
-            <span>High: 70%+ · Medium: 40–69.9% · Low: below 40% or not estimated</span>
-          </div>
-          <div className="chance-filter-list" role="group" aria-label="Filter IIMs by expected seat chance">
-            <button type="button" className={chanceFilter === "ALL" ? "active all" : "all"} aria-pressed={chanceFilter === "ALL"} onClick={() => setChanceFilter("ALL")}>All <span>{summaries.length}</span></button>
-            <button type="button" className={chanceFilter === "HIGH" ? "active high" : "high"} aria-pressed={chanceFilter === "HIGH"} onClick={() => setChanceFilter("HIGH")}>High <span>{chanceCounts.HIGH}</span></button>
-            <button type="button" className={chanceFilter === "MEDIUM" ? "active medium" : "medium"} aria-pressed={chanceFilter === "MEDIUM"} onClick={() => setChanceFilter("MEDIUM")}>Medium <span>{chanceCounts.MEDIUM}</span></button>
-            <button type="button" className={chanceFilter === "LOW" ? "active low" : "low"} aria-pressed={chanceFilter === "LOW"} onClick={() => setChanceFilter("LOW")}>Low <span>{chanceCounts.LOW}</span></button>
-          </div>
-        </div>
-
         <div className="institute-results-table-wrap">
           <table className="institute-results-table">
             <thead>
@@ -415,7 +393,7 @@ export function CombinedResultsDashboard({
               </tr>
             </thead>
             <tbody>
-              {filteredSummaries.map((summary) => (
+              {summaries.map((summary) => (
                 <tr className={summary.tone} key={summary.key}>
                   <th scope="row">
                     <span>{summary.key}</span>
@@ -445,9 +423,6 @@ export function CombinedResultsDashboard({
                   <td className="result-table-basis">{summary.callBasis}</td>
                 </tr>
               ))}
-              {filteredSummaries.length === 0 && (
-                <tr><td className="chance-filter-empty" colSpan={8}>No IIM currently falls in this seat-chance group.</td></tr>
-              )}
             </tbody>
           </table>
         </div>

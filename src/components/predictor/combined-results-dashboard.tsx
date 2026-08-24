@@ -407,7 +407,6 @@ export function CombinedResultsDashboard({
                 <th scope="col">Institute</th>
                 <th scope="col">Programme</th>
                 <th scope="col">Result</th>
-                <th scope="col">Pre-PI / shortlist score</th>
                 <th scope="col">Expected call chance</th>
                 <th scope="col">Expected seat chance</th>
                 <th scope="col">Expected call window</th>
@@ -431,7 +430,6 @@ export function CombinedResultsDashboard({
                   </th>
                   <td>{summary.programme}</td>
                   <td><span className="result-table-status">{summary.status}</span></td>
-                  <td className="result-table-score">{summary.score}</td>
                   <td className="result-table-call-chance">
                     <strong>{summary.callChance}</strong>
                   </td>

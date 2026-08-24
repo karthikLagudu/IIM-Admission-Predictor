@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { ArrowLeft, CalendarClock, ChevronDown, ChevronRight, ChevronUp, ListChecks, Sparkles } from "lucide-react";
 import type { CandidateInput, IimaPolicyConfig, IimaPredictionResult } from "@/types/iima";
 import type { InstituteKey, InstitutePredictionResult } from "@/types/institutes";
-import { formatProbability, formatScore } from "@/lib/utils";
+import { formatProbability, formatScore, formatScoreOutOf100, normalizeScoreOutOf100 } from "@/lib/utils";
 import { callStatusLabel } from "@/lib/institutes/cat2025_2026_28/shared";
 import {
   IIMA_HISTORICAL_STAGE2_CALL_RECORDS,
@@ -69,16 +69,6 @@ function seatChanceBand(probability: number | null | undefined): ChanceBand {
   if (probability != null && probability >= 0.7) return "HIGH";
   if (probability != null && probability >= 0.4) return "MEDIUM";
   return "LOW";
-}
-
-function formatScoreOutOf100(score: number, maxScore: number): string {
-  const normalizedScore = normalizeScoreOutOf100(score, maxScore);
-  return normalizedScore == null ? "Not calculated" : `${formatScore(normalizedScore, 2)} / 100`;
-}
-
-function normalizeScoreOutOf100(score: number, maxScore: number): number | null {
-  if (!Number.isFinite(score) || !Number.isFinite(maxScore) || maxScore <= 0) return null;
-  return (score / maxScore) * 100;
 }
 
 function iimaCallTiming(result: IimaPredictionResult): string {

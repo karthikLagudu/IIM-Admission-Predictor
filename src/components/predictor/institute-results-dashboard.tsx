@@ -6,7 +6,7 @@ import { Check, ChevronDown, ChevronUp, Circle, Database, X } from "lucide-react
 import type { CandidateInput } from "@/types/iima";
 import type { InstitutePredictionResult, InstituteScoreComponent } from "@/types/institutes";
 import { SourceBadge } from "@/components/ui/source-badge";
-import { formatProbability, formatScore, humanize } from "@/lib/utils";
+import { formatProbability, formatScore, formatScoreOutOf100, humanize, normalizeScoreOutOf100 } from "@/lib/utils";
 import { institutePredictionBand } from "@/lib/institutes/prediction";
 import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
 import { PiScoreSimulator } from "./pi-score-simulator";
@@ -98,6 +98,7 @@ export function InstituteResultsDashboard({ candidate, result, afterScore }: { c
   const preUsesModel = result.preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION");
   const preSource = preUsesModel ? "MODEL_ASSUMPTION" as const : result.preInterview.status === "CALCULATED" ? "CALCULATED" as const : "OFFICIAL_POLICY" as const;
   const currentCallScore = result.preInterview.score;
+  const callMarginOutOf100 = normalizeScoreOutOf100(result.call.margin, result.preInterview.maxScore);
   const scoreFallback = result.preInterview.status === "DATA_REQUIRED" ? "Needs cycle data" : "Not calculated";
   const probabilityFallback = "Not estimated yet";
   const marginFallback = result.call.benchmarkValue == null ? "No benchmark" : "Not calculated";
@@ -145,11 +146,11 @@ export function InstituteResultsDashboard({ candidate, result, afterScore }: { c
         <div className="result-hero-main">
           <div className="result-score">
             <span className="result-score-label">{result.scoreLabel}</span>
-            <strong>{currentCallScore == null ? scoreFallback : `${formatScore(currentCallScore, 2)} / ${result.preInterview.maxScore}`}</strong>
+            <strong>{currentCallScore == null ? scoreFallback : formatScoreOutOf100(currentCallScore, result.preInterview.maxScore)}</strong>
             <SourceBadge source={preSource} />
             <div className="score-comparison">
-              <div><span>Benchmark</span><b>{result.call.benchmarkValue == null ? "Not configured" : formatScore(result.call.benchmarkValue, 2)}</b></div>
-              <div><span>Margin</span><b className={(result.call.margin ?? -1) >= 0 ? "positive-delta" : ""}>{result.call.margin == null ? marginFallback : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`}</b></div>
+              <div><span>Benchmark</span><b>{result.call.benchmarkValue == null ? "Not configured" : formatScoreOutOf100(result.call.benchmarkValue, result.preInterview.maxScore)}</b></div>
+              <div><span>Margin</span><b className={(callMarginOutOf100 ?? -1) >= 0 ? "positive-delta" : ""}>{callMarginOutOf100 == null ? marginFallback : `${callMarginOutOf100 >= 0 ? "+" : ""}${formatScore(callMarginOutOf100, 2)} pts`}</b></div>
             </div>
           </div>
         </div>

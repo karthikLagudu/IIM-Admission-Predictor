@@ -10,7 +10,7 @@ import {
   iimaHistoricalCallCategoryLabel,
   iimaHistoricalCallThreshold,
 } from "@/lib/iima/historical-call-records";
-import { formatProbability, formatScore, humanize } from "@/lib/utils";
+import { formatProbability, formatScore, formatScoreOutOf100, humanize, normalizeScoreOutOf100 } from "@/lib/utils";
 import { PiScoreSimulator } from "./pi-score-simulator";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
@@ -161,6 +161,7 @@ export function ResultsDashboard({
   const route = result.callRoute ? humanize(result.callRoute) : "No route cleared";
   const rating = result.applicationRating;
   const diagnostics = result.diagnostics;
+  const callMarginOutOf100 = normalizeScoreOutOf100(result.callMargin, 1);
   const topStrength = diagnostics?.strengths[0];
   const topGap = diagnostics?.gaps[0];
   const prePiArContribution = rating
@@ -198,11 +199,11 @@ export function ResultsDashboard({
         <div className="result-hero-main">
           <div className="result-score">
             <span className="result-score-label">Pre-PI / shortlist score</span>
-            <strong>{formatScore(result.compositeScore)} / 1</strong>
+            <strong>{result.compositeScore == null ? "Not calculated" : formatScoreOutOf100(result.compositeScore, 1)}</strong>
             <SourceBadge source="CALCULATED" />
             <div className="score-comparison">
-              <div><span>Benchmark</span><b>{formatScore(result.applicableCallThreshold)}</b></div>
-              <div><span>Margin</span><b className={(result.callMargin ?? -1) >= 0 ? "positive-delta" : ""}>{result.callMargin == null ? "—" : `${result.callMargin >= 0 ? "+" : ""}${result.callMargin.toFixed(6)}`}</b></div>
+              <div><span>Benchmark</span><b>{result.applicableCallThreshold == null ? "Not configured" : formatScoreOutOf100(result.applicableCallThreshold, 1)}</b></div>
+              <div><span>Margin</span><b className={(callMarginOutOf100 ?? -1) >= 0 ? "positive-delta" : ""}>{callMarginOutOf100 == null ? "—" : `${callMarginOutOf100 >= 0 ? "+" : ""}${formatScore(callMarginOutOf100, 2)} pts`}</b></div>
             </div>
           </div>
         </div>

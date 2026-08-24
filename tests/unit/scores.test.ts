@@ -10,6 +10,15 @@ import {
   requiredCatScaledScore,
   requiredNormalizedPi,
 } from "@/lib/iima";
+import { formatScoreOutOf100, normalizeScoreOutOf100 } from "@/lib/utils";
+
+describe("100-point score display", () => {
+  it("normalizes scores from different institute scales", () => {
+    expect(normalizeScoreOutOf100(0.813982, 1)).toBeCloseTo(81.3982, 6);
+    expect(normalizeScoreOutOf100(70.85, 85)).toBeCloseTo(83.352941, 6);
+    expect(formatScoreOutOf100(73.54, 100)).toBe("73.54 / 100");
+  });
+});
 
 describe("shortlist composite score", () => {
   it("uses the CAT-2025 38 and 204 denominators", () => {

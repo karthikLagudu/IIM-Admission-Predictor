@@ -9,41 +9,6 @@ export function SiteHeader() {
   const [showResultsTitle, setShowResultsTitle] = useState(false);
 
   useEffect(() => {
-    const red = [182, 59, 70];
-    const amber = [167, 101, 17];
-    const green = [20, 128, 93];
-    let animationFrame = 0;
-
-    const mixColor = (from: number[], to: number[], amount: number) => (
-      from.map((channel, index) => Math.round(channel + (to[index] - channel) * amount))
-    );
-
-    const updateScrollbarColor = () => {
-      animationFrame = 0;
-      const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const progress = maximumScroll === 0 ? 0 : Math.min(1, Math.max(0, window.scrollY / maximumScroll));
-      const color = progress <= 0.5
-        ? mixColor(red, amber, progress * 2)
-        : mixColor(amber, green, (progress - 0.5) * 2);
-      document.documentElement.style.setProperty("--scroll-thumb-color", `rgb(${color.join(", ")})`);
-    };
-
-    const scheduleUpdate = () => {
-      if (animationFrame === 0) animationFrame = window.requestAnimationFrame(updateScrollbarColor);
-    };
-
-    updateScrollbarColor();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-    return () => {
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-      if (animationFrame !== 0) window.cancelAnimationFrame(animationFrame);
-      document.documentElement.style.removeProperty("--scroll-thumb-color");
-    };
-  }, []);
-
-  useEffect(() => {
     const syncResultsTitle = (event?: Event) => {
       if (event instanceof CustomEvent && typeof event.detail === "boolean") {
         setShowResultsTitle(event.detail);

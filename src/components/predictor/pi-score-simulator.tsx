@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type CSSProperties } from "react";
 import { ArrowDown, RotateCcw } from "lucide-react";
 import { formatProbability, formatScore, humanize } from "@/lib/utils";
 
@@ -15,6 +15,18 @@ export interface PiCallCriterion {
   label: string;
   detail: string;
   passed: boolean | null;
+}
+
+function piSliderColor(percent: number): string {
+  const red = [182, 59, 70] as const;
+  const amber = [167, 101, 17] as const;
+  const green = [20, 128, 93] as const;
+  const progress = Math.min(100, Math.max(0, percent)) / 100;
+  const from = progress <= 0.5 ? red : amber;
+  const to = progress <= 0.5 ? amber : green;
+  const amount = progress <= 0.5 ? progress * 2 : (progress - 0.5) * 2;
+  const color = from.map((channel, index) => Math.round(channel + (to[index] - channel) * amount));
+  return `rgb(${color.join(", ")})`;
 }
 
 export function PiScoreSimulator({
@@ -57,6 +69,10 @@ export function PiScoreSimulator({
     setPiPercent(Math.min(100, Math.max(0, value)));
   };
   const scenario = simulate(piPercent);
+  const sliderStyle = {
+    "--pi-slider-color": piSliderColor(piPercent),
+    "--pi-slider-progress": `${piPercent}%`,
+  } as CSSProperties;
   const studentPosition = Math.min(100, Math.max(0, initialPercent));
   const studentMarkerClass = studentPosition <= 8 ? "edge-start" : studentPosition >= 92 ? "edge-end" : "";
 
@@ -97,7 +113,7 @@ export function PiScoreSimulator({
       ) : (
         <>
           <div className="pi-simulator-controls">
-            <div className="pi-slider-field">
+            <div className="pi-slider-field" style={sliderStyle}>
               <label htmlFor={sliderId}>PI performance</label>
               <div className="pi-range-wrap">
                 <div className={`pi-student-marker ${studentMarkerClass}`} style={{ left: `${studentPosition}%` }} aria-label={`You may be here for ${instituteName}, at an estimated PI performance of ${studentPosition.toFixed(0)} percent`}>

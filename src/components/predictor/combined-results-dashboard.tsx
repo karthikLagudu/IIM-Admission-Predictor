@@ -49,8 +49,6 @@ interface HistoricalComparisonSummary {
   reference: string | null;
   referenceDetail: string;
   studentScore: string;
-  gap: number | null;
-  gapPrecision: number;
   sourceUrl: string;
   sourceLabel: string;
   years: HistoricalYearComparison[];
@@ -219,8 +217,6 @@ export function CombinedResultsDashboard({
       reference: `${formatScore(latestIimaThresholdOutOf100, 2)} / 100`,
       referenceDetail: `Official PGP ${latestIimaHistory.batch} Stage-2 minimum CS · ${iimaHistoricalCallCategoryLabel(candidate)} · normalized to 100`,
       studentScore: currentIimaScoreOutOf100 == null ? "Not calculated" : `${formatScore(currentIimaScoreOutOf100, 2)} / 100`,
-      gap: currentIimaScoreOutOf100 == null ? null : currentIimaScoreOutOf100 - latestIimaThresholdOutOf100,
-      gapPrecision: 2,
       sourceUrl: latestIimaHistory.sourceUrl,
       sourceLabel: "Official record",
       years: IIMA_HISTORICAL_STAGE2_CALL_RECORDS.map((record) => {
@@ -258,8 +254,6 @@ export function CombinedResultsDashboard({
           ? `Published ${result.call.benchmarkType.toLowerCase().replaceAll("_", " ")} call-score reference · normalized to 100`
           : "No fixed previous-cycle interview-call score is publicly configured",
         studentScore: normalizedStudentScore == null ? "Not calculated" : `${formatScore(normalizedStudentScore, 2)} / 100`,
-        gap: normalizedReference != null && normalizedStudentScore != null ? normalizedStudentScore - normalizedReference : null,
-        gapPrecision: 2,
         sourceUrl: result.sourceUrl,
         sourceLabel: hasHistoricalNumber ? "Official record" : "Official process",
         years: historicalReference.cycles.map((cycle) => {
@@ -483,7 +477,6 @@ export function CombinedResultsDashboard({
                 <th scope="col">Institute</th>
                 <th scope="col">Previous-cycle reference (out of 100)</th>
                 <th scope="col">Student&apos;s current score (out of 100)</th>
-                <th scope="col">Difference (points)</th>
                 <th scope="col">Source</th>
               </tr>
             </thead>
@@ -498,7 +491,7 @@ export function CombinedResultsDashboard({
           <span>{showAllHistory ? "Show less historical data" : `View more historical comparisons (${historicalComparisons.length - visibleHistoricalComparisons.length} more IIMs)`}</span>
           {showAllHistory ? <ChevronUp size={17} aria-hidden="true" /> : <ChevronDown size={17} aria-hidden="true" />}
         </button>
-        <p className="all-history-note"><strong>Important:</strong> All numeric scores and differences in this table are normalized to a 100-point scale. “Not publicly published” is not a zero and does not indicate rejection. Mock planning benchmarks are excluded. Different IIMs still use different formulas, so this is not a cross-IIM ranking.</p>
+        <p className="all-history-note"><strong>Important:</strong> All numeric scores in this table are normalized to a 100-point scale. “Not publicly published” is not a zero and does not indicate rejection. Mock planning benchmarks are excluded. Different IIMs still use different formulas, so this is not a cross-IIM ranking.</p>
       </section>
 
     </div>
@@ -548,20 +541,11 @@ function HistoricalComparisonRows({ comparison, expanded }: { comparison: Histor
           <small>{comparison.referenceDetail}</small>
         </td>
         <td className="history-student-score">{comparison.studentScore}</td>
-        <td>
-          {comparison.gap == null ? (
-            <span className="history-unavailable">Official comparison unavailable</span>
-          ) : (
-            <strong className={comparison.gap >= 0 ? "history-above" : "history-below"}>
-              {comparison.gap >= 0 ? "+" : ""}{comparison.gap.toFixed(comparison.gapPrecision)} · {Math.abs(comparison.gap).toFixed(comparison.gapPrecision)} {comparison.gap >= 0 ? "above" : "below"}
-            </strong>
-          )}
-        </td>
         <td><a href={comparison.sourceUrl} target="_blank" rel="noreferrer">{comparison.sourceLabel}</a></td>
       </tr>
       {expanded && (
         <tr className="history-years-row">
-          <td colSpan={5}>
+          <td colSpan={4}>
             <div className="history-years-grid" aria-label={`${comparison.name} previous-year performance comparisons`}>
               {comparison.years.map((year) => (
                 <article className="history-year-card" key={`${comparison.key}-${year.batch}-${year.catYear}`}>

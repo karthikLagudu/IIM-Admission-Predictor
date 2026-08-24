@@ -200,6 +200,12 @@ export function CombinedResultsDashboard({
     }),
   ];
   const activeSummary = summaries.find((summary) => summary.key === activeDetail) ?? null;
+  const chanceCounts: Record<ChanceBand | "ALL", number> = {
+    ALL: summaries.length,
+    HIGH: summaries.filter((summary) => summary.chanceBand === "HIGH").length,
+    MEDIUM: summaries.filter((summary) => summary.chanceBand === "MEDIUM").length,
+    LOW: summaries.filter((summary) => summary.chanceBand === "LOW").length,
+  };
   const filteredSummaries = chanceFilter === "ALL"
     ? summaries
     : summaries.filter((summary) => summary.chanceBand === chanceFilter);
@@ -403,13 +409,13 @@ export function CombinedResultsDashboard({
   return (
     <div className="all-results-stack" aria-live="polite" data-iim-results-active="true">
       {headerFilterHost && createPortal(
-        <ChanceBandFilters value={chanceFilter} onChange={setChanceFilter} className="header-chance-filters" />,
+        <ChanceBandFilters value={chanceFilter} counts={chanceCounts} onChange={setChanceFilter} className="header-chance-filters" />,
         headerFilterHost,
       )}
       <section className="panel results-table-panel" aria-labelledby="all-results-heading">
         <h2 className="sr-only" id="all-results-heading">Your IIM results</h2>
 
-        <ChanceBandFilters value={chanceFilter} onChange={setChanceFilter} className="results-chance-filters-mobile" />
+        <ChanceBandFilters value={chanceFilter} counts={chanceCounts} onChange={setChanceFilter} className="results-chance-filters-mobile" />
 
         <div className="institute-results-table-wrap">
           <table className="institute-results-table">
@@ -501,10 +507,12 @@ export function CombinedResultsDashboard({
 
 function ChanceBandFilters({
   value,
+  counts,
   onChange,
   className,
 }: {
   value: ChanceBand | "ALL";
+  counts: Record<ChanceBand | "ALL", number>;
   onChange: (value: ChanceBand | "ALL") => void;
   className: string;
 }) {
@@ -525,7 +533,8 @@ function ChanceBandFilters({
           onClick={() => onChange(option.value)}
           key={option.value}
         >
-          {option.label}
+          <span>{option.label}</span>
+          <strong className="chance-filter-count">{counts[option.value]}</strong>
         </button>
       ))}
     </div>

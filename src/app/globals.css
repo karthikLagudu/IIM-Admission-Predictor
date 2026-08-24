@@ -177,10 +177,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .institute-results-table tbody tr:hover > th:first-child { background: #f8fbfc; }
 .institute-results-table tbody th strong { display: block; font-family: Georgia, serif; font-size: 15px; line-height: 1.15; font-weight: 600; }
 .institute-results-table tbody td { color: var(--navy-800); font-size: 9px; }
-.chance-filter-group { display: flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid #dce3e8; border-radius: 999px; background: #f7f9fa; box-shadow: 0 5px 14px rgba(15,23,42,.05); }
-.chance-filter-button { min-width: 48px; padding: 5px 9px; border: 0; border-radius: 999px; background: transparent; color: #64748b; font-size: 8px; font-weight: 850; line-height: 1; text-transform: uppercase; cursor: pointer; transition: background-color .18s ease, color .18s ease, box-shadow .18s ease; }
+.chance-filter-group { display: flex; align-items: center; gap: 6px; padding: 6px; border: 1px solid #dce3e8; border-radius: 999px; background: #f7f9fa; box-shadow: 0 7px 18px rgba(15,23,42,.08); }
+.chance-filter-button { min-width: 76px; min-height: 36px; padding: 8px 12px; border: 0; border-radius: 999px; background: transparent; color: #64748b; font-size: 10px; font-weight: 850; line-height: 1; text-transform: uppercase; cursor: pointer; transition: background-color .18s ease, color .18s ease, box-shadow .18s ease; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.chance-filter-count { min-width: 21px; height: 21px; padding: 0 5px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: #e2e8f0; color: var(--navy-900); font-size: 9px; font-weight: 900; font-variant-numeric: tabular-nums; }
 .chance-filter-button:hover { background: white; color: var(--navy-900); }
 .chance-filter-button.active { background: var(--navy-900); color: white; box-shadow: 0 4px 10px rgba(15,23,42,.18); }
+.chance-filter-button.active .chance-filter-count { background: rgba(255,255,255,.2); color: white; }
 .chance-filter-button.high.active { background: var(--green); }
 .chance-filter-button.medium.active { background: var(--amber); }
 .chance-filter-button.low.active { background: var(--red); }

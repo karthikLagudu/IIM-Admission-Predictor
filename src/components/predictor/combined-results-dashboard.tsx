@@ -450,9 +450,10 @@ export function CombinedResultsDashboard({
                   <td className="result-table-call-chance">
                     <strong>{summary.callChance}</strong>
                   </td>
-                  <td className="result-table-chance">
-                    <span>{summary.chance}</span>
-                    <small className={`seat-chance-band ${summary.chanceBand.toLowerCase()}`}>{summary.chanceBand.toLowerCase()}</small>
+                  <td className="result-table-chance" aria-label={`Expected seat chance: ${summary.chanceBand.toLowerCase()}`}>
+                    <small className={`seat-chance-band ${summary.chanceBand.toLowerCase()}`}>
+                      {summary.chanceBand === "MEDIUM" ? "med" : summary.chanceBand.toLowerCase()}
+                    </small>
                   </td>
                   <td className="result-table-timing">{summary.callTiming}</td>
                   <td className="result-table-basis">{summary.callBasis}</td>

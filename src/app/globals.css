@@ -166,7 +166,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .results-table-panel { padding: 8px 12px 12px; }
 .edit-profile-button { min-height: 34px; padding: 7px 12px; border: 1px solid #b9ccd7; border-radius: 7px; background: white; color: var(--blue-700); font-size: 9px; font-weight: 800; cursor: pointer; }
 .edit-profile-button:hover { background: #edf5f9; }
-.institute-results-table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 11px; background: white; }
+.institute-results-table-wrap { width: 100%; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; border: 1px solid var(--line); border-radius: 11px; background: white; }
+.institute-results-table-wrap::-webkit-scrollbar { display: none; }
 .institute-results-table { width: 100%; min-width: 1260px; border-collapse: separate; border-spacing: 0; }
 .institute-results-table th, .institute-results-table td { padding: 9px 12px; text-align: left; vertical-align: middle; }
 .institute-results-table thead th { border-bottom: 1px solid var(--line); background: #f5f8fa; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }

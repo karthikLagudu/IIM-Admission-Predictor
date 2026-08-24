@@ -534,7 +534,7 @@ function HistoricalComparisonRows({ comparison, expanded }: { comparison: Histor
   return (
     <>
       <tr>
-        <th scope="row"><span>{comparison.key}</span><strong>{comparison.name}</strong></th>
+        <th scope="row"><strong>{comparison.name}</strong></th>
         <td>
           <strong className={comparison.reference == null ? "history-unavailable" : ""}>{comparison.reference ?? "Not publicly published"}</strong>
           <small>{comparison.referenceDetail}</small>

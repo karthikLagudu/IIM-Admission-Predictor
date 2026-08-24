@@ -22,11 +22,16 @@
   --purple: #7454a6;
   --purple-soft: #f1eafa;
   --pink: #ed237a;
+  --scroll-thumb-color: #b63b46;
   --shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scrollbar-color: var(--scroll-thumb-color) #eef2f7; }
+html::-webkit-scrollbar { width: 13px; }
+html::-webkit-scrollbar-track { background: #eef2f7; }
+html::-webkit-scrollbar-thumb { min-height: 48px; border: 3px solid #eef2f7; border-radius: 999px; background: var(--scroll-thumb-color); transition: background-color .12s linear; }
+html::-webkit-scrollbar-thumb:hover { border-width: 2px; }
 body {
   margin: 0;
   background: var(--surface);

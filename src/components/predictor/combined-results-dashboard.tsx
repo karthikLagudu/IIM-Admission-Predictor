@@ -73,8 +73,13 @@ function seatChanceBand(probability: number | null | undefined): ChanceBand {
 }
 
 function formatScoreOutOf100(score: number, maxScore: number): string {
-  if (!Number.isFinite(maxScore) || maxScore <= 0) return "Not calculated";
-  return `${formatScore((score / maxScore) * 100, 2)} / 100`;
+  const normalizedScore = normalizeScoreOutOf100(score, maxScore);
+  return normalizedScore == null ? "Not calculated" : `${formatScore(normalizedScore, 2)} / 100`;
+}
+
+function normalizeScoreOutOf100(score: number, maxScore: number): number | null {
+  if (!Number.isFinite(score) || !Number.isFinite(maxScore) || maxScore <= 0) return null;
+  return (score / maxScore) * 100;
 }
 
 function iimaCallTiming(result: IimaPredictionResult): string {
@@ -197,26 +202,31 @@ export function CombinedResultsDashboard({
   const activeInstituteResult = activeDetail === "IIMA" ? null : results.institutes.find((result) => result.institute === activeDetail) ?? null;
   const latestIimaHistory = IIMA_HISTORICAL_STAGE2_CALL_RECORDS[0];
   const latestIimaThreshold = iimaHistoricalCallThreshold(latestIimaHistory, candidate);
+  const currentIimaScoreOutOf100 = results.IIMA.compositeScore == null
+    ? null
+    : normalizeScoreOutOf100(results.IIMA.compositeScore, 1);
+  const latestIimaThresholdOutOf100 = normalizeScoreOutOf100(latestIimaThreshold, 1)!;
   const historicalComparisons: HistoricalComparisonSummary[] = [
     {
       key: "IIMA",
       name: "IIM Ahmedabad",
-      reference: latestIimaThreshold.toFixed(6),
-      referenceDetail: `Official PGP ${latestIimaHistory.batch} Stage-2 minimum CS · ${iimaHistoricalCallCategoryLabel(candidate)}`,
-      studentScore: results.IIMA.compositeScore == null ? "Not calculated" : formatScore(results.IIMA.compositeScore, 6),
-      gap: results.IIMA.compositeScore == null ? null : results.IIMA.compositeScore - latestIimaThreshold,
-      gapPrecision: 6,
+      reference: `${formatScore(latestIimaThresholdOutOf100, 2)} / 100`,
+      referenceDetail: `Official PGP ${latestIimaHistory.batch} Stage-2 minimum CS · ${iimaHistoricalCallCategoryLabel(candidate)} · normalized to 100`,
+      studentScore: currentIimaScoreOutOf100 == null ? "Not calculated" : `${formatScore(currentIimaScoreOutOf100, 2)} / 100`,
+      gap: currentIimaScoreOutOf100 == null ? null : currentIimaScoreOutOf100 - latestIimaThresholdOutOf100,
+      gapPrecision: 2,
       sourceUrl: latestIimaHistory.sourceUrl,
       sourceLabel: "Official record",
       years: IIMA_HISTORICAL_STAGE2_CALL_RECORDS.map((record) => {
         const threshold = iimaHistoricalCallThreshold(record, candidate);
-        const gap = results.IIMA.compositeScore == null ? null : results.IIMA.compositeScore - threshold;
+        const thresholdOutOf100 = normalizeScoreOutOf100(threshold, 1)!;
+        const gap = currentIimaScoreOutOf100 == null ? null : currentIimaScoreOutOf100 - thresholdOutOf100;
         return {
           batch: `PGP ${record.batch}`,
           catYear: Number(record.catYear),
-          reference: `Stage-2 minimum CS ${threshold.toFixed(6)}`,
-          studentPerformance: results.IIMA.compositeScore == null ? "Current CS not calculated" : `Current CS ${formatScore(results.IIMA.compositeScore, 6)}`,
-          comparison: gap == null ? "Comparison unavailable" : `${gap >= 0 ? "+" : ""}${gap.toFixed(6)} ${gap >= 0 ? "above" : "below"}`,
+          reference: `Stage-2 minimum CS ${formatScore(thresholdOutOf100, 2)} / 100`,
+          studentPerformance: currentIimaScoreOutOf100 == null ? "Current CS not calculated" : `Current CS ${formatScore(currentIimaScoreOutOf100, 2)} / 100`,
+          comparison: gap == null ? "Comparison unavailable" : `${gap >= 0 ? "+" : ""}${gap.toFixed(2)} points ${gap >= 0 ? "above" : "below"}`,
           tone: gap == null ? "unavailable" : gap >= 0 ? "above" : "below",
           note: `Official ${iimaHistoricalCallCategoryLabel(candidate)} Stage-2 interview-call record.`,
           sourceUrl: record.sourceUrl,
@@ -227,16 +237,22 @@ export function CombinedResultsDashboard({
       const hasHistoricalNumber = (result.call.benchmarkType === "HISTORICAL" || result.call.benchmarkType === "OFFICIAL_RESULT")
         && result.call.benchmarkValue != null;
       const studentScore = result.preInterview.score;
+      const normalizedStudentScore = studentScore == null
+        ? null
+        : normalizeScoreOutOf100(studentScore, result.preInterview.maxScore);
+      const normalizedReference = hasHistoricalNumber
+        ? normalizeScoreOutOf100(result.call.benchmarkValue!, result.preInterview.maxScore)
+        : null;
       const historicalReference = instituteHistoricalReference(result.institute);
       return {
         key: result.institute,
         name: result.instituteName,
-        reference: hasHistoricalNumber ? formatScore(result.call.benchmarkValue, 2) : null,
+        reference: normalizedReference == null ? null : `${formatScore(normalizedReference, 2)} / 100`,
         referenceDetail: hasHistoricalNumber
-          ? `Published ${result.call.benchmarkType.toLowerCase().replaceAll("_", " ")} call-score reference`
+          ? `Published ${result.call.benchmarkType.toLowerCase().replaceAll("_", " ")} call-score reference · normalized to 100`
           : "No fixed previous-cycle interview-call score is publicly configured",
-        studentScore: studentScore == null ? "Not calculated" : `${formatScore(studentScore, 2)} / ${result.preInterview.maxScore}`,
-        gap: hasHistoricalNumber && studentScore != null ? studentScore - result.call.benchmarkValue! : null,
+        studentScore: normalizedStudentScore == null ? "Not calculated" : `${formatScore(normalizedStudentScore, 2)} / 100`,
+        gap: normalizedReference != null && normalizedStudentScore != null ? normalizedStudentScore - normalizedReference : null,
         gapPrecision: 2,
         sourceUrl: result.sourceUrl,
         sourceLabel: hasHistoricalNumber ? "Official record" : "Official process",
@@ -446,9 +462,9 @@ export function CombinedResultsDashboard({
             <thead>
               <tr>
                 <th scope="col">Institute</th>
-                <th scope="col">Previous-cycle reference</th>
-                <th scope="col">Student&apos;s current score</th>
-                <th scope="col">Difference</th>
+                <th scope="col">Previous-cycle reference (out of 100)</th>
+                <th scope="col">Student&apos;s current score (out of 100)</th>
+                <th scope="col">Difference (points)</th>
                 <th scope="col">Source</th>
               </tr>
             </thead>
@@ -463,7 +479,7 @@ export function CombinedResultsDashboard({
           <span>{showAllHistory ? "Show less historical data" : `View more historical comparisons (${historicalComparisons.length - visibleHistoricalComparisons.length} more IIMs)`}</span>
           {showAllHistory ? <ChevronUp size={17} aria-hidden="true" /> : <ChevronDown size={17} aria-hidden="true" />}
         </button>
-        <p className="all-history-note"><strong>Important:</strong> “Not publicly published” is not a zero and does not indicate rejection. Mock planning benchmarks are excluded from this historical table. Scores from different IIMs use different formulas and are shown institute-by-institute, not as a cross-IIM ranking.</p>
+        <p className="all-history-note"><strong>Important:</strong> All numeric scores and differences in this table are normalized to a 100-point scale. “Not publicly published” is not a zero and does not indicate rejection. Mock planning benchmarks are excluded. Different IIMs still use different formulas, so this is not a cross-IIM ranking.</p>
       </section>
 
     </div>

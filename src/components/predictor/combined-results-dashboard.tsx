@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeft, CalendarClock, ChevronDown, ChevronRight, ChevronUp, ListChecks, Sparkles } from "lucide-react";
 import type { CandidateInput, IimaPolicyConfig, IimaPredictionResult } from "@/types/iima";
 import type { InstituteKey, InstitutePredictionResult } from "@/types/institutes";
@@ -134,6 +135,8 @@ export function CombinedResultsDashboard({
 }) {
   const [activeDetail, setActiveDetail] = useState<InstituteKey | null>(null);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [chanceFilter, setChanceFilter] = useState<ChanceBand | "ALL">("ALL");
+  const [headerFilterHost, setHeaderFilterHost] = useState<HTMLElement | null>(null);
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
   const iimaChance = results.IIMA.finalSelection?.seatProbability ?? 0;
   const iimaBasis = iimaCallBasis(results.IIMA);
@@ -199,6 +202,9 @@ export function CombinedResultsDashboard({
     }),
   ];
   const activeSummary = summaries.find((summary) => summary.key === activeDetail) ?? null;
+  const filteredSummaries = chanceFilter === "ALL"
+    ? summaries
+    : summaries.filter((summary) => summary.chanceBand === chanceFilter);
   const activeInstituteResult = activeDetail === "IIMA" ? null : results.institutes.find((result) => result.institute === activeDetail) ?? null;
   const latestIimaHistory = IIMA_HISTORICAL_STAGE2_CALL_RECORDS[0];
   const latestIimaThreshold = iimaHistoricalCallThreshold(latestIimaHistory, candidate);
@@ -295,6 +301,10 @@ export function CombinedResultsDashboard({
     }),
   ];
   const visibleHistoricalComparisons = showAllHistory ? historicalComparisons : historicalComparisons.slice(0, 5);
+
+  useEffect(() => {
+    setHeaderFilterHost(document.getElementById("header-results-filter-host"));
+  }, []);
 
   useEffect(() => {
     if (!activeDetail) return;
@@ -397,8 +407,14 @@ export function CombinedResultsDashboard({
 
   return (
     <div className="all-results-stack" aria-live="polite" data-iim-results-active="true">
+      {headerFilterHost && createPortal(
+        <ChanceBandFilters value={chanceFilter} onChange={setChanceFilter} className="header-chance-filters" />,
+        headerFilterHost,
+      )}
       <section className="panel results-table-panel" aria-labelledby="all-results-heading">
         <h2 className="sr-only" id="all-results-heading">Your IIM results</h2>
+
+        <ChanceBandFilters value={chanceFilter} onChange={setChanceFilter} className="results-chance-filters-mobile" />
 
         <div className="institute-results-table-wrap">
           <table className="institute-results-table">
@@ -414,7 +430,7 @@ export function CombinedResultsDashboard({
               </tr>
             </thead>
             <tbody>
-              {summaries.map((summary) => (
+              {filteredSummaries.map((summary) => (
                 <tr className={summary.tone} key={summary.key}>
                   <th scope="row">
                     <strong>{summary.name}</strong>
@@ -441,6 +457,11 @@ export function CombinedResultsDashboard({
                   <td className="result-table-basis">{summary.callBasis}</td>
                 </tr>
               ))}
+              {filteredSummaries.length === 0 && (
+                <tr>
+                  <td className="results-filter-empty" colSpan={7}>No IIMs match the selected seat-chance filter.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -480,6 +501,39 @@ export function CombinedResultsDashboard({
         <p className="all-history-note"><strong>Important:</strong> All numeric scores and differences in this table are normalized to a 100-point scale. “Not publicly published” is not a zero and does not indicate rejection. Mock planning benchmarks are excluded. Different IIMs still use different formulas, so this is not a cross-IIM ranking.</p>
       </section>
 
+    </div>
+  );
+}
+
+function ChanceBandFilters({
+  value,
+  onChange,
+  className,
+}: {
+  value: ChanceBand | "ALL";
+  onChange: (value: ChanceBand | "ALL") => void;
+  className: string;
+}) {
+  const options: Array<{ value: ChanceBand | "ALL"; label: string }> = [
+    { value: "ALL", label: "All" },
+    { value: "HIGH", label: "High" },
+    { value: "MEDIUM", label: "Medium" },
+    { value: "LOW", label: "Low" },
+  ];
+
+  return (
+    <div className={`chance-filter-group ${className}`} role="group" aria-label="Filter IIMs by expected seat chance">
+      {options.map((option) => (
+        <button
+          type="button"
+          className={`chance-filter-button ${option.value.toLowerCase()} ${value === option.value ? "active" : ""}`}
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
+          key={option.value}
+        >
+          {option.label}
+        </button>
+      ))}
     </div>
   );
 }

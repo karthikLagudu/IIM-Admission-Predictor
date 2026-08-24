@@ -28,13 +28,16 @@ export function SiteHeader() {
           <Image src={thinkplusLogo} alt="Thinkplus" priority />
         </Link>
         {showResultsTitle ? <strong className="header-results-title">Your IIM results</strong> : <span aria-hidden="true" />}
-        <div className="header-actions">
-          {showResultsTitle ? (
-            <button type="button" className="header-cta" onClick={() => window.dispatchEvent(new Event("iim-edit-candidate"))}>Enter candidate details</button>
-          ) : (
-            <Link className="header-cta" href="/predictor">Enter candidate details</Link>
-          )}
-          <Link className="header-methodology" href="/methodology">Methodology</Link>
+        <div className="header-tools">
+          <div className="header-results-filter-host" id="header-results-filter-host" />
+          <div className="header-actions">
+            {showResultsTitle ? (
+              <button type="button" className="header-cta" onClick={() => window.dispatchEvent(new Event("iim-edit-candidate"))}>Enter candidate details</button>
+            ) : (
+              <Link className="header-cta" href="/predictor">Enter candidate details</Link>
+            )}
+            <Link className="header-methodology" href="/methodology">Methodology</Link>
+          </div>
         </div>
       </div>
     </header>

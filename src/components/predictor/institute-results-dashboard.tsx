@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Check, ChevronDown, ChevronUp, Circle, Database, X } from "lucide-react";
 import type { CandidateInput } from "@/types/iima";
 import type { InstitutePredictionResult, InstituteScoreComponent } from "@/types/institutes";
@@ -78,7 +79,7 @@ function TextInsightList({ title, emptyMessage, items, tone }: { title: string; 
   );
 }
 
-export function InstituteResultsDashboard({ candidate, result }: { candidate: CandidateInput; result: InstitutePredictionResult }) {
+export function InstituteResultsDashboard({ candidate, result, afterScore }: { candidate: CandidateInput; result: InstitutePredictionResult; afterScore?: ReactNode }) {
   const [showMore, setShowMore] = useState(false);
   useEffect(() => {
     setShowMore(false);
@@ -153,6 +154,8 @@ export function InstituteResultsDashboard({ candidate, result }: { candidate: Ca
           </div>
         </div>
       </section>
+
+      {afterScore}
 
       <section className="panel feedback-summary" aria-labelledby="institute-feedback-heading">
         <div className="section-heading compact-heading"><div><h3 id="institute-feedback-heading">At a glance</h3><p>The most important strength and concern in this profile.</p></div></div>

@@ -314,6 +314,33 @@ export function CombinedResultsDashboard({
   }, []);
 
   if (activeDetail && activeSummary) {
+    const callOutlookPanel = (
+      <section className="panel call-outlook-panel" aria-labelledby="call-outlook-heading">
+        <div className="call-outlook-heading">
+          <span>Interview-call outlook</span>
+          <h2 id="call-outlook-heading">When could this student get a call—and why?</h2>
+        </div>
+        <div className="call-outlook-grid">
+          <article>
+            <CalendarClock size={21} aria-hidden="true" />
+            <div>
+              <span>Expected timing</span>
+              <strong>{activeSummary.callTiming}</strong>
+              <p>The month range is a planning estimate, not an official announcement. Always verify the institute portal and registered email.</p>
+            </div>
+          </article>
+          <article>
+            <ListChecks size={21} aria-hidden="true" />
+            <div>
+              <span>Basis for this result</span>
+              <strong>{activeSummary.callBasis}</strong>
+              <p>{activeSummary.callBasisDetail}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    );
+
     return (
       <div className="institute-focus-shell" aria-live="polite">
         <div className="institute-focus-toolbar">
@@ -359,35 +386,10 @@ export function CombinedResultsDashboard({
           <p>Start with the concise result below. Open <strong>More feedback</strong> only when you want the complete calculation and comparison.</p>
         </section>
 
-        <section className="panel call-outlook-panel" aria-labelledby="call-outlook-heading">
-          <div className="call-outlook-heading">
-            <span>Interview-call outlook</span>
-            <h2 id="call-outlook-heading">When could this student get a call—and why?</h2>
-          </div>
-          <div className="call-outlook-grid">
-            <article>
-              <CalendarClock size={21} aria-hidden="true" />
-              <div>
-                <span>Expected timing</span>
-                <strong>{activeSummary.callTiming}</strong>
-                <p>The month range is a planning estimate, not an official announcement. Always verify the institute portal and registered email.</p>
-              </div>
-            </article>
-            <article>
-              <ListChecks size={21} aria-hidden="true" />
-              <div>
-                <span>Basis for this result</span>
-                <strong>{activeSummary.callBasis}</strong>
-                <p>{activeSummary.callBasisDetail}</p>
-              </div>
-            </article>
-          </div>
-        </section>
-
         <section className="institute-focus-content" aria-label={`${activeDetail} detailed result`}>
           {activeDetail === "IIMA"
-            ? <ResultsDashboard candidate={candidate} result={results.IIMA} policy={policy} />
-            : activeInstituteResult && <InstituteResultsDashboard candidate={candidate} result={activeInstituteResult} />}
+            ? <ResultsDashboard candidate={candidate} result={results.IIMA} policy={policy} afterScore={callOutlookPanel} />
+            : activeInstituteResult && <InstituteResultsDashboard candidate={candidate} result={activeInstituteResult} afterScore={callOutlookPanel} />}
         </section>
 
         <button type="button" className="focus-back-button focus-back-footer" onClick={() => setActiveDetail(null)}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Check, ChevronDown, ChevronUp, Circle, Compass, X } from "lucide-react";
 import type { CandidateInput, IimaPolicyConfig, IimaPredictionResult, PredictionInsight } from "@/types/iima";
 import { SourceBadge } from "@/components/ui/source-badge";
@@ -146,10 +147,12 @@ export function ResultsDashboard({
   candidate,
   result,
   policy,
+  afterScore,
 }: {
   candidate: CandidateInput;
   result: IimaPredictionResult;
   policy: IimaPolicyConfig;
+  afterScore?: ReactNode;
 }) {
   const [showMoreFeedback, setShowMoreFeedback] = useState(false);
   const final = result.finalSelection;
@@ -204,6 +207,8 @@ export function ResultsDashboard({
           </div>
         </div>
       </section>
+
+      {afterScore}
 
       {diagnostics && (
         <section className="panel feedback-summary" aria-labelledby="feedback-summary-heading">

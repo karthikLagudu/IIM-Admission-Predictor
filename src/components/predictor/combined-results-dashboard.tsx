@@ -427,7 +427,6 @@ export function CombinedResultsDashboard({
                 <th scope="col">Expected call chance</th>
                 <th scope="col">Expected seat chance</th>
                 <th scope="col">Expected call window</th>
-                <th scope="col">Call basis</th>
               </tr>
             </thead>
             <tbody>
@@ -456,12 +455,11 @@ export function CombinedResultsDashboard({
                     </small>
                   </td>
                   <td className="result-table-timing">{summary.callTiming}</td>
-                  <td className="result-table-basis">{summary.callBasis}</td>
                 </tr>
               ))}
               {filteredSummaries.length === 0 && (
                 <tr>
-                  <td className="results-filter-empty" colSpan={7}>No IIMs match the selected seat-chance filter.</td>
+                  <td className="results-filter-empty" colSpan={6}>No IIMs match the selected seat-chance filter.</td>
                 </tr>
               )}
             </tbody>

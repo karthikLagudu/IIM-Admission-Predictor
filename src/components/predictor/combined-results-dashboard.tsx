@@ -340,10 +340,9 @@ export function CombinedResultsDashboard({
               <span>{activeSummary.scoreLabel}</span>
               <strong>{activeSummary.score}</strong>
             </div>
-            <div>
+            <div aria-label={`Expected interview-call chance ${activeSummary.callChance}. ${activeSummary.callChanceDetail}`}>
               <span>Expected interview-call chance</span>
               <strong>{activeSummary.callChance}</strong>
-              <small>{activeSummary.callChanceDetail}</small>
             </div>
             <div>
               <span>{activeSummary.chanceLabel}</span>

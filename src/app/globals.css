@@ -281,16 +281,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .report-reading-guide > div span { width: 25px; height: 25px; flex: 0 0 25px; border-radius: 50%; display: grid; place-items: center; background: #eaf4f9; color: var(--blue-600); font-size: 8px; font-weight: 850; }
 .report-reading-guide > div strong { color: var(--navy-800); font-size: 9px; }
 .report-reading-guide > p { grid-column: 1 / -1; margin: 0; padding: 10px 15px; border-top: 1px solid var(--line); background: #f7fafb; color: var(--muted); font-size: 9px; }
-.call-outlook-panel { padding: 22px; }
+.call-outlook-panel { padding: 14px 18px; display: grid; grid-template-columns: minmax(290px, .72fr) minmax(0, 1.28fr); align-items: center; gap: 18px; }
 .call-outlook-heading span { color: var(--blue-600); font-size: 8px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
-.call-outlook-heading h2 { margin: 4px 0 16px; color: var(--navy-900); font-family: Georgia, serif; font-size: 22px; font-weight: 600; }
-.call-outlook-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.call-outlook-grid article { min-width: 0; padding: 17px; display: flex; align-items: flex-start; gap: 12px; background: #fff; }
+.call-outlook-heading h2 { margin: 3px 0 0; color: var(--navy-900); font-family: Georgia, serif; font-size: 16px; line-height: 1.25; font-weight: 600; }
+.call-outlook-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
+.call-outlook-grid article { min-width: 0; padding: 8px 14px; display: flex; align-items: center; gap: 10px; background: #fff; }
 .call-outlook-grid article:first-child { border-right: 1px solid var(--line); }
 .call-outlook-grid article > svg { flex: 0 0 auto; color: var(--green); }
 .call-outlook-grid article span { display: block; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
-.call-outlook-grid article strong { display: block; margin-top: 5px; color: var(--navy-900); font-size: 13px; line-height: 1.4; }
-.call-outlook-grid article p { margin: 7px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.call-outlook-grid article strong { display: block; margin-top: 3px; color: var(--navy-900); font-size: 11px; line-height: 1.3; }
+.call-outlook-grid article p { margin: 3px 0 0; color: var(--muted); font-size: 8px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pi-simulator { padding: 21px; }
 .pi-simulator-disclosure { display: flex; justify-content: center; }
 .pi-simulator-disclosure .feedback-toggle { width: min(100%, 520px); }
@@ -405,11 +405,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .result-table-call-chance { min-width: 180px; }
 .result-table-call-chance strong { display: block; color: var(--green); font-size: 16px; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .institute-results-table tr.negative .result-table-call-chance strong { color: var(--red); }
-.result-score { padding: 26px; display: flex; flex-direction: column; justify-content: center; background: #fbfcfd; }
+.result-score { padding: 13px 18px; display: grid; grid-template-columns: auto auto auto minmax(280px, 1fr); align-items: center; gap: 16px; background: #fbfcfd; }
 .result-score-label { color: var(--muted); text-transform: uppercase; letter-spacing: .1em; font-size: 9px; font-weight: 800; }
-.result-score strong { font-family: Georgia, serif; font-size: 38px; color: var(--navy-900); line-height: 1.15; font-weight: 500; font-variant-numeric: tabular-nums; }
-.score-comparison { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 11px; }
-.score-comparison div { padding: 8px; border: 1px solid var(--line); border-radius: 7px; background: white; }
+.result-score strong { font-family: Georgia, serif; font-size: 28px; color: var(--navy-900); line-height: 1.1; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.score-comparison { min-width: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; margin-top: 0; border-left: 1px solid var(--line); }
+.score-comparison div { min-width: 0; padding: 5px 14px; border: 0; border-right: 1px solid var(--line); border-radius: 0; background: transparent; }
 .score-comparison span, .metric-card span { display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
 .score-comparison b { font-size: 12px; font-variant-numeric: tabular-nums; }
 .source-badge { display: inline-flex; align-items: center; width: fit-content; border-radius: 999px; padding: 3px 7px; font-size: 8px; line-height: 1.3; text-transform: uppercase; letter-spacing: .07em; font-weight: 850; border: 1px solid transparent; }
@@ -934,6 +934,8 @@ h1, h2, h3, h4, h5, h6,
   .report-reading-guide > div:nth-child(2) { border-right: 0; }
   .report-reading-guide > div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .call-outlook-grid { grid-template-columns: 1fr; }
+  .call-outlook-panel { display: block; padding: 18px; }
+  .call-outlook-heading h2 { margin-bottom: 12px; font-size: 18px; }
   .call-outlook-grid article:first-child { border-right: 0; border-bottom: 1px solid var(--line); }
   .pi-simulator-controls { grid-template-columns: 1fr; gap: 15px; }
   .pi-call-context { grid-template-columns: 1fr; }
@@ -951,6 +953,10 @@ h1, h2, h3, h4, h5, h6,
   .form-only .panel-header { padding-inline: 20px; }
   .form-only .form-body { padding-inline: 20px; padding-bottom: 21px; }
   .result-hero-main, .final-top { grid-template-columns: 1fr; }
+  .result-score { grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px 12px; padding: 18px; }
+  .result-score > .source-badge { justify-self: end; }
+  .score-comparison { grid-column: 1 / -1; margin-top: 3px; border-left: 0; }
+  .score-comparison div { padding-inline: 8px; }
   .feedback-snapshot-grid { grid-template-columns: 1fr; }
   .insight-grid { grid-template-columns: 1fr; }
   .eligibility-check-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

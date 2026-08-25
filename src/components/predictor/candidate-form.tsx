@@ -2,7 +2,7 @@
 
 import type { CandidateInput } from "@/types/iima";
 import type { InstituteKey } from "@/types/institutes";
-import { ACADEMIC_CATEGORY_LABELS, classifyDegreeForInstitutes, DEGREE_OPTIONS, estimateCat2025OverallPercentile, estimateCat2025SectionScaledScore, SAMPLE_CANDIDATE } from "@/lib/iima";
+import { ACADEMIC_CATEGORY_LABELS, classifyDegreeForInstitutes, DEGREE_OPTIONS, estimateCat2025OverallPercentile, SAMPLE_CANDIDATE } from "@/lib/iima";
 import { BookOpen, BriefcaseBusiness, ChevronLeft, ChevronRight, GraduationCap, UserRound } from "lucide-react";
 
 interface CandidateFormProps {
@@ -19,6 +19,32 @@ interface CandidateFormProps {
 
 const steps = ["Personal", "Academic", "Experience", "CAT"];
 const displayNumber = (value: number | undefined) => value == null || value === 0 ? "" : value;
+
+const CAT_SECTIONS = [
+  {
+    id: "varc",
+    label: "VARC",
+    maxQuestions: 24,
+    correctKey: "catVarcCorrectAnswers",
+    wrongKey: "catVarcWrongAnswers",
+  },
+  {
+    id: "dilr",
+    label: "DILR",
+    maxQuestions: 22,
+    correctKey: "catDilrCorrectAnswers",
+    wrongKey: "catDilrWrongAnswers",
+  },
+  {
+    id: "qa",
+    label: "QA",
+    maxQuestions: 22,
+    correctKey: "catQaCorrectAnswers",
+    wrongKey: "catQaWrongAnswers",
+  },
+] as const;
+
+type CatSectionId = (typeof CAT_SECTIONS)[number]["id"];
 
 export function CandidateForm({
   institute,
@@ -41,28 +67,34 @@ export function CandidateForm({
   const replaceZeroOnFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     if (event.currentTarget.value === "0") event.currentTarget.select();
   };
-  const sectionalPercentile = (
-    key: "catVarcPercentile" | "catDilrPercentile" | "catQaPercentile",
-    raw: string,
-  ) => {
-    const value = raw === "" ? 0 : Number(raw);
+  const updateCatAnswers = (sectionId: CatSectionId, answerType: "correct" | "wrong", raw: string) => {
+    const section = CAT_SECTIONS.find((item) => item.id === sectionId)!;
+    const requested = raw === "" ? 0 : Math.max(0, Math.floor(Number(raw)));
     setCandidate((current) => {
-      const next = { ...current, [key]: value };
-      const varcScore = estimateCat2025SectionScaledScore(next.catVarcPercentile);
-      const dilrScore = estimateCat2025SectionScaledScore(next.catDilrPercentile);
-      const qaScore = estimateCat2025SectionScaledScore(next.catQaPercentile);
-      const overall = Number((
-        varcScore
-        + dilrScore
-        + qaScore
-      ).toFixed(2));
+      const key = answerType === "correct" ? section.correctKey : section.wrongKey;
+      const otherKey = answerType === "correct" ? section.wrongKey : section.correctKey;
+      const otherAnswers = Number(current[otherKey] ?? 0);
+      const value = Math.min(requested, section.maxQuestions - otherAnswers);
+      const next: CandidateInput = { ...current, [key]: value };
+      const sectionScores = CAT_SECTIONS.map((item) => {
+        const correct = Number(next[item.correctKey] ?? 0);
+        const wrong = Number(next[item.wrongKey] ?? 0);
+        return correct * 3 - wrong;
+      });
+      const overall = sectionScores.reduce((total, score) => total + score, 0);
       return {
         ...next,
-        catVarcScaledScore: varcScore,
-        catDilrScaledScore: dilrScore,
-        catQaScaledScore: qaScore,
+        catVarcScaledScore: sectionScores[0],
+        catDilrScaledScore: sectionScores[1],
+        catQaScaledScore: sectionScores[2],
+        catVarcPercentile: estimateCat2025OverallPercentile(sectionScores[0] * 3),
+        catDilrPercentile: estimateCat2025OverallPercentile(sectionScores[1] * 3),
+        catQaPercentile: estimateCat2025OverallPercentile(sectionScores[2] * 3),
         catOverallScaledScore: overall,
         catOverallPercentile: estimateCat2025OverallPercentile(overall),
+        positiveRawVarc: sectionScores[0] > 0,
+        positiveRawDilr: sectionScores[1] > 0,
+        positiveRawQa: sectionScores[2] > 0,
       };
     });
   };
@@ -79,6 +111,24 @@ export function CandidateForm({
       professionalFinalPercent: selected.academicCategory === "AC_2" ? current.professionalFinalPercent : undefined,
     }));
   };
+
+  const catRows = CAT_SECTIONS.map((section) => {
+    const correct = Number(candidate[section.correctKey] ?? 0);
+    const wrong = Number(candidate[section.wrongKey] ?? 0);
+    return {
+      ...section,
+      correct,
+      wrong,
+      attempted: correct + wrong,
+      marks: correct * 3 - wrong,
+    };
+  });
+  const catTotals = catRows.reduce((totals, row) => ({
+    correct: totals.correct + row.correct,
+    wrong: totals.wrong + row.wrong,
+    attempted: totals.attempted + row.attempted,
+    marks: totals.marks + row.marks,
+  }), { correct: 0, wrong: 0, attempted: 0, marks: 0 });
 
   return (
     <section className="panel form-panel" aria-labelledby="candidate-form-heading">
@@ -259,39 +309,53 @@ export function CandidateForm({
 
         <div className={`form-section ${mobileStep === 3 ? "active-mobile-step" : ""}`}>
           <div className="section-kicker"><BookOpen size={14} /> CAT</div>
-          <div className="field-grid">
-            <div className="field">
-              <label htmlFor="cat-overall">Expected overall percentile (%)</label>
-              <input id="cat-overall" className="calculated-input" type="number" value={candidate.catOverallPercentile === 0 ? "" : candidate.catOverallPercentile.toFixed(2)} readOnly aria-describedby="cat-overall-help" />
-              <p className="form-help" id="cat-overall-help">Automatically estimated from the three sectional percentiles. Internal scaled-score estimates are retained only for institute formulas; the official CAT scorecard may differ.</p>
-            </div>
-            <div className="field">
-              <label htmlFor="cat-varc">VARC percentile</label>
-              <input id="cat-varc" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.catVarcPercentile)} onFocus={replaceZeroOnFocus} onChange={(event) => sectionalPercentile("catVarcPercentile", event.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="cat-dilr">DILR percentile</label>
-              <input id="cat-dilr" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.catDilrPercentile)} onFocus={replaceZeroOnFocus} onChange={(event) => sectionalPercentile("catDilrPercentile", event.target.value)} />
-            </div>
-            <div className="field">
-              <label htmlFor="cat-qa">QA percentile</label>
-              <input id="cat-qa" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.catQaPercentile)} onFocus={replaceZeroOnFocus} onChange={(event) => sectionalPercentile("catQaPercentile", event.target.value)} />
-            </div>
-            <div className="field field-full">
-              <span>{institute === "ALL" ? "Positive raw score in every section" : institute === "IIMC" ? "Non-negative raw score in every section" : "Positive raw score in every section"}</span>
-              <div className="raw-checks">
-                {(["Varc", "Dilr", "Qa"] as const).map((section) => {
-                  const key = `positiveRaw${section}` as keyof CandidateInput;
-                  return (
-                    <div className="inline-check" key={section}>
-                      <input id={`raw-${section.toLowerCase()}`} type="checkbox" checked={Boolean(candidate[key])} onChange={(event) => update(key, event.target.checked as never)} />
-                      <label htmlFor={`raw-${section.toLowerCase()}`}>{section.toUpperCase()}</label>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+          <div className="cat-score-grid-wrap">
+            <table className="cat-score-grid">
+              <thead>
+                <tr>
+                  <th scope="col">CAT section</th>
+                  <th scope="col">Right answers</th>
+                  <th scope="col">Wrong answers</th>
+                  <th scope="col">Attempted</th>
+                  <th scope="col">Expected marks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {catRows.map((row) => (
+                  <tr key={row.id}>
+                    <th scope="row"><strong>{row.label}</strong><span>{row.maxQuestions} questions</span></th>
+                    <td>
+                      <label className="sr-only" htmlFor={`cat-${row.id}-correct`}>{row.label} right answers</label>
+                      <input id={`cat-${row.id}-correct`} type="number" min="0" max={row.maxQuestions - row.wrong} step="1" inputMode="numeric" value={displayNumber(row.correct)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "correct", event.target.value)} />
+                    </td>
+                    <td>
+                      <label className="sr-only" htmlFor={`cat-${row.id}-wrong`}>{row.label} wrong answers</label>
+                      <input id={`cat-${row.id}-wrong`} type="number" min="0" max={row.maxQuestions - row.correct} step="1" inputMode="numeric" value={displayNumber(row.wrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "wrong", event.target.value)} />
+                    </td>
+                    <td className="cat-calculated-cell">{row.attempted} / {row.maxQuestions}</td>
+                    <td className={`cat-marks-cell ${row.marks < 0 ? "negative" : ""}`}>{row.marks}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th scope="row">Total</th>
+                  <td>{catTotals.correct}</td>
+                  <td>{catTotals.wrong}</td>
+                  <td>{catTotals.attempted} / 68</td>
+                  <td className={catTotals.marks < 0 ? "negative" : ""}>{catTotals.marks}</td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
+          <div className="cat-percentile-summary" aria-live="polite">
+            <div>
+              <span>Expected percentile</span>
+              <small>Estimated automatically from the expected marks</small>
+            </div>
+            <strong>{candidate.catOverallPercentile === 0 ? "—" : `${candidate.catOverallPercentile.toFixed(2)}%`}</strong>
+          </div>
+          <p className="form-help cat-score-note">Marks use +3 for each right answer and −1 for each wrong answer. TITA questions with no negative marking should not be included in the wrong-answer count. The official CAT scorecard remains authoritative.</p>
         </div>
 
         {error && <div className="form-error" role="alert">{error}</div>}
@@ -318,11 +382,17 @@ export function CandidateForm({
 }
 
 export function cloneSample(): CandidateInput {
-  const sectionPercentile = 99.995;
-  const sectionScore = estimateCat2025SectionScaledScore(sectionPercentile);
-  const overallScore = Number((sectionScore * 3).toFixed(2));
+  const sectionScore = 48;
+  const sectionPercentile = estimateCat2025OverallPercentile(sectionScore * 3);
+  const overallScore = sectionScore * 3;
   return {
     ...SAMPLE_CANDIDATE,
+    catVarcCorrectAnswers: 16,
+    catVarcWrongAnswers: 0,
+    catDilrCorrectAnswers: 16,
+    catDilrWrongAnswers: 0,
+    catQaCorrectAnswers: 16,
+    catQaWrongAnswers: 0,
     catVarcPercentile: sectionPercentile,
     catDilrPercentile: sectionPercentile,
     catQaPercentile: sectionPercentile,
@@ -354,6 +424,12 @@ export function createEmptyCandidate(): CandidateInput {
     catVarcPercentile: 0,
     catDilrPercentile: 0,
     catQaPercentile: 0,
+    catVarcCorrectAnswers: 0,
+    catVarcWrongAnswers: 0,
+    catDilrCorrectAnswers: 0,
+    catDilrWrongAnswers: 0,
+    catQaCorrectAnswers: 0,
+    catQaWrongAnswers: 0,
     catVarcScaledScore: 0,
     catDilrScaledScore: 0,
     catQaScaledScore: 0,

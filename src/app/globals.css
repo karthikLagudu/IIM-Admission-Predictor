@@ -293,9 +293,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .call-outlook-grid article { min-width: 0; padding: 8px 14px; display: flex; align-items: center; gap: 10px; background: #fff; }
 .call-outlook-grid article:first-child { border-right: 1px solid var(--line); }
 .call-outlook-grid article > svg { flex: 0 0 auto; color: var(--green); }
+.call-outlook-grid article > div { min-width: 0; }
 .call-outlook-grid article span { display: block; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
-.call-outlook-grid article strong { display: block; margin-top: 3px; color: var(--navy-900); font-size: 11px; line-height: 1.3; }
-.call-outlook-grid article p { margin: 3px 0 0; color: var(--muted); font-size: 8px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.call-outlook-grid article strong { display: block; margin-top: 3px; color: var(--navy-900); font-size: 11px; line-height: 1.3; overflow-wrap: anywhere; }
+.call-outlook-grid article p { margin: 3px 0 0; color: var(--muted); font-size: 8px; line-height: 1.45; white-space: normal; overflow-wrap: anywhere; }
 .pi-simulator { padding: 21px; }
 .pi-simulator-disclosure { display: flex; justify-content: center; }
 .pi-simulator-disclosure .feedback-toggle { width: min(100%, 520px); }

@@ -29,6 +29,7 @@ const CAT_SECTIONS = [
     mcqWrongKey: "catVarcWrongAnswers",
     titaCorrectKey: "catVarcCorrectTitaAnswers",
     titaWrongKey: "catVarcWrongTitaAnswers",
+    percentileKey: "catVarcPercentile",
   },
   {
     id: "dilr",
@@ -38,6 +39,7 @@ const CAT_SECTIONS = [
     mcqWrongKey: "catDilrWrongAnswers",
     titaCorrectKey: "catDilrCorrectTitaAnswers",
     titaWrongKey: "catDilrWrongTitaAnswers",
+    percentileKey: "catDilrPercentile",
   },
   {
     id: "qa",
@@ -47,6 +49,7 @@ const CAT_SECTIONS = [
     mcqWrongKey: "catQaWrongAnswers",
     titaCorrectKey: "catQaCorrectTitaAnswers",
     titaWrongKey: "catQaWrongTitaAnswers",
+    percentileKey: "catQaPercentile",
   },
 ] as const;
 
@@ -139,6 +142,7 @@ export function CandidateForm({
     return {
       ...section,
       ...projection,
+      percentile: candidate[section.percentileKey],
     };
   });
   const catTotals = catRows.reduce((totals, row) => ({
@@ -345,6 +349,7 @@ export function CandidateForm({
                   <th scope="col">TITA <span>+3 / 0</span></th>
                   <th scope="col">Attempted</th>
                   <th scope="col">Expected marks</th>
+                  <th scope="col">Sectional percentile</th>
                 </tr>
               </thead>
               <tbody>
@@ -365,6 +370,7 @@ export function CandidateForm({
                     </td>
                     <td className="cat-calculated-cell">{row.attempted} / {row.maxQuestions}</td>
                     <td className={`cat-marks-cell ${row.marks < 0 ? "negative" : ""}`}>{row.marks}</td>
+                    <td className="cat-percentile-cell">{row.percentile === 0 ? "—" : `${row.percentile.toFixed(2)}%`}</td>
                   </tr>
                 ))}
               </tbody>
@@ -375,6 +381,7 @@ export function CandidateForm({
                   <td><span className="cat-total-pair"><b>{catTotals.titaCorrect} right</b><b>{catTotals.titaWrong} wrong</b></span></td>
                   <td>{catTotals.attempted} / 68</td>
                   <td className={catTotals.marks < 0 ? "negative" : ""}>{catTotals.marks}</td>
+                  <td>—</td>
                 </tr>
               </tfoot>
             </table>

@@ -4,6 +4,7 @@ export * from "./c1-c6";
 export * from "./composite-score";
 export * from "./constants";
 export * from "./diagnostics";
+export * from "./cat-marking";
 export * from "./cat-percentile";
 export * from "./eligibility";
 export * from "./final-score";

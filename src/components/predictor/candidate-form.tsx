@@ -2,7 +2,7 @@
 
 import type { CandidateInput } from "@/types/iima";
 import type { InstituteKey } from "@/types/institutes";
-import { ACADEMIC_CATEGORY_LABELS, classifyDegreeForInstitutes, DEGREE_OPTIONS, estimateCat2025OverallPercentile, SAMPLE_CANDIDATE } from "@/lib/iima";
+import { ACADEMIC_CATEGORY_LABELS, calculateCatSectionProjection, classifyDegreeForInstitutes, DEGREE_OPTIONS, estimateCat2025OverallPercentile, SAMPLE_CANDIDATE } from "@/lib/iima";
 import { BookOpen, BriefcaseBusiness, ChevronLeft, ChevronRight, GraduationCap, UserRound } from "lucide-react";
 
 interface CandidateFormProps {
@@ -25,26 +25,33 @@ const CAT_SECTIONS = [
     id: "varc",
     label: "VARC",
     maxQuestions: 24,
-    correctKey: "catVarcCorrectAnswers",
-    wrongKey: "catVarcWrongAnswers",
+    mcqCorrectKey: "catVarcCorrectAnswers",
+    mcqWrongKey: "catVarcWrongAnswers",
+    titaCorrectKey: "catVarcCorrectTitaAnswers",
+    titaWrongKey: "catVarcWrongTitaAnswers",
   },
   {
     id: "dilr",
     label: "DILR",
     maxQuestions: 22,
-    correctKey: "catDilrCorrectAnswers",
-    wrongKey: "catDilrWrongAnswers",
+    mcqCorrectKey: "catDilrCorrectAnswers",
+    mcqWrongKey: "catDilrWrongAnswers",
+    titaCorrectKey: "catDilrCorrectTitaAnswers",
+    titaWrongKey: "catDilrWrongTitaAnswers",
   },
   {
     id: "qa",
     label: "QA",
     maxQuestions: 22,
-    correctKey: "catQaCorrectAnswers",
-    wrongKey: "catQaWrongAnswers",
+    mcqCorrectKey: "catQaCorrectAnswers",
+    mcqWrongKey: "catQaWrongAnswers",
+    titaCorrectKey: "catQaCorrectTitaAnswers",
+    titaWrongKey: "catQaWrongTitaAnswers",
   },
 ] as const;
 
 type CatSectionId = (typeof CAT_SECTIONS)[number]["id"];
+type CatAnswerType = "mcqCorrect" | "mcqWrong" | "titaCorrect" | "titaWrong";
 
 export function CandidateForm({
   institute,
@@ -67,19 +74,29 @@ export function CandidateForm({
   const replaceZeroOnFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     if (event.currentTarget.value === "0") event.currentTarget.select();
   };
-  const updateCatAnswers = (sectionId: CatSectionId, answerType: "correct" | "wrong", raw: string) => {
+  const updateCatAnswers = (sectionId: CatSectionId, answerType: CatAnswerType, raw: string) => {
     const section = CAT_SECTIONS.find((item) => item.id === sectionId)!;
     const requested = raw === "" ? 0 : Math.max(0, Math.floor(Number(raw)));
     setCandidate((current) => {
-      const key = answerType === "correct" ? section.correctKey : section.wrongKey;
-      const otherKey = answerType === "correct" ? section.wrongKey : section.correctKey;
-      const otherAnswers = Number(current[otherKey] ?? 0);
-      const value = Math.min(requested, section.maxQuestions - otherAnswers);
+      const answerKeys = {
+        mcqCorrect: section.mcqCorrectKey,
+        mcqWrong: section.mcqWrongKey,
+        titaCorrect: section.titaCorrectKey,
+        titaWrong: section.titaWrongKey,
+      } as const;
+      const key = answerKeys[answerType];
+      const otherAnswers = Object.values(answerKeys)
+        .filter((answerKey) => answerKey !== key)
+        .reduce((total, answerKey) => total + Number(current[answerKey] ?? 0), 0);
+      const value = Math.min(requested, Math.max(0, section.maxQuestions - otherAnswers));
       const next: CandidateInput = { ...current, [key]: value };
       const sectionScores = CAT_SECTIONS.map((item) => {
-        const correct = Number(next[item.correctKey] ?? 0);
-        const wrong = Number(next[item.wrongKey] ?? 0);
-        return correct * 3 - wrong;
+        return calculateCatSectionProjection({
+          mcqCorrect: Number(next[item.mcqCorrectKey] ?? 0),
+          mcqWrong: Number(next[item.mcqWrongKey] ?? 0),
+          titaCorrect: Number(next[item.titaCorrectKey] ?? 0),
+          titaWrong: Number(next[item.titaWrongKey] ?? 0),
+        }).marks;
       });
       const overall = sectionScores.reduce((total, score) => total + score, 0);
       return {
@@ -113,22 +130,25 @@ export function CandidateForm({
   };
 
   const catRows = CAT_SECTIONS.map((section) => {
-    const correct = Number(candidate[section.correctKey] ?? 0);
-    const wrong = Number(candidate[section.wrongKey] ?? 0);
+    const projection = calculateCatSectionProjection({
+      mcqCorrect: Number(candidate[section.mcqCorrectKey] ?? 0),
+      mcqWrong: Number(candidate[section.mcqWrongKey] ?? 0),
+      titaCorrect: Number(candidate[section.titaCorrectKey] ?? 0),
+      titaWrong: Number(candidate[section.titaWrongKey] ?? 0),
+    });
     return {
       ...section,
-      correct,
-      wrong,
-      attempted: correct + wrong,
-      marks: correct * 3 - wrong,
+      ...projection,
     };
   });
   const catTotals = catRows.reduce((totals, row) => ({
-    correct: totals.correct + row.correct,
-    wrong: totals.wrong + row.wrong,
+    mcqCorrect: totals.mcqCorrect + row.mcqCorrect,
+    mcqWrong: totals.mcqWrong + row.mcqWrong,
+    titaCorrect: totals.titaCorrect + row.titaCorrect,
+    titaWrong: totals.titaWrong + row.titaWrong,
     attempted: totals.attempted + row.attempted,
     marks: totals.marks + row.marks,
-  }), { correct: 0, wrong: 0, attempted: 0, marks: 0 });
+  }), { mcqCorrect: 0, mcqWrong: 0, titaCorrect: 0, titaWrong: 0, attempted: 0, marks: 0 });
 
   return (
     <section className="panel form-panel" aria-labelledby="candidate-form-heading">
@@ -309,13 +329,20 @@ export function CandidateForm({
 
         <div className={`form-section ${mobileStep === 3 ? "active-mobile-step" : ""}`}>
           <div className="section-kicker"><BookOpen size={14} /> CAT</div>
+          <div className="cat-marking-key" aria-label="CAT marking scheme">
+            <span><strong>68</strong> questions · <strong>204</strong> marks</span>
+            <span>Correct MCQ <strong>+3</strong></span>
+            <span>Wrong MCQ <strong>−1</strong></span>
+            <span>Correct TITA <strong>+3</strong></span>
+            <span>Wrong TITA / unattempted <strong>0</strong></span>
+          </div>
           <div className="cat-score-grid-wrap">
             <table className="cat-score-grid">
               <thead>
                 <tr>
                   <th scope="col">CAT section</th>
-                  <th scope="col">Right answers</th>
-                  <th scope="col">Wrong answers</th>
+                  <th scope="col">MCQ <span>+3 / −1</span></th>
+                  <th scope="col">TITA <span>+3 / 0</span></th>
                   <th scope="col">Attempted</th>
                   <th scope="col">Expected marks</th>
                 </tr>
@@ -325,12 +352,16 @@ export function CandidateForm({
                   <tr key={row.id}>
                     <th scope="row"><strong>{row.label}</strong><span>{row.maxQuestions} questions</span></th>
                     <td>
-                      <label className="sr-only" htmlFor={`cat-${row.id}-correct`}>{row.label} right answers</label>
-                      <input id={`cat-${row.id}-correct`} type="number" min="0" max={row.maxQuestions - row.wrong} step="1" inputMode="numeric" value={displayNumber(row.correct)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "correct", event.target.value)} />
+                      <div className="cat-answer-pair">
+                        <label htmlFor={`cat-${row.id}-mcq-correct`}><span>Right</span><input id={`cat-${row.id}-mcq-correct`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.mcqCorrect)} step="1" inputMode="numeric" value={displayNumber(row.mcqCorrect)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "mcqCorrect", event.target.value)} /></label>
+                        <label htmlFor={`cat-${row.id}-mcq-wrong`}><span>Wrong</span><input id={`cat-${row.id}-mcq-wrong`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.mcqWrong)} step="1" inputMode="numeric" value={displayNumber(row.mcqWrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "mcqWrong", event.target.value)} /></label>
+                      </div>
                     </td>
                     <td>
-                      <label className="sr-only" htmlFor={`cat-${row.id}-wrong`}>{row.label} wrong answers</label>
-                      <input id={`cat-${row.id}-wrong`} type="number" min="0" max={row.maxQuestions - row.correct} step="1" inputMode="numeric" value={displayNumber(row.wrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "wrong", event.target.value)} />
+                      <div className="cat-answer-pair">
+                        <label htmlFor={`cat-${row.id}-tita-correct`}><span>Right</span><input id={`cat-${row.id}-tita-correct`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.titaCorrect)} step="1" inputMode="numeric" value={displayNumber(row.titaCorrect)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "titaCorrect", event.target.value)} /></label>
+                        <label htmlFor={`cat-${row.id}-tita-wrong`}><span>Wrong</span><input id={`cat-${row.id}-tita-wrong`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.titaWrong)} step="1" inputMode="numeric" value={displayNumber(row.titaWrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "titaWrong", event.target.value)} /></label>
+                      </div>
                     </td>
                     <td className="cat-calculated-cell">{row.attempted} / {row.maxQuestions}</td>
                     <td className={`cat-marks-cell ${row.marks < 0 ? "negative" : ""}`}>{row.marks}</td>
@@ -340,8 +371,8 @@ export function CandidateForm({
               <tfoot>
                 <tr>
                   <th scope="row">Total</th>
-                  <td>{catTotals.correct}</td>
-                  <td>{catTotals.wrong}</td>
+                  <td><span className="cat-total-pair"><b>{catTotals.mcqCorrect} right</b><b>{catTotals.mcqWrong} wrong</b></span></td>
+                  <td><span className="cat-total-pair"><b>{catTotals.titaCorrect} right</b><b>{catTotals.titaWrong} wrong</b></span></td>
                   <td>{catTotals.attempted} / 68</td>
                   <td className={catTotals.marks < 0 ? "negative" : ""}>{catTotals.marks}</td>
                 </tr>
@@ -355,7 +386,7 @@ export function CandidateForm({
             </div>
             <strong>{candidate.catOverallPercentile === 0 ? "—" : `${candidate.catOverallPercentile.toFixed(2)}%`}</strong>
           </div>
-          <p className="form-help cat-score-note">Marks use +3 for each right answer and −1 for each wrong answer. TITA questions with no negative marking should not be included in the wrong-answer count. The official CAT scorecard remains authoritative.</p>
+          <p className="form-help cat-score-note">TITA wrong answers and all unattempted questions receive 0 marks. The official CAT scorecard remains authoritative.</p>
         </div>
 
         {error && <div className="form-error" role="alert">{error}</div>}
@@ -389,10 +420,16 @@ export function cloneSample(): CandidateInput {
     ...SAMPLE_CANDIDATE,
     catVarcCorrectAnswers: 16,
     catVarcWrongAnswers: 0,
+    catVarcCorrectTitaAnswers: 0,
+    catVarcWrongTitaAnswers: 0,
     catDilrCorrectAnswers: 16,
     catDilrWrongAnswers: 0,
+    catDilrCorrectTitaAnswers: 0,
+    catDilrWrongTitaAnswers: 0,
     catQaCorrectAnswers: 16,
     catQaWrongAnswers: 0,
+    catQaCorrectTitaAnswers: 0,
+    catQaWrongTitaAnswers: 0,
     catVarcPercentile: sectionPercentile,
     catDilrPercentile: sectionPercentile,
     catQaPercentile: sectionPercentile,
@@ -426,10 +463,16 @@ export function createEmptyCandidate(): CandidateInput {
     catQaPercentile: 0,
     catVarcCorrectAnswers: 0,
     catVarcWrongAnswers: 0,
+    catVarcCorrectTitaAnswers: 0,
+    catVarcWrongTitaAnswers: 0,
     catDilrCorrectAnswers: 0,
     catDilrWrongAnswers: 0,
+    catDilrCorrectTitaAnswers: 0,
+    catDilrWrongTitaAnswers: 0,
     catQaCorrectAnswers: 0,
     catQaWrongAnswers: 0,
+    catQaCorrectTitaAnswers: 0,
+    catQaWrongTitaAnswers: 0,
     catVarcScaledScore: 0,
     catDilrScaledScore: 0,
     catQaScaledScore: 0,

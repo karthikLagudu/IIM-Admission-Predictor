@@ -110,10 +110,16 @@ export interface CandidateInput {
   catQaPercentile: number;
   catVarcCorrectAnswers?: number;
   catVarcWrongAnswers?: number;
+  catVarcCorrectTitaAnswers?: number;
+  catVarcWrongTitaAnswers?: number;
   catDilrCorrectAnswers?: number;
   catDilrWrongAnswers?: number;
+  catDilrCorrectTitaAnswers?: number;
+  catDilrWrongTitaAnswers?: number;
   catQaCorrectAnswers?: number;
   catQaWrongAnswers?: number;
+  catQaCorrectTitaAnswers?: number;
+  catQaWrongTitaAnswers?: number;
   catVarcScaledScore: number;
   catDilrScaledScore: number;
   catQaScaledScore: number;

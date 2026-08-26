@@ -546,6 +546,34 @@ export function ResultsDashboard({
         <ol className="explain-list">{result.explanation.map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</ol>
       </section>
 
+      <PiScoreSimulator
+        instituteName="IIM Ahmedabad"
+        simulatorKey={`${result.policyVersion}-${result.compositeScore ?? "none"}`}
+        initialPercent={initialPiPercent}
+        piMaxScore={policy.finalWeights.pi * 100}
+        finalMaxScore={1}
+        scorePrecision={4}
+        benchmarkLabel="Probability uses the existing historical-cycle planning model, not an official current cutoff."
+        callPredictionLabel={callLabel}
+        callPredictionReason={result.callPrediction ? `${route} clears the applicable shortlist boundary after all hard gates.` : diagnostics?.gaps[0]?.detail ?? "The profile does not clear every required interview-call condition."}
+        callPredictionTone={result.callPrediction ? "positive" : "negative"}
+        callCriteria={iimaCallCriteria}
+        unavailableReason={final == null || iimaOtherFinalContribution == null ? "The other final-selection inputs, including AWT, must be available before a new final score can be calculated." : undefined}
+        simulate={(piPercent) => {
+          const normalizedPi = piPercent / 100;
+          const finalScore = iimaOtherFinalContribution == null ? null : iimaOtherFinalContribution + policy.finalWeights.pi * normalizedPi;
+          const seatProbability = finalScore == null
+            ? null
+            : result.callPrediction
+              ? final!.calibration.cycles.reduce((sum, cycle) => sum + cycle.weight * (1 / (1 + Math.exp(-policy.model.logisticSlope * (finalScore - cycle.planningTarget)))), 0)
+              : 0;
+          const band = seatProbability == null
+            ? null
+            : policy.probabilityBands.find((item) => seatProbability < item.maxExclusive)?.band ?? "VERY_STRONG";
+          return { piPoints: normalizedPi * policy.finalWeights.pi * 100, finalScore, seatProbability, band };
+        }}
+      />
+
       <section className="panel detail-panel historical-call-panel" aria-labelledby="historical-call-heading">
         <div className="section-heading">
           <div>
@@ -582,34 +610,6 @@ export function ResultsDashboard({
           <strong>What this comparison means:</strong> it compares the student&apos;s current shortlist Composite Score with prior scores used to issue AWT/PI interview calls. It does not compare interview performance or PI marks. Each cycle used its own CAT and Application Rating normalization, so the gap is a useful historical reference—not a guarantee that the same candidate would have received a call in that year.
         </div>
       </section>
-
-      <PiScoreSimulator
-        instituteName="IIM Ahmedabad"
-        simulatorKey={`${result.policyVersion}-${result.compositeScore ?? "none"}`}
-        initialPercent={initialPiPercent}
-        piMaxScore={policy.finalWeights.pi * 100}
-        finalMaxScore={1}
-        scorePrecision={4}
-        benchmarkLabel="Probability uses the existing historical-cycle planning model, not an official current cutoff."
-        callPredictionLabel={callLabel}
-        callPredictionReason={result.callPrediction ? `${route} clears the applicable shortlist boundary after all hard gates.` : diagnostics?.gaps[0]?.detail ?? "The profile does not clear every required interview-call condition."}
-        callPredictionTone={result.callPrediction ? "positive" : "negative"}
-        callCriteria={iimaCallCriteria}
-        unavailableReason={final == null || iimaOtherFinalContribution == null ? "The other final-selection inputs, including AWT, must be available before a new final score can be calculated." : undefined}
-        simulate={(piPercent) => {
-          const normalizedPi = piPercent / 100;
-          const finalScore = iimaOtherFinalContribution == null ? null : iimaOtherFinalContribution + policy.finalWeights.pi * normalizedPi;
-          const seatProbability = finalScore == null
-            ? null
-            : result.callPrediction
-              ? final!.calibration.cycles.reduce((sum, cycle) => sum + cycle.weight * (1 / (1 + Math.exp(-policy.model.logisticSlope * (finalScore - cycle.planningTarget)))), 0)
-              : 0;
-          const band = seatProbability == null
-            ? null
-            : policy.probabilityBands.find((item) => seatProbability < item.maxExclusive)?.band ?? "VERY_STRONG";
-          return { piPoints: normalizedPi * policy.finalWeights.pi * 100, finalScore, seatProbability, band };
-        }}
-      />
         </div>
       )}
 

@@ -573,6 +573,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .calibration-table-wrap { margin-top: 12px; overflow-x: auto; }
 .calibration-table { min-width: 520px; margin-top: 0; }
 .microcopy { margin-top: 8px; color: var(--muted); font-size: 10px; }
+.decision-audit-toggle-panel { padding: 0; overflow: hidden; border-color: #b9d4e3; background: linear-gradient(135deg, #f8fbfd, #eef6fa); }
+.decision-audit-toggle { width: 100%; min-height: 74px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 16px 20px; border: 0; background: transparent; color: var(--navy-900); text-align: left; cursor: pointer; }
+.decision-audit-toggle:hover { background: rgba(255, 255, 255, .62); }
+.decision-audit-toggle:focus-visible { outline: 3px solid var(--blue-600); outline-offset: -3px; }
+.decision-audit-toggle > span { display: grid; gap: 4px; }
+.decision-audit-toggle strong { font-family: Georgia, serif; font-size: 17px; font-weight: 600; }
+.decision-audit-toggle small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.decision-audit-toggle svg { flex: 0 0 auto; color: var(--blue-600); }
 .audit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
 .audit-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: #fbfcfd; }
 .audit-card h4 { margin: 0 0 10px; color: var(--navy-900); font-family: Georgia, serif; font-size: 15px; font-weight: 500; }

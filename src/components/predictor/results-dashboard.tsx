@@ -155,6 +155,7 @@ export function ResultsDashboard({
   afterScore?: ReactNode;
 }) {
   const [showMoreFeedback, setShowMoreFeedback] = useState(false);
+  const [showDecisionAudit, setShowDecisionAudit] = useState(false);
   const final = result.finalSelection;
   const cat = result.catEligibility;
   const callLabel = result.callPrediction ? "CALL PREDICTED" : "LESS LIKELY";
@@ -180,6 +181,7 @@ export function ResultsDashboard({
   ];
   useEffect(() => {
     setShowMoreFeedback(false);
+    setShowDecisionAudit(false);
   }, [result]);
 
   const pipeline: Array<{ label: string; value: string; state: StepState }> = [
@@ -358,94 +360,6 @@ export function ResultsDashboard({
         </section>
       )}
 
-      <section className="panel detail-panel" aria-labelledby="audit-heading">
-        <div className="section-heading">
-          <div><h3 id="audit-heading">Detailed decision audit</h3><p>Every input, comparison and formula used in the result</p></div>
-          <SourceBadge source="CALCULATED" />
-        </div>
-        <div className="audit-grid">
-          <article className="audit-card">
-            <h4>1. Basic eligibility</h4>
-            <AuditRow
-              label="Bachelor marks"
-              value={`${candidate.bachelorPercent.toFixed(2)}% / ${result.basicEligibility.bachelorRequired.toFixed(0)}%`}
-              explanation={`Your applicable minimum is ${result.basicEligibility.bachelorRequired}% based on category and PwD status.`}
-              state={result.basicEligibility.bachelorPass ? "pass" : "fail"}
-            />
-            <AuditRow
-              label="Age on cutoff date"
-              value={result.basicEligibility.ageAtCutoff == null ? "Not provided" : `${result.basicEligibility.ageAtCutoff} years`}
-              explanation={`When DOB is provided, the engine checks age ${policy.minimumAge}+ on ${policy.ageCutoffDate}.`}
-              state={result.basicEligibility.agePass == null ? "info" : result.basicEligibility.agePass ? "pass" : "fail"}
-            />
-            <AuditRow
-              label="Degree duration"
-              value={candidate.degreeDurationYears == null ? "Not provided" : `${candidate.degreeDurationYears} years`}
-              explanation={`The configured minimum duration after 10+2 is ${policy.minimumDegreeDurationYears} years.`}
-              state={result.basicEligibility.degreeDurationPass == null ? "info" : result.basicEligibility.degreeDurationPass ? "pass" : "fail"}
-            />
-            <AuditRow
-              label="Study status"
-              value={result.basicEligibility.provisionalFinalYear ? "Final-year provisional" : "Degree completed"}
-              explanation={result.basicEligibility.provisionalFinalYear ? `Completion is provisional and subject to the ${policy.finalYearCompletionDeadline} examination deadline.` : "The completed-degree eligibility route is applied."}
-            />
-          </article>
-
-          {cat && (
-            <article className="audit-card">
-              <h4>2. CAT hard-gate screen</h4>
-              <AuditRow label="Overall percentile" value={`${candidate.catOverallPercentile.toFixed(2)} / ${cat.cutoff.overall}`} explanation="Actual CAT overall percentile must meet or exceed the applicable category/PwD minimum." state={cat.overallPass ? "pass" : "fail"} />
-              <AuditRow label="VARC percentile" value={`${candidate.catVarcPercentile.toFixed(2)} / ${cat.cutoff.varc}`} explanation="VARC is checked independently; a high overall percentile cannot compensate for failure here." state={cat.varcPass ? "pass" : "fail"} />
-              <AuditRow label="DILR percentile" value={`${candidate.catDilrPercentile.toFixed(2)} / ${cat.cutoff.dilr}`} explanation="DILR must independently clear its sectional threshold." state={cat.dilrPass ? "pass" : "fail"} />
-              <AuditRow label="QA percentile" value={`${candidate.catQaPercentile.toFixed(2)} / ${cat.cutoff.qa}`} explanation="QA must independently clear its sectional threshold." state={cat.qaPass ? "pass" : "fail"} />
-              <AuditRow label="Positive raw scores" value={cat.positiveRawScoresPass ? "All three positive" : "One or more failed"} explanation="VARC, DILR and QA must each have a raw score above zero." state={cat.positiveRawScoresPass ? "pass" : "fail"} />
-            </article>
-          )}
-
-          {rating && result.compositeScore != null && (
-            <article className="audit-card">
-              <h4>3. Composite Score construction</h4>
-              <AuditRow label="Normalized AR" value={(rating.total / policy.arNormalizationDenominator).toFixed(6)} explanation={`AR ${rating.total.toFixed(1)} ÷ ${policy.arNormalizationDenominator}.`} />
-              <AuditRow label="AR contribution" value={(policy.compositeWeights.ar * rating.total / policy.arNormalizationDenominator).toFixed(6)} explanation={`${(policy.compositeWeights.ar * 100).toFixed(0)}% × normalized AR.`} />
-              <AuditRow label="Normalized CAT" value={(candidate.catOverallScaledScore / policy.catNormalizationDenominator).toFixed(6)} explanation={`Scaled score ${candidate.catOverallScaledScore.toFixed(2)} ÷ ${policy.catNormalizationDenominator}.`} />
-              <AuditRow label="CAT contribution" value={(policy.compositeWeights.cat * candidate.catOverallScaledScore / policy.catNormalizationDenominator).toFixed(6)} explanation={`${(policy.compositeWeights.cat * 100).toFixed(0)}% × normalized CAT.`} />
-              <AuditRow label="Final shortlist CS" value={result.compositeScore.toFixed(6)} explanation="AR contribution + CAT contribution. Comparisons use the unrounded value." state="pass" />
-            </article>
-          )}
-
-          {result.stage1 && (
-            <article className="audit-card">
-              <h4>4. Stage 1 discipline route</h4>
-              <AuditRow label="Route" value={result.stage1.route.replace("_", "-")} explanation={result.stage1.route === "ACRC" ? "The ACRC route applies C1, C2 and C3 before the observed CS/rank boundary." : "The small-category route applies C4, C5 and C6 before its CS/rank boundary."} />
-              <AuditRow label={result.stage1.route === "ACRC" ? "C1 · CAT criteria" : "C4 · small-AC CAT criteria"} value={(result.stage1.route === "ACRC" ? result.stage1.c1 : result.stage1.c4) ? "Passed" : "Failed"} explanation="This reuses the applicable CAT gate; it is never bypassed." state={(result.stage1.route === "ACRC" ? result.stage1.c1 : result.stage1.c4) ? "pass" : "fail"} />
-              <AuditRow label={result.stage1.route === "ACRC" ? "C2 · school consistency" : "C5 · school consistency"} value={result.stage1.route === "ACRC" ? `${result.stage1.c2.actual.toFixed(2)}% / ${result.stage1.c2.required?.toFixed(2)}%` : `${result.stage1.c5.actual.toFixed(2)}% / ${result.stage1.c5.required?.toFixed(2)}%`} explanation="The Class 10 and 12 average is compared with the applicable stream/category requirement." state={(result.stage1.route === "ACRC" ? result.stage1.c2.passed : result.stage1.c5.passed) ? "pass" : "fail"} />
-              <AuditRow label={result.stage1.route === "ACRC" ? "C3 · graduation filter" : "C6 · graduation filter"} value={(result.stage1.route === "ACRC" ? result.stage1.c3.available : result.stage1.c6.available) ? `${(result.stage1.route === "ACRC" ? result.stage1.c3.actual : result.stage1.c6.actual).toFixed(2)}% / ${(result.stage1.route === "ACRC" ? result.stage1.c3.required : result.stage1.c6.required)?.toFixed(2)}%` : "Not published"} explanation="Observed CAT-cycle graduation boundary for the applicable Academic Category route; missing data is never treated as zero." state={(result.stage1.route === "ACRC" ? result.stage1.c3.passed : result.stage1.c6.passed) ? "pass" : "fail"} />
-              <AuditRow label="Observed minimum CS" value={formatScore(result.stage1.threshold)} explanation={result.stage1.threshold == null ? "No observed threshold is available for this route, so Stage 1 cannot be asserted from a fabricated value." : `Your CS is compared against this route-specific boundary. Source: ${result.stage1.thresholdSource.toLowerCase().replace("_", " ")}.`} state={result.stage1.threshold == null ? "info" : result.stage1.compositeScore >= result.stage1.threshold ? "pass" : "fail"} />
-              <AuditRow label="Stage 1 decision" value={result.stage1.predictedShortlist ? "Selected" : "Not selected"} explanation={result.stage1.reason} state={result.stage1.predictedShortlist ? "pass" : "fail"} />
-            </article>
-          )}
-
-          {result.stage2 && (
-            <article className="audit-card">
-              <h4>5. Stage 2 additional shortlist</h4>
-              <AuditRow label="C1 · CAT criteria" value={result.stage2.c1 ? "Passed" : "Failed"} explanation="Stage 2 still requires the complete CAT screen." state={result.stage2.c1 ? "pass" : "fail"} />
-              <AuditRow label="C2 · school consistency" value={`${result.stage2.c2.actual.toFixed(2)}% / ${result.stage2.c2.required?.toFixed(2)}%`} explanation="The same official academic-consistency gate remains binding." state={result.stage2.c2.passed ? "pass" : "fail"} />
-              <AuditRow label="CS threshold comparison" value={`${result.stage2.compositeScore.toFixed(6)} / ${result.stage2.threshold.toFixed(6)}`} explanation={`Margin = ${result.stage2.margin >= 0 ? "+" : ""}${result.stage2.margin.toFixed(6)}.`} state={result.stage2.margin >= 0 ? "pass" : "fail"} />
-              <AuditRow label="Stage 2 decision" value={result.stage2.predictedShortlist ? "Selected" : "Not selected"} explanation={result.stage2.reason} state={result.stage2.predictedShortlist ? "pass" : "fail"} />
-            </article>
-          )}
-
-          {rating && (
-            <article className="audit-card outcome-audit-card">
-              <h4>{result.stage2 ? "6" : "5"}. Overall call conclusion</h4>
-              <AuditRow label="AWT/PI call" value={result.callPrediction ? `YES · ${route}` : "NO"} explanation={result.callPrediction ? "At least one official shortlist route clears all its hard gates and score boundary." : "Neither Stage 1 nor Stage 2 clears every required condition."} state={result.callPrediction ? "pass" : "fail"} />
-              <AuditRow label="Applicable CS margin" value={result.callMargin == null ? "Unavailable" : `${result.callMargin >= 0 ? "+" : ""}${result.callMargin.toFixed(6)}`} explanation="Positive means the unrounded CS is above the boundary used for the successful/final route." state={result.callMargin == null ? "info" : result.callMargin >= 0 ? "pass" : "fail"} />
-              <AuditRow label="Required CAT scaled score" value={result.requiredCatScaledScore ? result.requiredCatScaledScore.required.toFixed(2) : "Unavailable"} explanation={result.requiredCatScaledScore ? `At the current AR, Stage 2 requires approximately this CAT scaled score. Current score: ${result.requiredCatScaledScore.current.toFixed(2)}; gap: ${result.requiredCatScaledScore.gap >= 0 ? "+" : ""}${result.requiredCatScaledScore.gap.toFixed(2)}.` : "This calculation was not reached."} state={result.requiredCatScaledScore?.achievable ? (result.requiredCatScaledScore.gap >= 0 ? "pass" : "fail") : "info"} />
-            </article>
-          )}
-        </div>
-      </section>
-
       {rating && (
         <div className="two-column-panels">
           <section className="panel detail-panel" aria-labelledby="rating-heading">
@@ -545,6 +459,112 @@ export function ResultsDashboard({
         <div className="section-heading"><div><h3 id="why-heading">Why this result?</h3><p>Generated from the exact gate sequence</p></div><SourceBadge source="CALCULATED" /></div>
         <ol className="explain-list">{result.explanation.map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</ol>
       </section>
+
+      <section className="panel decision-audit-toggle-panel" aria-label="Detailed decision audit controls">
+        <button
+          type="button"
+          className="decision-audit-toggle"
+          aria-expanded={showDecisionAudit}
+          aria-controls="detailed-decision-audit"
+          onClick={() => setShowDecisionAudit((current) => !current)}
+        >
+          <span>
+            <strong>{showDecisionAudit ? "Hide detailed decision audit" : "View detailed decision audit"}</strong>
+            <small>See every eligibility check, threshold, comparison and formula behind this result.</small>
+          </span>
+          {showDecisionAudit ? <ChevronUp size={20} aria-hidden="true" /> : <ChevronDown size={20} aria-hidden="true" />}
+        </button>
+      </section>
+
+      {showDecisionAudit && (
+        <section id="detailed-decision-audit" className="panel detail-panel" aria-labelledby="audit-heading">
+          <div className="section-heading">
+            <div><h3 id="audit-heading">Detailed decision audit</h3><p>Every input, comparison and formula used in the result</p></div>
+            <SourceBadge source="CALCULATED" />
+          </div>
+          <div className="audit-grid">
+            <article className="audit-card">
+              <h4>1. Basic eligibility</h4>
+              <AuditRow
+                label="Bachelor marks"
+                value={`${candidate.bachelorPercent.toFixed(2)}% / ${result.basicEligibility.bachelorRequired.toFixed(0)}%`}
+                explanation={`Your applicable minimum is ${result.basicEligibility.bachelorRequired}% based on category and PwD status.`}
+                state={result.basicEligibility.bachelorPass ? "pass" : "fail"}
+              />
+              <AuditRow
+                label="Age on cutoff date"
+                value={result.basicEligibility.ageAtCutoff == null ? "Not provided" : `${result.basicEligibility.ageAtCutoff} years`}
+                explanation={`When DOB is provided, the engine checks age ${policy.minimumAge}+ on ${policy.ageCutoffDate}.`}
+                state={result.basicEligibility.agePass == null ? "info" : result.basicEligibility.agePass ? "pass" : "fail"}
+              />
+              <AuditRow
+                label="Degree duration"
+                value={candidate.degreeDurationYears == null ? "Not provided" : `${candidate.degreeDurationYears} years`}
+                explanation={`The configured minimum duration after 10+2 is ${policy.minimumDegreeDurationYears} years.`}
+                state={result.basicEligibility.degreeDurationPass == null ? "info" : result.basicEligibility.degreeDurationPass ? "pass" : "fail"}
+              />
+              <AuditRow
+                label="Study status"
+                value={result.basicEligibility.provisionalFinalYear ? "Final-year provisional" : "Degree completed"}
+                explanation={result.basicEligibility.provisionalFinalYear ? `Completion is provisional and subject to the ${policy.finalYearCompletionDeadline} examination deadline.` : "The completed-degree eligibility route is applied."}
+              />
+            </article>
+
+            {cat && (
+              <article className="audit-card">
+                <h4>2. CAT hard-gate screen</h4>
+                <AuditRow label="Overall percentile" value={`${candidate.catOverallPercentile.toFixed(2)} / ${cat.cutoff.overall}`} explanation="Actual CAT overall percentile must meet or exceed the applicable category/PwD minimum." state={cat.overallPass ? "pass" : "fail"} />
+                <AuditRow label="VARC percentile" value={`${candidate.catVarcPercentile.toFixed(2)} / ${cat.cutoff.varc}`} explanation="VARC is checked independently; a high overall percentile cannot compensate for failure here." state={cat.varcPass ? "pass" : "fail"} />
+                <AuditRow label="DILR percentile" value={`${candidate.catDilrPercentile.toFixed(2)} / ${cat.cutoff.dilr}`} explanation="DILR must independently clear its sectional threshold." state={cat.dilrPass ? "pass" : "fail"} />
+                <AuditRow label="QA percentile" value={`${candidate.catQaPercentile.toFixed(2)} / ${cat.cutoff.qa}`} explanation="QA must independently clear its sectional threshold." state={cat.qaPass ? "pass" : "fail"} />
+                <AuditRow label="Positive raw scores" value={cat.positiveRawScoresPass ? "All three positive" : "One or more failed"} explanation="VARC, DILR and QA must each have a raw score above zero." state={cat.positiveRawScoresPass ? "pass" : "fail"} />
+              </article>
+            )}
+
+            {rating && result.compositeScore != null && (
+              <article className="audit-card">
+                <h4>3. Composite Score construction</h4>
+                <AuditRow label="Normalized AR" value={(rating.total / policy.arNormalizationDenominator).toFixed(6)} explanation={`AR ${rating.total.toFixed(1)} ÷ ${policy.arNormalizationDenominator}.`} />
+                <AuditRow label="AR contribution" value={(policy.compositeWeights.ar * rating.total / policy.arNormalizationDenominator).toFixed(6)} explanation={`${(policy.compositeWeights.ar * 100).toFixed(0)}% × normalized AR.`} />
+                <AuditRow label="Normalized CAT" value={(candidate.catOverallScaledScore / policy.catNormalizationDenominator).toFixed(6)} explanation={`Scaled score ${candidate.catOverallScaledScore.toFixed(2)} ÷ ${policy.catNormalizationDenominator}.`} />
+                <AuditRow label="CAT contribution" value={(policy.compositeWeights.cat * candidate.catOverallScaledScore / policy.catNormalizationDenominator).toFixed(6)} explanation={`${(policy.compositeWeights.cat * 100).toFixed(0)}% × normalized CAT.`} />
+                <AuditRow label="Final shortlist CS" value={result.compositeScore.toFixed(6)} explanation="AR contribution + CAT contribution. Comparisons use the unrounded value." state="pass" />
+              </article>
+            )}
+
+            {result.stage1 && (
+              <article className="audit-card">
+                <h4>4. Stage 1 discipline route</h4>
+                <AuditRow label="Route" value={result.stage1.route.replace("_", "-")} explanation={result.stage1.route === "ACRC" ? "The ACRC route applies C1, C2 and C3 before the observed CS/rank boundary." : "The small-category route applies C4, C5 and C6 before its CS/rank boundary."} />
+                <AuditRow label={result.stage1.route === "ACRC" ? "C1 · CAT criteria" : "C4 · small-AC CAT criteria"} value={(result.stage1.route === "ACRC" ? result.stage1.c1 : result.stage1.c4) ? "Passed" : "Failed"} explanation="This reuses the applicable CAT gate; it is never bypassed." state={(result.stage1.route === "ACRC" ? result.stage1.c1 : result.stage1.c4) ? "pass" : "fail"} />
+                <AuditRow label={result.stage1.route === "ACRC" ? "C2 · school consistency" : "C5 · school consistency"} value={result.stage1.route === "ACRC" ? `${result.stage1.c2.actual.toFixed(2)}% / ${result.stage1.c2.required?.toFixed(2)}%` : `${result.stage1.c5.actual.toFixed(2)}% / ${result.stage1.c5.required?.toFixed(2)}%`} explanation="The Class 10 and 12 average is compared with the applicable stream/category requirement." state={(result.stage1.route === "ACRC" ? result.stage1.c2.passed : result.stage1.c5.passed) ? "pass" : "fail"} />
+                <AuditRow label={result.stage1.route === "ACRC" ? "C3 · graduation filter" : "C6 · graduation filter"} value={(result.stage1.route === "ACRC" ? result.stage1.c3.available : result.stage1.c6.available) ? `${(result.stage1.route === "ACRC" ? result.stage1.c3.actual : result.stage1.c6.actual).toFixed(2)}% / ${(result.stage1.route === "ACRC" ? result.stage1.c3.required : result.stage1.c6.required)?.toFixed(2)}%` : "Not published"} explanation="Observed CAT-cycle graduation boundary for the applicable Academic Category route; missing data is never treated as zero." state={(result.stage1.route === "ACRC" ? result.stage1.c3.passed : result.stage1.c6.passed) ? "pass" : "fail"} />
+                <AuditRow label="Observed minimum CS" value={formatScore(result.stage1.threshold)} explanation={result.stage1.threshold == null ? "No observed threshold is available for this route, so Stage 1 cannot be asserted from a fabricated value." : `Your CS is compared against this route-specific boundary. Source: ${result.stage1.thresholdSource.toLowerCase().replace("_", " ")}.`} state={result.stage1.threshold == null ? "info" : result.stage1.compositeScore >= result.stage1.threshold ? "pass" : "fail"} />
+                <AuditRow label="Stage 1 decision" value={result.stage1.predictedShortlist ? "Selected" : "Not selected"} explanation={result.stage1.reason} state={result.stage1.predictedShortlist ? "pass" : "fail"} />
+              </article>
+            )}
+
+            {result.stage2 && (
+              <article className="audit-card">
+                <h4>5. Stage 2 additional shortlist</h4>
+                <AuditRow label="C1 · CAT criteria" value={result.stage2.c1 ? "Passed" : "Failed"} explanation="Stage 2 still requires the complete CAT screen." state={result.stage2.c1 ? "pass" : "fail"} />
+                <AuditRow label="C2 · school consistency" value={`${result.stage2.c2.actual.toFixed(2)}% / ${result.stage2.c2.required?.toFixed(2)}%`} explanation="The same official academic-consistency gate remains binding." state={result.stage2.c2.passed ? "pass" : "fail"} />
+                <AuditRow label="CS threshold comparison" value={`${result.stage2.compositeScore.toFixed(6)} / ${result.stage2.threshold.toFixed(6)}`} explanation={`Margin = ${result.stage2.margin >= 0 ? "+" : ""}${result.stage2.margin.toFixed(6)}.`} state={result.stage2.margin >= 0 ? "pass" : "fail"} />
+                <AuditRow label="Stage 2 decision" value={result.stage2.predictedShortlist ? "Selected" : "Not selected"} explanation={result.stage2.reason} state={result.stage2.predictedShortlist ? "pass" : "fail"} />
+              </article>
+            )}
+
+            {rating && (
+              <article className="audit-card outcome-audit-card">
+                <h4>{result.stage2 ? "6" : "5"}. Overall call conclusion</h4>
+                <AuditRow label="AWT/PI call" value={result.callPrediction ? `YES · ${route}` : "NO"} explanation={result.callPrediction ? "At least one official shortlist route clears all its hard gates and score boundary." : "Neither Stage 1 nor Stage 2 clears every required condition."} state={result.callPrediction ? "pass" : "fail"} />
+                <AuditRow label="Applicable CS margin" value={result.callMargin == null ? "Unavailable" : `${result.callMargin >= 0 ? "+" : ""}${result.callMargin.toFixed(6)}`} explanation="Positive means the unrounded CS is above the boundary used for the successful/final route." state={result.callMargin == null ? "info" : result.callMargin >= 0 ? "pass" : "fail"} />
+                <AuditRow label="Required CAT scaled score" value={result.requiredCatScaledScore ? result.requiredCatScaledScore.required.toFixed(2) : "Unavailable"} explanation={result.requiredCatScaledScore ? `At the current AR, Stage 2 requires approximately this CAT scaled score. Current score: ${result.requiredCatScaledScore.current.toFixed(2)}; gap: ${result.requiredCatScaledScore.gap >= 0 ? "+" : ""}${result.requiredCatScaledScore.gap.toFixed(2)}.` : "This calculation was not reached."} state={result.requiredCatScaledScore?.achievable ? (result.requiredCatScaledScore.gap >= 0 ? "pass" : "fail") : "info"} />
+              </article>
+            )}
+          </div>
+        </section>
+      )}
 
       <PiScoreSimulator
         instituteName="IIM Ahmedabad"

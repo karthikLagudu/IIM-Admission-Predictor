@@ -172,7 +172,7 @@ export function InstituteResultsDashboard({ candidate, result, afterScore, navig
           <div className="result-score">
             <span className="result-score-label">{result.scoreLabel}</span>
             <strong>{currentCallScore == null ? scoreFallback : formatScoreOutOf100(currentCallScore, result.preInterview.maxScore)}</strong>
-            <SourceBadge source={preSource} />
+            {preSource !== "MODEL_ASSUMPTION" && <SourceBadge source={preSource} />}
             <div className="score-comparison">
               <div><span>Benchmark</span><b>{result.call.benchmarkValue == null ? "Not configured" : formatScoreOutOf100(result.call.benchmarkValue, result.preInterview.maxScore)}</b></div>
               <div><span>Margin</span><b className={(callMarginOutOf100 ?? -1) >= 0 ? "positive-delta" : ""}>{callMarginOutOf100 == null ? marginFallback : `${callMarginOutOf100 >= 0 ? "+" : ""}${formatScore(callMarginOutOf100, 2)} pts`}</b></div>

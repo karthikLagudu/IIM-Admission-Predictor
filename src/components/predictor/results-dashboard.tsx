@@ -428,7 +428,7 @@ export function ResultsDashboard({
       )}
 
       {final && result.sensitivity.length > 0 && (
-        <section className="panel detail-panel" aria-labelledby="sensitivity-heading">
+        <section className="panel detail-panel sensitivity-panel" aria-labelledby="sensitivity-heading">
           <div className="section-heading"><div><h3 id="sensitivity-heading">What improves my chance?</h3><p>Each scenario changes one input only and recalculates the complete result</p></div><SourceBadge source="MODEL_ASSUMPTION" /></div>
           <div className="sensitivity-intro"><strong>Current baseline</strong><span>Final Composite Score {formatScore(final.finalCompositeScore)} · Estimated seat chance {formatProbability(final.seatProbability)}</span><p>Use these scenarios to see which improvement has the greatest modelled effect. They are planning comparisons, not promises of admission.</p></div>
           <div className="sensitivity-list">

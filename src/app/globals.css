@@ -405,8 +405,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .inline-check label { margin: 0; font-size: 11px; }
 .raw-checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .cat-marking-key { display: grid; grid-template-columns: 1.35fr repeat(4, 1fr); gap: 7px; margin-bottom: 10px; }
-.cat-marking-key span { display: flex; align-items: center; justify-content: center; min-height: 34px; padding: 7px 9px; border: 1px solid #d7e1e7; border-radius: 8px; background: #f7f9fa; color: #526473; text-align: center; font-size: 9px; font-weight: 700; }
-.cat-marking-key strong { margin-left: 3px; color: var(--navy-900); font-size: 11px; }
+.cat-marking-key span { display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 34px; padding: 7px 9px; border: 1px solid #d7e1e7; border-radius: 8px; background: #f7f9fa; color: #526473; text-align: center; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.cat-marking-key strong { color: var(--navy-900); font-size: 11px; }
 .cat-score-grid-wrap { width: 100%; border: 1px solid #cbd7df; border-radius: 11px; overflow: hidden; background: white; }
 .cat-score-grid { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
 .cat-score-grid tr > :first-child { width: 13%; }

@@ -67,7 +67,9 @@ export function CandidateForm({
   mobileStep,
   setMobileStep,
 }: CandidateFormProps) {
-  const instituteShortName = institute === "ALL" ? "all 21 IIMs" : institute;
+  const analyzeLabel = institute === "ALL"
+    ? "Want to know your expected CAT percentile and analyse all 21 IIM chances?"
+    : `Analyse ${institute} chances`;
   const update = <K extends keyof CandidateInput>(key: K, value: CandidateInput[K]) => {
     setCandidate((current) => ({ ...current, [key]: value }));
   };
@@ -393,7 +395,7 @@ export function CandidateForm({
 
         <div className="form-actions">
           <button className="primary-button analyze-all-button" type="button" onClick={onAnalyze} disabled={loading}>
-            {loading ? "Analysing…" : `Analyse ${instituteShortName} chances`}
+            {loading ? "Analysing…" : analyzeLabel}
           </button>
         </div>
 

@@ -171,10 +171,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .results-overview-percentile small { margin-top: 2px; color: var(--muted); font-size: 9px; }
 .results-overview-chances { display: grid; align-content: center; }
 .results-overview-chances h2 { margin: 5px 0 3px; color: var(--navy-900); font-family: Georgia, serif; font-size: clamp(20px, 2vw, 29px); font-weight: 600; line-height: 1.2; }
-.results-overview-chances h2 strong { white-space: nowrap; }
-.results-overview-chances h2 .high { color: var(--green); }
-.results-overview-chances h2 .medium { color: var(--amber); }
-.results-overview-chances h2 .low { color: var(--red); }
+.results-overview-filter { display: inline; margin: 0; padding: 1px 4px 2px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-weight: 800; white-space: nowrap; cursor: pointer; }
+.results-overview-filter.high { color: var(--green); }
+.results-overview-filter.medium { color: var(--amber); }
+.results-overview-filter.low { color: var(--red); }
+.results-overview-filter:hover { background: #eef2f5; }
+.results-overview-filter.high[aria-pressed="true"] { background: var(--green); color: white; }
+.results-overview-filter.medium[aria-pressed="true"] { background: var(--amber); color: white; }
+.results-overview-filter.low[aria-pressed="true"] { background: var(--red); color: white; }
 .results-overview-chances p { margin: 0; color: var(--muted); font-size: 10px; }
 .results-table-panel { padding: 8px 12px 12px; }
 .edit-profile-button { min-height: 34px; padding: 7px 12px; border: 1px solid #b9ccd7; border-radius: 7px; background: white; color: var(--blue-700); font-size: 9px; font-weight: 800; cursor: pointer; }

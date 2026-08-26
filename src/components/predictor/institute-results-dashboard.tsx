@@ -81,8 +81,10 @@ function TextInsightList({ title, emptyMessage, items, tone }: { title: string; 
 
 export function InstituteResultsDashboard({ candidate, result, afterScore }: { candidate: CandidateInput; result: InstitutePredictionResult; afterScore?: ReactNode }) {
   const [showMore, setShowMore] = useState(false);
+  const [showDecisionAudit, setShowDecisionAudit] = useState(false);
   useEffect(() => {
     setShowMore(false);
+    setShowDecisionAudit(false);
   }, [result]);
 
   const callPredicted = result.call.status === "PREDICTED_CALL";
@@ -225,37 +227,6 @@ export function InstituteResultsDashboard({ candidate, result, afterScore }: { c
             </div>
           </section>
 
-          <section className="panel detail-panel" aria-labelledby="institute-audit-heading">
-            <div className="section-heading"><div><h3 id="institute-audit-heading">Detailed decision audit</h3><p>Every input, comparison and formula used in the result</p></div><SourceBadge source="CALCULATED" /></div>
-            <div className="audit-grid">
-              <article className="audit-card">
-                <h4>1. Basic eligibility</h4>
-                <AuditRow label="Bachelor marks" value={`${candidate.bachelorPercent.toFixed(2)}% / ${result.eligibility.bachelorRequired.toFixed(0)}%`} explanation="The applicable bachelor minimum is based on the institute's published category rules." state={result.eligibility.bachelorPass ? "pass" : "fail"} />
-                <AuditRow label="Section score condition" value={result.eligibility.rawScoreGatePass ? "Satisfied" : "Failed"} explanation={result.institute === "IIMB" ? "All three CAT sections require positive raw scores." : "All three CAT sections must satisfy the institute's non-negative score condition."} state={result.eligibility.rawScoreGatePass ? "pass" : "fail"} />
-                <AuditRow label="Official minimums" value={result.eligibility.passed ? "Passed" : "Failed"} explanation="Degree and CAT minimums are binding before later-stage scoring matters." state={result.eligibility.passed ? "pass" : "fail"} />
-              </article>
-              <article className="audit-card">
-                <h4>2. CAT hard-gate screen</h4>
-                <AuditRow label="Overall percentile" value={`${candidate.catOverallPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.overall)}`} explanation="The overall CAT percentile is checked when the institute publishes a threshold." state={result.eligibility.overallPass ? "pass" : "fail"} />
-                <AuditRow label="VARC percentile" value={`${candidate.catVarcPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.varc)}`} explanation="VARC is checked independently when a sectional threshold exists." state={result.eligibility.varcPass ? "pass" : "fail"} />
-                <AuditRow label="DILR percentile" value={`${candidate.catDilrPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.dilr)}`} explanation="DILR is checked independently when a sectional threshold exists." state={result.eligibility.dilrPass ? "pass" : "fail"} />
-                <AuditRow label="QA percentile" value={`${candidate.catQaPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.qa)}`} explanation="QA is checked independently when a sectional threshold exists." state={result.eligibility.qaPass ? "pass" : "fail"} />
-              </article>
-              {result.preInterview.components.length > 0 && (
-                <article className="audit-card">
-                  <h4>3. Shortlist score construction</h4>
-                  {result.preInterview.components.map((component) => <AuditRow key={component.key} label={component.label} value={component.score == null ? "Required" : `${formatScore(component.score, 2)} / ${component.maxScore}`} explanation={`${component.formula}. ${component.detail}`} state={component.status === "CALCULATED" ? "pass" : component.status === "DATA_REQUIRED" ? "fail" : "info"} />)}
-                </article>
-              )}
-              <article className="audit-card outcome-audit-card">
-                <h4>4. Overall selection conclusion</h4>
-                <AuditRow label={directMerit ? "Direct merit status" : "Interview call"} value={callPredicted ? "YES · predicted" : humanize(result.call.status)} explanation={result.call.reason} state={callPredicted ? "pass" : callNegative ? "fail" : "info"} />
-                <AuditRow label="Applicable benchmark" value={result.call.benchmarkValue == null ? "Not published" : formatScore(result.call.benchmarkValue, 2)} explanation={`Benchmark source: ${humanize(result.call.benchmarkType)}.`} state={result.call.benchmarkValue == null ? "info" : "pass"} />
-                <AuditRow label="Applicable margin" value={result.call.margin == null ? "Unavailable" : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`} explanation="Positive means the current shortlist score is above the configured boundary." state={result.call.margin == null ? "info" : result.call.margin >= 0 ? "pass" : "fail"} />
-              </article>
-            </div>
-          </section>
-
           <div className="two-column-panels">
             <section className="panel detail-panel" aria-labelledby="score-source-heading">
               <div className="section-heading"><div><h3 id="score-source-heading">Score components</h3><p>Official component breakdown</p></div><SourceBadge source={preSource} /></div>
@@ -345,6 +316,55 @@ export function InstituteResultsDashboard({ candidate, result, afterScore }: { c
             </div>
             <div className="historical-call-note"><strong>How to read this history:</strong> published CAT screens are minimum eligibility or first-screen percentiles, not proof that a candidate received an interview call. The actual call depends on the institute&apos;s composite ranking and applicant pool. Any mock-model comparison is shown in a separate card and is not an official historical cutoff.</div>
           </section>
+
+          <section className="panel decision-audit-toggle-panel" aria-label={`Detailed decision audit controls for ${result.instituteName}`}>
+            <button
+              type="button"
+              className="decision-audit-toggle"
+              aria-expanded={showDecisionAudit}
+              aria-controls="institute-detailed-decision-audit"
+              onClick={() => setShowDecisionAudit((current) => !current)}
+            >
+              <span>
+                <strong>{showDecisionAudit ? "Hide detailed decision audit" : "View detailed decision audit"}</strong>
+                <small>See every eligibility check, threshold, comparison and formula behind this result.</small>
+              </span>
+              {showDecisionAudit ? <ChevronUp size={20} aria-hidden="true" /> : <ChevronDown size={20} aria-hidden="true" />}
+            </button>
+          </section>
+
+          {showDecisionAudit && (
+            <section id="institute-detailed-decision-audit" className="panel detail-panel" aria-labelledby="institute-audit-heading">
+              <div className="section-heading"><div><h3 id="institute-audit-heading">Detailed decision audit</h3><p>Every input, comparison and formula used in the result</p></div><SourceBadge source="CALCULATED" /></div>
+              <div className="audit-grid">
+                <article className="audit-card">
+                  <h4>1. Basic eligibility</h4>
+                  <AuditRow label="Bachelor marks" value={`${candidate.bachelorPercent.toFixed(2)}% / ${result.eligibility.bachelorRequired.toFixed(0)}%`} explanation="The applicable bachelor minimum is based on the institute's published category rules." state={result.eligibility.bachelorPass ? "pass" : "fail"} />
+                  <AuditRow label="Section score condition" value={result.eligibility.rawScoreGatePass ? "Satisfied" : "Failed"} explanation={result.institute === "IIMB" ? "All three CAT sections require positive raw scores." : "All three CAT sections must satisfy the institute's non-negative score condition."} state={result.eligibility.rawScoreGatePass ? "pass" : "fail"} />
+                  <AuditRow label="Official minimums" value={result.eligibility.passed ? "Passed" : "Failed"} explanation="Degree and CAT minimums are binding before later-stage scoring matters." state={result.eligibility.passed ? "pass" : "fail"} />
+                </article>
+                <article className="audit-card">
+                  <h4>2. CAT hard-gate screen</h4>
+                  <AuditRow label="Overall percentile" value={`${candidate.catOverallPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.overall)}`} explanation="The overall CAT percentile is checked when the institute publishes a threshold." state={result.eligibility.overallPass ? "pass" : "fail"} />
+                  <AuditRow label="VARC percentile" value={`${candidate.catVarcPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.varc)}`} explanation="VARC is checked independently when a sectional threshold exists." state={result.eligibility.varcPass ? "pass" : "fail"} />
+                  <AuditRow label="DILR percentile" value={`${candidate.catDilrPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.dilr)}`} explanation="DILR is checked independently when a sectional threshold exists." state={result.eligibility.dilrPass ? "pass" : "fail"} />
+                  <AuditRow label="QA percentile" value={`${candidate.catQaPercentile.toFixed(2)} / ${cutoffText(result.eligibility.cutoff.qa)}`} explanation="QA is checked independently when a sectional threshold exists." state={result.eligibility.qaPass ? "pass" : "fail"} />
+                </article>
+                {result.preInterview.components.length > 0 && (
+                  <article className="audit-card">
+                    <h4>3. Shortlist score construction</h4>
+                    {result.preInterview.components.map((component) => <AuditRow key={component.key} label={component.label} value={component.score == null ? "Required" : `${formatScore(component.score, 2)} / ${component.maxScore}`} explanation={`${component.formula}. ${component.detail}`} state={component.status === "CALCULATED" ? "pass" : component.status === "DATA_REQUIRED" ? "fail" : "info"} />)}
+                  </article>
+                )}
+                <article className="audit-card outcome-audit-card">
+                  <h4>4. Overall selection conclusion</h4>
+                  <AuditRow label={directMerit ? "Direct merit status" : "Interview call"} value={callPredicted ? "YES · predicted" : humanize(result.call.status)} explanation={result.call.reason} state={callPredicted ? "pass" : callNegative ? "fail" : "info"} />
+                  <AuditRow label="Applicable benchmark" value={result.call.benchmarkValue == null ? "Not published" : formatScore(result.call.benchmarkValue, 2)} explanation={`Benchmark source: ${humanize(result.call.benchmarkType)}.`} state={result.call.benchmarkValue == null ? "info" : "pass"} />
+                  <AuditRow label="Applicable margin" value={result.call.margin == null ? "Unavailable" : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`} explanation="Positive means the current shortlist score is above the configured boundary." state={result.call.margin == null ? "info" : result.call.margin >= 0 ? "pass" : "fail"} />
+                </article>
+              </div>
+            </section>
+          )}
 
           {result.selectionStages.interview && (
             <PiScoreSimulator

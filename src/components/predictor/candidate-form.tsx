@@ -274,7 +274,6 @@ export function CandidateForm({
                   </optgroup>
                 ))}
               </select>
-              <p className="form-help">This one selection automatically sets the relevant academic classification for IIMA, IIMB and IIMC.</p>
             </div>
             <div className="field">
               <label htmlFor="bachelor">Bachelor / professional %</label>

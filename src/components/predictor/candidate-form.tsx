@@ -332,7 +332,7 @@ export function CandidateForm({
         </div>
 
         <div className={`form-section ${mobileStep === 3 ? "active-mobile-step" : ""}`}>
-          <div className="section-kicker"><BookOpen size={14} /> CAT</div>
+          <div className="section-kicker"><BookOpen size={14} /> CAT Percentile Predictor</div>
           <div className="cat-marking-key" aria-label="CAT marking scheme">
             <span><strong>68</strong> questions · <strong>204</strong> marks</span>
             <span>Correct MCQ <strong>+3</strong></span>

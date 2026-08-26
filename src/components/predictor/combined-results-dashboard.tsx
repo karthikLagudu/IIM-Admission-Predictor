@@ -423,16 +423,18 @@ export function CombinedResultsDashboard({
               {filteredSummaries.map((summary) => (
                 <tr className={summary.tone} key={summary.key}>
                   <th scope="row">
-                    <strong>{summary.name}</strong>
-                    <button
-                      type="button"
-                      className="result-table-detail-button"
-                      onClick={() => setActiveDetail(summary.key)}
-                      aria-label={`View more details for ${summary.name}`}
-                    >
-                      <span>View more</span>
-                      <ChevronRight size={15} aria-hidden="true" />
-                    </button>
+                    <div className="result-table-institute-cell">
+                      <strong>{summary.name}</strong>
+                      <button
+                        type="button"
+                        className="result-table-detail-button"
+                        onClick={() => setActiveDetail(summary.key)}
+                        aria-label={`View more details for ${summary.name}`}
+                      >
+                        <span>View more</span>
+                        <ChevronRight size={15} aria-hidden="true" />
+                      </button>
+                    </div>
                   </th>
                   <td>{summary.programme}</td>
                   <td><span className="result-table-status">{summary.status}</span></td>

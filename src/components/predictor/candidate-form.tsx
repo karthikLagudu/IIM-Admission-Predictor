@@ -386,7 +386,6 @@ export function CandidateForm({
               </tfoot>
             </table>
           </div>
-          <p className="form-help cat-score-note">TITA wrong answers and all unattempted questions receive 0 marks. The official CAT scorecard remains authoritative.</p>
         </div>
 
         {error && <div className="form-error" role="alert">{error}</div>}

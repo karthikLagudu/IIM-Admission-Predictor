@@ -163,6 +163,19 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .combined-workspace.results-only { display: block; }
 .results-only .all-results-stack { width: 100%; }
 .all-results-stack { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.results-overview-panel { display: grid; grid-template-columns: minmax(220px, .42fr) minmax(0, 1.58fr); overflow: hidden; padding: 0; }
+.results-overview-percentile, .results-overview-chances { min-width: 0; padding: 20px 24px; }
+.results-overview-percentile { display: grid; align-content: center; border-right: 1px solid #b9ddca; background: #f2faf6; }
+.results-overview-percentile span, .results-overview-chances > span { color: var(--navy-700); font-size: 9px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.results-overview-percentile strong { margin-top: 3px; color: var(--green); font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.results-overview-percentile small { margin-top: 2px; color: var(--muted); font-size: 9px; }
+.results-overview-chances { display: grid; align-content: center; }
+.results-overview-chances h2 { margin: 5px 0 3px; color: var(--navy-900); font-family: Georgia, serif; font-size: clamp(20px, 2vw, 29px); font-weight: 600; line-height: 1.2; }
+.results-overview-chances h2 strong { white-space: nowrap; }
+.results-overview-chances h2 .high { color: var(--green); }
+.results-overview-chances h2 .medium { color: var(--amber); }
+.results-overview-chances h2 .low { color: var(--red); }
+.results-overview-chances p { margin: 0; color: var(--muted); font-size: 10px; }
 .results-table-panel { padding: 8px 12px 12px; }
 .edit-profile-button { min-height: 34px; padding: 7px 12px; border: 1px solid #b9ccd7; border-radius: 7px; background: white; color: var(--blue-700); font-size: 9px; font-weight: 800; cursor: pointer; }
 .edit-profile-button:hover { background: #edf5f9; }
@@ -406,10 +419,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .cat-score-grid tfoot td:nth-child(5) { color: var(--green); font-size: 15px; }
 .cat-total-pair { display: flex; align-items: center; justify-content: center; gap: 9px; }
 .cat-total-pair b { font-size: 9px; white-space: nowrap; }
-.cat-percentile-summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 12px; padding: 14px 16px; border: 1px solid #b9ddca; border-radius: 10px; background: #f2faf6; }
-.cat-percentile-summary span { display: block; color: var(--navy-700); font-size: 11px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
-.cat-percentile-summary small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
-.cat-percentile-summary strong { color: var(--green); font-size: 25px; font-weight: 900; }
 .cat-score-note { line-height: 1.5; }
 .form-help { margin: 7px 0 0; color: var(--muted); font-size: 10px; }
 .form-error { margin: 13px 0 0; padding: 10px 12px; background: var(--red-soft); color: var(--red); border-radius: 8px; font-size: 11px; }
@@ -1002,6 +1011,9 @@ h1, h2, h3, h4, h5, h6,
   .pi-simulator-results { grid-template-columns: 1fr; }
   .pi-simulator-results article + article { border-left: 0; border-top: 1px solid var(--line); }
   .results-table-panel { padding: 16px; }
+  .results-overview-panel { grid-template-columns: 1fr; }
+  .results-overview-percentile { border-right: 0; border-bottom: 1px solid #b9ddca; }
+  .results-overview-percentile, .results-overview-chances { padding: 17px 18px; }
   .results-chance-filters-mobile { display: flex; }
   .mobile-stepper { display: flex; align-items: center; gap: 8px; }
   .form-section { display: none; }
@@ -1082,8 +1094,6 @@ h1, h2, h3, h4, h5, h6,
   .cat-score-grid .cat-marks-cell, .cat-score-grid .cat-percentile-cell, .cat-score-grid tfoot td:nth-child(5) { font-size: 11px; }
   .cat-total-pair { align-items: stretch; flex-direction: column; gap: 2px; }
   .cat-total-pair b { font-size: 6px; }
-  .cat-percentile-summary { padding: 12px; }
-  .cat-percentile-summary strong { font-size: 21px; }
   .eligibility-check-grid { grid-template-columns: 1fr; }
   .component-row { grid-template-columns: 1fr; }
   .component-row > span { width: fit-content; }

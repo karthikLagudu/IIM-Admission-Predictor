@@ -385,6 +385,22 @@ export function CombinedResultsDashboard({
         <ChanceBandFilters value={chanceFilter} counts={chanceCounts} onChange={setChanceFilter} className="header-chance-filters" />,
         headerFilterHost,
       )}
+      <section className="panel results-overview-panel" aria-labelledby="results-overview-heading">
+        <div className="results-overview-percentile">
+          <span>Expected CAT percentile</span>
+          <strong>{candidate.catOverallPercentile === 0 ? "—" : `${candidate.catOverallPercentile.toFixed(2)}%`}</strong>
+          <small>Estimated automatically from your expected marks</small>
+        </div>
+        <div className="results-overview-chances">
+          <span>Your IIM chance summary</span>
+          <h2 id="results-overview-heading">
+            You have <strong className="high">{chanceCounts.HIGH} high {chanceCounts.HIGH === 1 ? "chance" : "chances"}</strong>,{" "}
+            <strong className="medium">{chanceCounts.MEDIUM} medium {chanceCounts.MEDIUM === 1 ? "chance" : "chances"}</strong> and{" "}
+            <strong className="low">{chanceCounts.LOW} low {chanceCounts.LOW === 1 ? "chance" : "chances"}</strong>.
+          </h2>
+          <p>Based on the expected seat-chance bands for all {chanceCounts.ALL} IIMs below.</p>
+        </div>
+      </section>
       <section className="panel results-table-panel" aria-labelledby="all-results-heading">
         <h2 className="sr-only" id="all-results-heading">Your IIM results</h2>
 

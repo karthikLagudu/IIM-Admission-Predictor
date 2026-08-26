@@ -386,13 +386,6 @@ export function CandidateForm({
               </tfoot>
             </table>
           </div>
-          <div className="cat-percentile-summary" aria-live="polite">
-            <div>
-              <span>Expected percentile</span>
-              <small>Estimated automatically from the expected marks</small>
-            </div>
-            <strong>{candidate.catOverallPercentile === 0 ? "—" : `${candidate.catOverallPercentile.toFixed(2)}%`}</strong>
-          </div>
           <p className="form-help cat-score-note">TITA wrong answers and all unattempted questions receive 0 marks. The official CAT scorecard remains authoritative.</p>
         </div>
 

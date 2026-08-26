@@ -16,6 +16,7 @@ import { instituteHistoricalReference } from "@/lib/institutes/historical-refere
 import { estimateInterviewCallChance } from "@/lib/institutes/call-probability";
 import { ResultsDashboard } from "./results-dashboard";
 import { InstituteResultsDashboard } from "./institute-results-dashboard";
+import type { ReportNavigationRequest, ReportSection } from "./report-navigation";
 
 export interface CombinedPredictionResults {
   IIMA: IimaPredictionResult;
@@ -111,7 +112,15 @@ export function CombinedResultsDashboard({
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [chanceFilter, setChanceFilter] = useState<ChanceBand | "ALL">("ALL");
   const [headerFilterHost, setHeaderFilterHost] = useState<HTMLElement | null>(null);
+  const [reportNavigation, setReportNavigation] = useState<ReportNavigationRequest | null>(null);
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
+  const navigateToReportSection = (section: ReportSection) => {
+    setReportNavigation((current) => ({ section, requestId: (current?.requestId ?? 0) + 1 }));
+  };
+  const openInstituteDetail = (key: InstituteKey) => {
+    setReportNavigation(null);
+    setActiveDetail(key);
+  };
   const iimaChance = results.IIMA.finalSelection?.seatProbability ?? 0;
   const iimaBasis = iimaCallBasis(results.IIMA);
   const iimaCallChance = estimateInterviewCallChance({
@@ -358,17 +367,17 @@ export function CombinedResultsDashboard({
         </header>
 
         <section className="report-reading-guide" aria-label="Report guide">
-          <div><span>01</span><strong>Quick verdict</strong></div>
-          <div><span>02</span><strong>Strengths and gaps</strong></div>
-          <div><span>03</span><strong>Detailed audit</strong></div>
-          <div><span>04</span><strong>Historical comparison</strong></div>
-          <p>Start with the concise result below. Open <strong>More feedback</strong> only when you want the complete calculation and comparison.</p>
+          <button type="button" onClick={() => navigateToReportSection("quick")}><span>01</span><span><strong>Quick verdict</strong><small>Score and call outlook</small></span><ChevronDown size={15} aria-hidden="true" /></button>
+          <button type="button" onClick={() => navigateToReportSection("strengths")}><span>02</span><span><strong>Strengths and gaps</strong><small>Positives and blockers</small></span><ChevronDown size={15} aria-hidden="true" /></button>
+          <button type="button" onClick={() => navigateToReportSection("audit")}><span>03</span><span><strong>Detailed audit</strong><small>Every check and formula</small></span><ChevronDown size={15} aria-hidden="true" /></button>
+          <button type="button" onClick={() => navigateToReportSection("history")}><span>04</span><span><strong>Historical comparison</strong><small>Previous-cycle context</small></span><ChevronDown size={15} aria-hidden="true" /></button>
+          <p>Select a section to jump directly to it. Hidden detail panels open automatically.</p>
         </section>
 
         <section className="institute-focus-content" aria-label={`${activeDetail} detailed result`}>
           {activeDetail === "IIMA"
-            ? <ResultsDashboard candidate={candidate} result={results.IIMA} policy={policy} afterScore={callOutlookPanel} />
-            : activeInstituteResult && <InstituteResultsDashboard candidate={candidate} result={activeInstituteResult} afterScore={callOutlookPanel} />}
+            ? <ResultsDashboard candidate={candidate} result={results.IIMA} policy={policy} afterScore={callOutlookPanel} navigationRequest={reportNavigation} />
+            : activeInstituteResult && <InstituteResultsDashboard candidate={candidate} result={activeInstituteResult} afterScore={callOutlookPanel} navigationRequest={reportNavigation} />}
         </section>
 
         <button type="button" className="focus-back-button focus-back-footer" onClick={() => setActiveDetail(null)}>
@@ -428,7 +437,7 @@ export function CombinedResultsDashboard({
                       <button
                         type="button"
                         className="result-table-detail-button"
-                        onClick={() => setActiveDetail(summary.key)}
+                        onClick={() => openInstituteDetail(summary.key)}
                         aria-label={`View more details for ${summary.name}`}
                       >
                         <span>View more</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Check, ChevronDown, ChevronUp, Circle, Database, X } from "lucide-react";
 import type { CandidateInput } from "@/types/iima";
@@ -10,6 +10,7 @@ import { formatProbability, formatScore, formatScoreOutOf100, humanize, normaliz
 import { institutePredictionBand } from "@/lib/institutes/prediction";
 import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
 import { PiScoreSimulator } from "./pi-score-simulator";
+import { REPORT_SECTION_IDS, type ReportNavigationRequest } from "./report-navigation";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
 
@@ -79,13 +80,35 @@ function TextInsightList({ title, emptyMessage, items, tone }: { title: string; 
   );
 }
 
-export function InstituteResultsDashboard({ candidate, result, afterScore }: { candidate: CandidateInput; result: InstitutePredictionResult; afterScore?: ReactNode }) {
+export function InstituteResultsDashboard({ candidate, result, afterScore, navigationRequest }: { candidate: CandidateInput; result: InstitutePredictionResult; afterScore?: ReactNode; navigationRequest?: ReportNavigationRequest | null }) {
   const [showMore, setShowMore] = useState(false);
   const [showDecisionAudit, setShowDecisionAudit] = useState(false);
+  const handledNavigationRequestRef = useRef<number | null>(null);
   useEffect(() => {
     setShowMore(false);
     setShowDecisionAudit(false);
   }, [result]);
+
+  useEffect(() => {
+    if (!navigationRequest) return;
+    if (handledNavigationRequestRef.current === navigationRequest.requestId) return;
+    const needsMoreFeedback = navigationRequest.section !== "quick";
+    if (needsMoreFeedback && !showMore) {
+      setShowMore(true);
+      return;
+    }
+    if (navigationRequest.section === "audit" && !showDecisionAudit) {
+      setShowDecisionAudit(true);
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(REPORT_SECTION_IDS[navigationRequest.section]);
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (target instanceof HTMLElement) target.focus({ preventScroll: true });
+      handledNavigationRequestRef.current = navigationRequest.requestId;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [navigationRequest, showDecisionAudit, showMore]);
 
   const callPredicted = result.call.status === "PREDICTED_CALL";
   const callNegative = result.call.status === "NO_CALL";
@@ -144,7 +167,7 @@ export function InstituteResultsDashboard({ candidate, result, afterScore }: { c
 
   return (
     <div className="results-stack" aria-live="polite">
-      <section className="panel result-hero">
+      <section id={REPORT_SECTION_IDS.quick} className="panel result-hero report-navigation-target" tabIndex={-1}>
         <div className="result-hero-main">
           <div className="result-score">
             <span className="result-score-label">{result.scoreLabel}</span>
@@ -185,7 +208,7 @@ export function InstituteResultsDashboard({ candidate, result, afterScore }: { c
 
       {showMore && (
         <div className="detailed-feedback" id="institute-detailed-feedback">
-          <section className="panel insight-panel" aria-labelledby="institute-insight-heading">
+          <section id={REPORT_SECTION_IDS.strengths} className="panel insight-panel report-navigation-target" tabIndex={-1} aria-labelledby="institute-insight-heading">
             <div className="section-heading"><div><h3 id="institute-insight-heading">Profile strengths and gaps</h3><p>{callPredicted ? "The strongest evidence supporting this qualification" : "The exact conditions helping and blocking this profile"}</p></div><SourceBadge source="CALCULATED" /></div>
             <div className="insight-grid">
               <TextInsightList title="Where this profile is strong" emptyMessage="No measurable strength was reached before the failed hard gate." items={result.strengths} tone="strength" />
@@ -272,7 +295,7 @@ export function InstituteResultsDashboard({ candidate, result, afterScore }: { c
             <ol className="explain-list">{result.explanation.map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</ol>
           </section>
 
-          <section className="panel detail-panel historical-call-panel" aria-labelledby={`${result.institute.toLowerCase()}-historical-call-heading`}>
+          <section id={REPORT_SECTION_IDS.history} className="panel detail-panel historical-call-panel report-navigation-target" tabIndex={-1} aria-labelledby={`${result.institute.toLowerCase()}-historical-call-heading`}>
             <div className="section-heading"><div><h3 id={`${result.institute.toLowerCase()}-historical-call-heading`}>{directMerit ? "Previous selection records and this profile" : "Previous interview-call scores vs this profile"}</h3><p>{historicalReference.recordLabel}. Historical facts and test-model assumptions are kept separate.</p></div><SourceBadge source="OFFICIAL_POLICY" /></div>
             <div className={`historical-call-grid ${modelCallBenchmark == null ? "single" : ""}`}>
               <article className="historical-call-card historical-records-card">
@@ -322,7 +345,7 @@ export function InstituteResultsDashboard({ candidate, result, afterScore }: { c
               type="button"
               className="decision-audit-toggle"
               aria-expanded={showDecisionAudit}
-              aria-controls="institute-detailed-decision-audit"
+              aria-controls={REPORT_SECTION_IDS.audit}
               onClick={() => setShowDecisionAudit((current) => !current)}
             >
               <span>
@@ -334,7 +357,7 @@ export function InstituteResultsDashboard({ candidate, result, afterScore }: { c
           </section>
 
           {showDecisionAudit && (
-            <section id="institute-detailed-decision-audit" className="panel detail-panel" aria-labelledby="institute-audit-heading">
+            <section id={REPORT_SECTION_IDS.audit} className="panel detail-panel report-navigation-target" tabIndex={-1} aria-labelledby="institute-audit-heading">
               <div className="section-heading"><div><h3 id="institute-audit-heading">Detailed decision audit</h3><p>Every input, comparison and formula used in the result</p></div><SourceBadge source="CALCULATED" /></div>
               <div className="audit-grid">
                 <article className="audit-card">

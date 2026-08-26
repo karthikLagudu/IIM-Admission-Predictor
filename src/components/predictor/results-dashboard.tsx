@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Check, ChevronDown, ChevronUp, Circle, Compass, X } from "lucide-react";
 import type { CandidateInput, IimaPolicyConfig, IimaPredictionResult, PredictionInsight } from "@/types/iima";
@@ -12,6 +12,7 @@ import {
 } from "@/lib/iima/historical-call-records";
 import { formatProbability, formatScore, formatScoreOutOf100, humanize, normalizeScoreOutOf100 } from "@/lib/utils";
 import { PiScoreSimulator } from "./pi-score-simulator";
+import { REPORT_SECTION_IDS, type ReportNavigationRequest } from "./report-navigation";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
 
@@ -148,14 +149,17 @@ export function ResultsDashboard({
   result,
   policy,
   afterScore,
+  navigationRequest,
 }: {
   candidate: CandidateInput;
   result: IimaPredictionResult;
   policy: IimaPolicyConfig;
   afterScore?: ReactNode;
+  navigationRequest?: ReportNavigationRequest | null;
 }) {
   const [showMoreFeedback, setShowMoreFeedback] = useState(false);
   const [showDecisionAudit, setShowDecisionAudit] = useState(false);
+  const handledNavigationRequestRef = useRef<number | null>(null);
   const final = result.finalSelection;
   const cat = result.catEligibility;
   const callLabel = result.callPrediction ? "CALL PREDICTED" : "LESS LIKELY";
@@ -184,6 +188,27 @@ export function ResultsDashboard({
     setShowDecisionAudit(false);
   }, [result]);
 
+  useEffect(() => {
+    if (!navigationRequest) return;
+    if (handledNavigationRequestRef.current === navigationRequest.requestId) return;
+    const needsMoreFeedback = navigationRequest.section !== "quick";
+    if (needsMoreFeedback && !showMoreFeedback) {
+      setShowMoreFeedback(true);
+      return;
+    }
+    if (navigationRequest.section === "audit" && !showDecisionAudit) {
+      setShowDecisionAudit(true);
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(REPORT_SECTION_IDS[navigationRequest.section]);
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (target instanceof HTMLElement) target.focus({ preventScroll: true });
+      handledNavigationRequestRef.current = navigationRequest.requestId;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [navigationRequest, showDecisionAudit, showMoreFeedback]);
+
   const pipeline: Array<{ label: string; value: string; state: StepState }> = [
     { label: "Eligibility", value: result.basicEligibility.passed ? "Passed" : "Failed", state: result.basicEligibility.passed ? "pass" : "fail" },
     { label: "CAT screen", value: result.catEligibility ? (result.catEligibility.catEligible ? "Passed" : "Failed") : "Not reached", state: result.catEligibility ? (result.catEligibility.catEligible ? "pass" : "fail") : "neutral" },
@@ -197,7 +222,7 @@ export function ResultsDashboard({
 
   return (
     <div className="results-stack" aria-live="polite">
-      <section className="panel result-hero">
+      <section id={REPORT_SECTION_IDS.quick} className="panel result-hero report-navigation-target" tabIndex={-1}>
         <div className="result-hero-main">
           <div className="result-score">
             <span className="result-score-label">Pre-PI / shortlist score</span>
@@ -254,7 +279,7 @@ export function ResultsDashboard({
       {showMoreFeedback && (
         <div className="detailed-feedback" id="detailed-feedback">
       {diagnostics && (
-        <section className="panel insight-panel" aria-labelledby="insight-heading">
+        <section id={REPORT_SECTION_IDS.strengths} className="panel insight-panel report-navigation-target" tabIndex={-1} aria-labelledby="insight-heading">
           <div className="section-heading">
             <div>
               <h3 id="insight-heading">Profile strengths and gaps</h3>
@@ -465,7 +490,7 @@ export function ResultsDashboard({
           type="button"
           className="decision-audit-toggle"
           aria-expanded={showDecisionAudit}
-          aria-controls="detailed-decision-audit"
+          aria-controls={REPORT_SECTION_IDS.audit}
           onClick={() => setShowDecisionAudit((current) => !current)}
         >
           <span>
@@ -477,7 +502,7 @@ export function ResultsDashboard({
       </section>
 
       {showDecisionAudit && (
-        <section id="detailed-decision-audit" className="panel detail-panel" aria-labelledby="audit-heading">
+        <section id={REPORT_SECTION_IDS.audit} className="panel detail-panel report-navigation-target" tabIndex={-1} aria-labelledby="audit-heading">
           <div className="section-heading">
             <div><h3 id="audit-heading">Detailed decision audit</h3><p>Every input, comparison and formula used in the result</p></div>
             <SourceBadge source="CALCULATED" />
@@ -594,7 +619,7 @@ export function ResultsDashboard({
         }}
       />
 
-      <section className="panel detail-panel historical-call-panel" aria-labelledby="historical-call-heading">
+      <section id={REPORT_SECTION_IDS.history} className="panel detail-panel historical-call-panel report-navigation-target" tabIndex={-1} aria-labelledby="historical-call-heading">
         <div className="section-heading">
           <div>
             <h3 id="historical-call-heading">Previous interview-call scores vs this profile</h3>

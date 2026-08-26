@@ -40,7 +40,6 @@ interface ResultSummary {
   note: string;
   callTiming: string;
   callBasis: string;
-  callBasisDetail: string;
 }
 
 interface HistoricalComparisonSummary {
@@ -77,14 +76,9 @@ function iimaCallTiming(result: IimaPredictionResult): string {
     : "No call expected from the current profile";
 }
 
-function iimaCallBasis(result: IimaPredictionResult): { short: string; detail: string } {
+function iimaCallBasis(result: IimaPredictionResult): string {
   const route = result.callRoute === "STAGE_1" ? "Stage 1" : result.callRoute === "STAGE_2" ? "Stage 2" : "shortlist";
-  const threshold = result.applicableCallThreshold == null ? "the applicable boundary" : result.applicableCallThreshold.toFixed(6);
-  const margin = result.callMargin == null ? "not available" : `${result.callMargin >= 0 ? "+" : ""}${result.callMargin.toFixed(6)}`;
-  return {
-    short: `CAT gates + academic profile + ${route} composite`,
-    detail: `IIMA first checks degree eligibility and CAT overall/sectional cut-offs. It then applies academic-category rules, Application Rating and the ${route} Composite Score. This profile is compared with ${threshold}; its calculated margin is ${margin}.`,
-  };
+  return `CAT gates + academic profile + ${route} composite`;
 }
 
 function instituteCallTiming(result: InstitutePredictionResult): string {
@@ -96,18 +90,10 @@ function instituteCallTiming(result: InstitutePredictionResult): string {
   return "At the official shortlist release · timing depends on applicant-pool ranking";
 }
 
-function instituteCallBasis(result: InstitutePredictionResult): { short: string; detail: string } {
-  const componentLabels = result.preInterview.components
-    .filter((component) => component.score != null)
-    .map((component) => component.label);
-  const shortComponents = componentLabels.slice(0, 3).join(" + ") || "CAT and published eligibility gates";
-  const benchmark = result.call.benchmarkValue == null
-    ? "No fixed current-cycle call boundary is configured, so the final decision depends on the institute's published shortlist or applicant-pool ranking."
-    : `The calculated score is compared with ${formatScore(result.call.benchmarkValue, 2)} (${result.call.benchmarkType.toLowerCase().replaceAll("_", " ")}); the margin is ${result.call.margin == null ? "not available" : `${result.call.margin >= 0 ? "+" : ""}${result.call.margin.toFixed(2)}`}.`;
-  return {
-    short: shortComponents,
-    detail: `The institute first applies category-specific CAT overall and sectional cut-offs plus its published eligibility gates. The shortlist score uses ${componentLabels.join(", ") || "the available policy inputs"}. ${benchmark} ${result.call.reason}`,
-  };
+function instituteCallBasis(result: InstitutePredictionResult): string {
+  return result.selectionStages.directMerit
+    ? "CAT eligibility + merit score"
+    : "CAT eligibility + shortlist score";
 }
 
 export function CombinedResultsDashboard({
@@ -150,8 +136,7 @@ export function CombinedResultsDashboard({
       tone: results.IIMA.callPrediction ? "positive" : "negative",
       note: results.IIMA.callPrediction ? "Observed-boundary planning model" : "An official hard gate or shortlist boundary was not cleared",
       callTiming: iimaCallTiming(results.IIMA),
-      callBasis: iimaBasis.short,
-      callBasisDetail: iimaBasis.detail,
+      callBasis: iimaBasis,
     },
     ...results.institutes.map((result): ResultSummary => {
       const basis = instituteCallBasis(result);
@@ -184,8 +169,7 @@ export function CombinedResultsDashboard({
             ? "Test model; official score with mock planning benchmarks"
             : result.call.reason,
         callTiming: instituteCallTiming(result),
-        callBasis: basis.short,
-        callBasisDetail: basis.detail,
+        callBasis: basis,
       };
     }),
   ];
@@ -330,7 +314,6 @@ export function CombinedResultsDashboard({
             <div>
               <span>Basis for this result</span>
               <strong>{activeSummary.callBasis}</strong>
-              <p>{activeSummary.callBasisDetail}</p>
             </div>
           </article>
         </div>

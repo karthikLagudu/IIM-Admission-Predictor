@@ -20,9 +20,9 @@ export function estimateInterviewCallChance(args: {
 }): InterviewCallChance {
   if (args.directMerit) {
     return {
-      probability: null,
-      label: "Not applicable",
-      detail: "This programme uses direct merit ranking and does not issue an interview call.",
+      probability: 0,
+      label: "0.0%",
+      detail: "This programme uses direct merit ranking and has no interview-call stage, so its interview-call chance is zero.",
     };
   }
 
@@ -53,9 +53,17 @@ export function estimateInterviewCallChance(args: {
     };
   }
 
+  const normalizedScore = args.score != null && args.maxScore > 0
+    ? Math.min(1, Math.max(0, args.score / args.maxScore))
+    : null;
+  const probability = normalizedScore == null
+    ? args.status === "PREDICTED_CALL" ? 0.75 : 0.5
+    : Math.min(0.95, Math.max(0.5, 0.5 + 0.45 * normalizedScore));
   return {
-    probability: null,
-    label: args.status === "PREDICTED_CALL" ? "Criteria met" : "Pool-dependent",
-    detail: "A numeric percentage is not shown because the institute has not published a compatible fixed shortlist boundary.",
+    probability,
+    label: `${(probability * 100).toFixed(1)}%`,
+    detail: normalizedScore == null
+      ? "Planning estimate used because the institute has not published a compatible fixed shortlist boundary."
+      : "Planning estimate from the normalized shortlist score because the institute has not published a compatible fixed shortlist boundary.",
   };
 }

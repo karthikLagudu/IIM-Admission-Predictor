@@ -19,9 +19,15 @@ describe("interview-call chance", () => {
     expect(result.label).toBe("0.0%");
   });
 
-  it("does not invent a percentage without a fixed benchmark", () => {
+  it("uses a numeric planning estimate without a fixed benchmark", () => {
     const result = estimateInterviewCallChance({ eligible: true, score: 80, maxScore: 100, benchmark: null, status: "ELIGIBLE_FOR_RANKING" });
-    expect(result.probability).toBeNull();
-    expect(result.label).toBe("Pool-dependent");
+    expect(result.probability).toBeCloseTo(0.86);
+    expect(result.label).toBe("86.0%");
+  });
+
+  it("shows zero call chance for direct-merit programmes without interviews", () => {
+    const result = estimateInterviewCallChance({ eligible: true, score: 90, maxScore: 100, benchmark: null, directMerit: true });
+    expect(result.probability).toBe(0);
+    expect(result.label).toBe("0.0%");
   });
 });

@@ -160,7 +160,7 @@ export default function MethodologyPage() {
               <h3>Expected interview-call chance</h3>
               <p>When a compatible shortlist benchmark is configured, the dashboard converts the student&apos;s normalized distance above or below that benchmark into a planning percentage. The benchmark itself is 50%; the estimate rises above 50% as the score clears it and falls below 50% when the score trails it.</p>
               <div className="formula">P(Call) = Hard gates × 1 / (1 + exp(−16 × ((shortlist score − benchmark) / score maximum)))</div>
-              <p>If a hard gate fails, call chance is 0%. If the institute ranks the applicant pool without publishing a compatible fixed boundary, the result says <strong>Pool-dependent</strong> instead of inventing a percentage. Direct-merit programmes show <strong>Not applicable</strong> because there is no interview call.</p>
+              <p>If a hard gate fails, call chance is 0%. When no compatible fixed boundary is published, the site shows a numeric planning estimate based on the normalized shortlist score. Direct-merit programmes show 0% because they have no interview-call stage.</p>
             </article>
 
             <article className="panel method-card" id="history">

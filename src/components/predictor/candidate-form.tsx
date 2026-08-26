@@ -324,7 +324,7 @@ export function CandidateForm({
           <div className="section-kicker"><BriefcaseBusiness size={14} /> Work experience</div>
           <div className="field-grid">
             <div className="field field-full">
-              <label htmlFor="workex"><span className="required-star" aria-hidden="true">*</span> Eligible completed work-experience months</label>
+              <label htmlFor="workex">Eligible completed work-experience months</label>
               <input id="workex" type="number" min="0" max="600" step="1" value={displayNumber(candidate.workExperienceMonths)} onFocus={replaceZeroOnFocus} onChange={(event) => number("workExperienceMonths", event.target.value)} />
               <p className="form-help"><span className="required-star" aria-hidden="true">*</span>{institute === "ALL" ? "The engines apply each institute's own official work-experience cut-off date." : institute === "IIMC" ? "Count only eligible full-time post-bachelor work completed by the official cut-off date." : "Counted as on the official work-experience cut-off date. Rating reaches its maximum at 36 months."}</p>
             </div>

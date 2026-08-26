@@ -161,7 +161,6 @@ export function CandidateForm({
       <div className="panel-header">
         <div>
           <h3 id="candidate-form-heading">Candidate profile</h3>
-          <p>Complete the official profile and CAT inputs.</p>
         </div>
         <button type="button" className="sample-button" onClick={onLoadSample}>Load sample</button>
       </div>

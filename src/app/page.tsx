@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BarChart3, History, Landmark, ShieldCheck } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -6,7 +7,6 @@ export default function HomePage() {
       <section className="cat-product-hero">
         <div className="shell cat-product-hero-grid">
           <div className="cat-product-copy">
-            <p className="cat-product-kicker">CAT · IIM admissions intelligence</p>
             <h1>
               Turn your <span className="cat-gradient-word">CAT</span> profile into a{" "}
               <span className="cat-clear-word">clear</span>{" "}
@@ -14,9 +14,10 @@ export default function HomePage() {
             </h1>
             <p className="cat-product-lead">Enter one academic and CAT profile to understand interview-call routes, shortlist scores and modelled seat chances across all 21 IIMs.</p>
             <div className="cat-product-benefits" aria-label="Predictor benefits">
-              <span><i>01</i>Official hard-gate checks</span>
-              <span><i>02</i>Institute-specific scoring</span>
-              <span><i>03</i>Historical comparisons</span>
+              <article><div><ShieldCheck size={18} aria-hidden="true" /><strong>Official gates</strong></div><span>Hard-gate checks</span></article>
+              <article><div><Landmark size={18} aria-hidden="true" /><strong>21 IIMs</strong></div><span>Institute scoring</span></article>
+              <article><div><History size={18} aria-hidden="true" /><strong>Past cycles</strong></div><span>Historical context</span></article>
+              <article><div><BarChart3 size={18} aria-hidden="true" /><strong>Clear outlook</strong></div><span>Call &amp; seat chances</span></article>
             </div>
             <div className="cat-product-actions">
               <Link className="cat-primary-cta" href="/predictor">Start your analysis</Link>

@@ -416,6 +416,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .form-actions { display: flex; gap: 10px; align-items: center; padding-top: 18px; }
 .primary-button, .secondary-button { min-height: 44px; border-radius: 9px; padding: 10px 16px; font-size: 12px; font-weight: 800; cursor: pointer; }
 .primary-button { flex: 1; color: white; background: linear-gradient(140deg, var(--blue-600), #115183); border: 0; box-shadow: 0 8px 18px rgba(23,105,170,.18); }
+.primary-button.analyze-all-button { min-height: 64px; padding: 16px 24px; border-radius: 14px; font-size: 17px; letter-spacing: .01em; }
 .primary-button:disabled { opacity: .65; cursor: wait; }
 .secondary-button { border: 1px solid var(--line); background: white; color: var(--navy-700); }
 .mobile-nav-actions { display: none; }

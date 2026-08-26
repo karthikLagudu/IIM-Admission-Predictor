@@ -399,7 +399,7 @@ export function CandidateForm({
         {error && <div className="form-error" role="alert">{error}</div>}
 
         <div className="form-actions">
-          <button className="primary-button" type="button" onClick={onAnalyze} disabled={loading}>
+          <button className="primary-button analyze-all-button" type="button" onClick={onAnalyze} disabled={loading}>
             {loading ? "Analysing…" : `Analyse ${instituteShortName} chances`}
           </button>
         </div>

@@ -279,7 +279,7 @@ export function CandidateForm({
               <label htmlFor="bachelor">Bachelor / professional %</label>
               <input id="bachelor" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.bachelorPercent)} onFocus={replaceZeroOnFocus} onChange={(event) => number("bachelorPercent", event.target.value)} />
             </div>
-            <div className="field field-full">
+            <div className="field">
               <label htmlFor="professional">Professional qualification</label>
               <select id="professional" value={candidate.professionalQualification} onChange={(event) => update("professionalQualification", event.target.value as CandidateInput["professionalQualification"])}>
                 <option value="NONE">None</option>

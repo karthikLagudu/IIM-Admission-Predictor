@@ -13,12 +13,6 @@ export default function HomePage() {
               <span className="cat-gradient-word">IIM strategy.</span>
             </h1>
             <p className="cat-product-lead">Enter one academic and CAT profile to understand interview-call routes, shortlist scores and modelled seat chances across all 21 IIMs.</p>
-            <div className="cat-product-benefits" aria-label="Predictor benefits">
-              <article><div><ShieldCheck size={18} aria-hidden="true" /><strong>Official gates</strong></div><span>Hard-gate checks</span></article>
-              <article><div><Landmark size={18} aria-hidden="true" /><strong>21 IIMs</strong></div><span>Institute scoring</span></article>
-              <article><div><History size={18} aria-hidden="true" /><strong>Past cycles</strong></div><span>Historical context</span></article>
-              <article><div><BarChart3 size={18} aria-hidden="true" /><strong>Clear outlook</strong></div><span>Call &amp; seat chances</span></article>
-            </div>
             <div className="cat-product-actions">
               <Link className="cat-primary-cta" href="/predictor">Start your analysis</Link>
               <Link className="cat-secondary-cta" href="/methodology">Explore methodology</Link>
@@ -41,12 +35,12 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="cat-proof-strip" aria-label="Predictor coverage">
-        <div className="shell cat-proof-grid">
-          <div><strong>21</strong><span>IIM rule engines</span></div>
-          <div><strong>239</strong><span>Calculation checks</span></div>
-          <div><strong>3</strong><span>CAT sections evaluated</span></div>
-          <div><strong>1</strong><span>Profile for every result</span></div>
+      <section className="cat-benefit-strip" aria-label="Predictor benefits">
+        <div className="shell cat-product-benefits">
+          <article><div><ShieldCheck size={20} aria-hidden="true" /><strong>Official gates</strong></div><span>Hard-gate checks</span></article>
+          <article><div><Landmark size={20} aria-hidden="true" /><strong>21 IIMs</strong></div><span>Institute scoring</span></article>
+          <article><div><History size={20} aria-hidden="true" /><strong>Past cycles</strong></div><span>Historical context</span></article>
+          <article><div><BarChart3 size={20} aria-hidden="true" /><strong>Clear outlook</strong></div><span>Call &amp; seat chances</span></article>
         </div>
       </section>
 

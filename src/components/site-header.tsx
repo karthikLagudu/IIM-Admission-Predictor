@@ -32,9 +32,7 @@ export function SiteHeader() {
         </Link>
         {isHome ? (
           <nav className="home-header-nav" aria-label="Homepage navigation">
-            <Link href="#about">About</Link>
             <Link href="#features">Features</Link>
-            <Link href="/methodology">Methodology</Link>
             <Link href="/methodology">FAQ</Link>
           </nav>
         ) : showResultsTitle ? <strong className="header-results-title">Your IIM results</strong> : <span aria-hidden="true" />}
@@ -51,7 +49,7 @@ export function SiteHeader() {
             ) : (
               <Link className="header-cta" href="/predictor">Enter candidate details</Link>
             )}
-            <Link className="header-methodology" href="/methodology">Methodology</Link>
+            {!isHome && <Link className="header-methodology" href="/methodology">Methodology</Link>}
           </div>
         </div>
       </div>

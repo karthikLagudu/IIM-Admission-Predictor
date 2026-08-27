@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { ArrowRight, BarChart3, History, Landmark, ShieldCheck } from "lucide-react";
+import heroBackground from "../../public/home-background-reference.webp";
 
 export default function HomePage() {
   return (
-    <div className="cat-landing-page">
+    <div className="cat-landing-page" style={{ backgroundImage: `url(${heroBackground.src})` }}>
       <section className="cat-product-hero" id="about">
-        <div className="cat-hero-wave cat-hero-wave-left" aria-hidden="true" />
-        <div className="cat-hero-wave cat-hero-wave-right" aria-hidden="true" />
         <div className="shell cat-product-hero-grid">
           <div className="cat-product-copy">
             <h1>

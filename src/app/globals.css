@@ -77,8 +77,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .site-footer p { margin: 5px 0 0; font-size: 12px; }
 .footer-links { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; font-size: 12px; }
 
-.cat-landing-page { min-height: 100vh; display: flex; flex-direction: column; background: #fff; }
-.cat-product-hero { position: relative; isolation: isolate; display: flex; min-height: 100vh; align-items: center; overflow: hidden; padding: 150px 0 120px; background: radial-gradient(circle at 50% 45%, rgba(255,255,255,.98) 0 24%, rgba(244,248,255,.9) 58%, rgba(224,234,255,.94) 100%), linear-gradient(135deg, #fff 0%, #edf4ff 55%, #dbe8ff 100%); }
+.cat-landing-page { height: 100vh; height: 100svh; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+.cat-product-hero { position: relative; isolation: isolate; display: flex; flex: 1 1 auto; min-height: 0; align-items: center; overflow: hidden; padding: 112px 0 34px; background: radial-gradient(circle at 50% 45%, rgba(255,255,255,.98) 0 24%, rgba(244,248,255,.9) 58%, rgba(224,234,255,.94) 100%), linear-gradient(135deg, #fff 0%, #edf4ff 55%, #dbe8ff 100%); }
 .cat-product-hero::before { content: ""; position: absolute; z-index: -2; width: 720px; height: 720px; right: -310px; top: 120px; border: 1px solid rgba(37,99,235,.12); border-radius: 50%; box-shadow: 0 0 0 26px rgba(37,99,235,.025), 0 0 0 52px rgba(37,99,235,.025), 0 0 0 78px rgba(37,99,235,.02), 0 0 0 104px rgba(37,99,235,.018); }
 .cat-product-hero::after { content: ""; position: absolute; z-index: -2; width: 760px; height: 600px; left: -390px; bottom: -320px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(37,99,235,.34), rgba(59,130,246,.12) 44%, transparent 70%); transform: rotate(20deg); }
 .cat-hero-wave { position: absolute; z-index: -1; pointer-events: none; border-radius: 50%; opacity: .58; }
@@ -92,9 +92,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .cat-product-copy h1 .cat-gradient-word { margin-top: 12px; color: transparent; background: linear-gradient(100deg, #4513c5 5%, #1749cd 50%, #0878f5 100%); background-clip: text; -webkit-background-clip: text; }
 .cat-product-copy h1 .cat-clear-word { color: #080b16; }
 .cat-product-lead { max-width: 700px; margin: 38px auto 0; color: #52627b; font-size: 19px; line-height: 1.65; }
-.cat-benefit-strip { position: relative; z-index: 2; padding: 38px 0; background: #fff; }
+.cat-benefit-strip { position: relative; z-index: 2; flex: 0 0 auto; padding: 0 0 20px; background: #fff; }
 .cat-product-benefits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-.cat-product-benefits article { min-width: 0; min-height: 96px; padding: 18px 20px; border: 1px solid #d8deea; border-radius: 14px; background: #fffdfa; box-shadow: 0 8px 20px rgba(15,23,42,.07); }
+.cat-product-benefits article { min-width: 0; min-height: 80px; padding: 14px 18px; border: 1px solid #d8deea; border-radius: 14px; background: #fffdfa; box-shadow: 0 8px 20px rgba(15,23,42,.07); }
 .cat-product-benefits article > div { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .cat-product-benefits article svg { flex: 0 0 auto; color: #2563eb; }
 .cat-product-benefits article:nth-child(1) svg { color: #e2aa19; }
@@ -984,7 +984,7 @@ h1, h2, h3, h4, h5, h6,
   .home-header-nav { gap: 20px; font-size: 12px; }
   .home-header-primary { min-width: 150px; padding-inline: 18px; }
   .home-header-join { min-width: 96px; padding-inline: 18px; }
-  .cat-landing-page { min-height: 0; }
+  .cat-landing-page { height: 100svh; }
   .cat-product-hero-grid { grid-template-columns: 1fr; gap: 35px; }
   .cat-product-copy { max-width: 840px; }
   .cat-intelligence-card { min-height: 360px; }
@@ -1013,7 +1013,7 @@ h1, h2, h3, h4, h5, h6,
   .header-actions { flex-direction: column; gap: 3px; }
   .header-results-title { font-size: 16px; }
   .header-results-filter-host { display: none; }
-  .cat-product-hero { min-height: 100svh; padding: 125px 0 86px; }
+  .cat-product-hero { min-height: 0; padding: 105px 0 26px; }
   .cat-product-eyebrow { margin-bottom: 20px; font-size: 10px; }
   .cat-product-copy h1 { font-size: clamp(38px, 12vw, 54px); }
   .cat-product-copy h1 .cat-gradient-word { margin-top: 8px; }
@@ -1021,8 +1021,10 @@ h1, h2, h3, h4, h5, h6,
   .cat-product-actions { margin-top: 32px; }
   .cat-primary-cta { min-width: 0; min-height: 58px; padding: 14px 24px; font-size: 15px; }
   .cat-intelligence-card { min-height: 0; padding: 20px; border-radius: 16px; }
-  .cat-benefit-strip { padding-bottom: 20px; }
-  .cat-product-benefits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cat-benefit-strip { padding-bottom: 12px; }
+  .cat-product-benefits { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .cat-product-benefits article { min-height: 66px; padding: 10px 12px; }
+  .cat-product-benefits article > span { margin-top: 8px; }
   .hero { padding: 46px 0 80px; }
   .hero h1 { font-size: 39px; }
   .hero-copy { font-size: 15px; }
@@ -1103,6 +1105,19 @@ h1, h2, h3, h4, h5, h6,
   .method-card-heading { align-items: flex-start; flex-direction: column; }
   .footer-inner { flex-direction: column; }
   .footer-links { align-items: flex-start; }
+}
+
+@media (max-height: 760px) and (min-width: 761px) {
+  .cat-product-hero { padding: 92px 0 22px; }
+  .cat-product-eyebrow { margin-bottom: 14px; font-size: 10px; }
+  .cat-product-copy h1 { font-size: clamp(44px, 5.3vw, 68px); }
+  .cat-product-copy h1 .cat-gradient-word { margin-top: 5px; }
+  .cat-product-lead { margin-top: 20px; font-size: 16px; }
+  .cat-product-actions { margin-top: 24px; }
+  .cat-primary-cta { min-height: 56px; padding-block: 13px; font-size: 16px; }
+  .cat-benefit-strip { padding-bottom: 12px; }
+  .cat-product-benefits article { min-height: 68px; padding: 10px 14px; }
+  .cat-product-benefits article > span { margin-top: 7px; }
 }
 
 @media (max-width: 470px) {

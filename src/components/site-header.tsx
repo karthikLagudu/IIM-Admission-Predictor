@@ -30,18 +30,13 @@ export function SiteHeader() {
         <Link className="site-wordmark" href="/" aria-label="CAT IIM Predictor home">
           <Image src={thinkplusLogo} alt="Thinkplus" priority />
         </Link>
-        {isHome ? (
-          <nav className="home-header-nav" aria-label="Homepage navigation">
-            <Link href="#features">Features</Link>
-            <Link href="/methodology">FAQ</Link>
-          </nav>
-        ) : showResultsTitle ? <strong className="header-results-title">Your IIM results</strong> : <span aria-hidden="true" />}
+        {isHome ? <span aria-hidden="true" /> : showResultsTitle ? <strong className="header-results-title">Your IIM results</strong> : <span aria-hidden="true" />}
         <div className="header-tools">
           <div className="header-results-filter-host" id="header-results-filter-host" />
           <div className="header-actions">
             {isHome ? (
               <>
-                <Link className="home-header-primary" href="/predictor">Enter your details</Link>
+                <Link className="home-header-primary" href="/methodology">Methodology</Link>
                 <Link className="home-header-join" href="/predictor">Join now</Link>
               </>
             ) : showResultsTitle ? (

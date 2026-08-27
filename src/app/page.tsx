@@ -9,10 +9,9 @@ export default function HomePage() {
         <div className="cat-hero-wave cat-hero-wave-right" aria-hidden="true" />
         <div className="shell cat-product-hero-grid">
           <div className="cat-product-copy">
-            <p className="cat-product-eyebrow">CAT IIM Call Predictor</p>
             <h1>
-              <span className="cat-clear-word">Know your IIM calls.</span>
-              <span className="cat-gradient-word">Before they come.</span>
+              <span className="cat-clear-word">Which IIM will you land?</span>
+              <span className="cat-gradient-word">Predict for yourself</span>
             </h1>
             <p className="cat-product-lead">Enter your CAT score and academic profile to get clear, explainable estimates of interview calls across all 21 IIMs.</p>
             <div className="cat-product-actions">

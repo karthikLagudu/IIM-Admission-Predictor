@@ -997,11 +997,13 @@ h1, h2, h3, h4, h5, h6,
   .shell { width: min(100% - 24px, 1440px); }
   .site-header-inner { min-height: 48px; }
   .home-site-header { padding: 12px 0; }
-  .home-site-header .site-header-inner { grid-template-columns: auto 1fr; min-height: 48px; gap: 16px; }
-  .home-site-header .site-wordmark { width: 132px; }
-  .home-header-nav, .home-header-join { display: none; }
+  .home-site-header .site-header-inner { grid-template-columns: auto minmax(0, 1fr) auto; min-height: 48px; gap: 8px; }
+  .home-site-header .site-wordmark { width: 118px; }
+  .home-header-nav { display: none; }
+  .home-header-join { display: inline-flex; min-width: 68px; min-height: 42px; padding: 9px 10px; font-size: 10px; }
   .home-site-header .header-tools { justify-self: end; }
-  .home-header-primary { min-width: 0; min-height: 42px; padding: 9px 14px; font-size: 11px; }
+  .home-site-header .header-actions { flex-direction: row; gap: 6px; }
+  .home-header-primary { min-width: 100px; min-height: 42px; padding: 9px 10px; font-size: 10px; }
   .brand small { display: none; }
   .site-header-inner { grid-template-columns: minmax(130px, 1fr) auto minmax(130px, 1fr); gap: 12px; }
   .header-cta { padding: 8px 12px; }
@@ -1117,6 +1119,9 @@ h1, h2, h3, h4, h5, h6,
   .site-header { padding-block: 8px; }
   .site-header-inner { gap: 10px; }
   .site-wordmark { width: 126px; }
+  .home-site-header .site-wordmark { width: 108px; }
+  .home-header-primary { min-width: 94px; }
+  .home-header-join { min-width: 62px; padding-inline: 8px; }
   .site-header-inner { grid-template-columns: auto minmax(70px, 1fr) auto; gap: 8px; }
   .header-results-title { max-width: 105px; font-size: 12px; white-space: normal; }
   .header-actions { gap: 2px; }

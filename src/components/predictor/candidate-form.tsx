@@ -3,14 +3,14 @@
 import type { CandidateInput } from "@/types/iima";
 import type { InstituteKey } from "@/types/institutes";
 import { ACADEMIC_CATEGORY_LABELS, calculateCatSectionProjection, classifyDegreeForInstitutes, DEGREE_OPTIONS, estimateCat2025OverallPercentile, SAMPLE_CANDIDATE } from "@/lib/iima";
-import { BookOpen, BriefcaseBusiness, ChevronLeft, ChevronRight, GraduationCap, UserRound } from "lucide-react";
+import { ArrowRight, BookOpen, BriefcaseBusiness, ChevronLeft, ChevronRight, CircleCheckBig, CircleMinus, CircleX, GraduationCap, Keyboard, ListChecks, UserRound } from "lucide-react";
+import { useState } from "react";
 
 interface CandidateFormProps {
   institute: InstituteKey | "ALL";
   candidate: CandidateInput;
   setCandidate: React.Dispatch<React.SetStateAction<CandidateInput>>;
   onAnalyze: () => void;
-  onLoadSample: () => void;
   loading: boolean;
   error: string | null;
   mobileStep: number;
@@ -61,16 +61,18 @@ export function CandidateForm({
   candidate,
   setCandidate,
   onAnalyze,
-  onLoadSample,
   loading,
   error,
   mobileStep,
   setMobileStep,
 }: CandidateFormProps) {
+  const [missingMessage, setMissingMessage] = useState<string | null>(null);
+  const [showMissingFields, setShowMissingFields] = useState(false);
   const analyzeLabel = institute === "ALL"
     ? "Analyze all 21 IIM Chances"
     : `Analyse ${institute} chances`;
   const update = <K extends keyof CandidateInput>(key: K, value: CandidateInput[K]) => {
+    setMissingMessage(null);
     setCandidate((current) => ({ ...current, [key]: value }));
   };
   const number = <K extends keyof CandidateInput>(key: K, raw: string, optional = false) => {
@@ -79,7 +81,14 @@ export function CandidateForm({
   const replaceZeroOnFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     if (event.currentTarget.value === "0") event.currentTarget.select();
   };
+  const preventNumberWheelChange = (event: React.WheelEvent<HTMLElement>) => {
+    const target = event.target;
+    if (target instanceof HTMLInputElement && target.type === "number" && document.activeElement === target) {
+      target.blur();
+    }
+  };
   const updateCatAnswers = (sectionId: CatSectionId, answerType: CatAnswerType, raw: string) => {
+    setMissingMessage(null);
     const section = CAT_SECTIONS.find((item) => item.id === sectionId)!;
     const requested = raw === "" ? 0 : Math.max(0, Math.floor(Number(raw)));
     setCandidate((current) => {
@@ -121,6 +130,7 @@ export function CandidateForm({
     });
   };
   const selectDegree = (degreeName: string) => {
+    setMissingMessage(null);
     const selected = DEGREE_OPTIONS.find((option) => option.value === degreeName);
     if (!selected) return;
     const classification = classifyDegreeForInstitutes(selected);
@@ -156,13 +166,50 @@ export function CandidateForm({
     marks: totals.marks + row.marks,
   }), { mcqCorrect: 0, mcqWrong: 0, titaCorrect: 0, titaWrong: 0, attempted: 0, marks: 0 });
 
+  const completionChecks = [
+    { id: "dob", step: 0, complete: Boolean(candidate.dateOfBirth), message: "Enter the student's date of birth." },
+    { id: "class10", step: 1, complete: candidate.class10Percent > 0 && candidate.class10Percent <= 100, message: "Enter a valid Class 10 percentage." },
+    { id: "class12", step: 1, complete: candidate.class12Percent > 0 && candidate.class12Percent <= 100, message: "Enter a valid Class 12 percentage." },
+    { id: "class10-board", step: 1, complete: institute !== "ALL" && institute !== "IIMB" || Boolean(candidate.class10Board), message: "Select the Class 10 board." },
+    { id: "class12-board", step: 1, complete: institute !== "ALL" && institute !== "IIMB" || Boolean(candidate.class12Board), message: "Select the Class 12 board." },
+    { id: "degree", step: 1, complete: Boolean(candidate.degreeName.trim()), message: "Select the bachelor's degree or qualification." },
+    { id: "bachelor", step: 1, complete: candidate.bachelorPercent > 0 && candidate.bachelorPercent <= 100, message: "Enter a valid bachelor or professional percentage." },
+    { id: "workex", step: 2, complete: candidate.workExperienceMonths >= 0 && candidate.workExperienceMonths <= 600, message: "Enter eligible work-experience months; use 0 if there is no experience." },
+    ...catRows.map((row) => ({
+      id: `cat-${row.id}-mcq-correct`,
+      step: 3,
+      complete: row.attempted > 0,
+      message: `Enter the ${row.label} answer details.`,
+    })),
+  ];
+  const firstIncomplete = completionChecks.find((check) => !check.complete);
+  const formComplete = !firstIncomplete;
+  const isMissing = (id: string) => showMissingFields && completionChecks.some((check) => check.id === id && !check.complete);
+  const focusFirstIncomplete = () => {
+    if (!firstIncomplete) return false;
+    setShowMissingFields(true);
+    setMissingMessage(firstIncomplete.message);
+    setMobileStep(firstIncomplete.step);
+    window.requestAnimationFrame(() => {
+      const field = document.getElementById(firstIncomplete.id);
+      field?.scrollIntoView({ behavior: "smooth", block: "center" });
+      field?.focus({ preventScroll: true });
+    });
+    return true;
+  };
+  const handleAnalyze = () => {
+    if (focusFirstIncomplete()) return;
+    setShowMissingFields(false);
+    setMissingMessage(null);
+    onAnalyze();
+  };
+
   return (
-    <section className="panel form-panel" aria-labelledby="candidate-form-heading">
+    <section className="panel form-panel" aria-labelledby="candidate-form-heading" onWheelCapture={preventNumberWheelChange}>
       <div className="panel-header">
         <div>
           <h3 id="candidate-form-heading">Candidate profile</h3>
         </div>
-        <button type="button" className="sample-button" onClick={onLoadSample}>Load sample</button>
       </div>
 
       <div className="mobile-stepper" aria-label="Form steps">
@@ -204,9 +251,10 @@ export function CandidateForm({
                 <option value="OTHER">Other qualifying category</option>
               </select>
             </div>
-            <div className="field">
+            <div className={`field ${isMissing("dob") ? "field-missing" : ""}`}>
               <label htmlFor="dob">Date of birth</label>
-              <input id="dob" type="date" value={candidate.dateOfBirth ?? ""} onChange={(event) => update("dateOfBirth", event.target.value || undefined)} />
+              <input id="dob" type="date" value={candidate.dateOfBirth ?? ""} aria-invalid={isMissing("dob")} onChange={(event) => update("dateOfBirth", event.target.value || undefined)} />
+              {isMissing("dob") && <p className="field-missing-note">You missed this field.</p>}
             </div>
             <div className="field">
               <span>PwD status</span>
@@ -221,19 +269,21 @@ export function CandidateForm({
         <div className={`form-section ${mobileStep === 1 ? "active-mobile-step" : ""}`}>
           <div className="section-kicker"><GraduationCap size={14} /> Academic record</div>
           <div className="field-grid">
-            <div className="field">
+            <div className={`field ${isMissing("class10") ? "field-missing" : ""}`}>
               <label htmlFor="class10">Class 10 percentage</label>
-              <input id="class10" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.class10Percent)} onFocus={replaceZeroOnFocus} onChange={(event) => number("class10Percent", event.target.value)} />
+              <input id="class10" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.class10Percent)} aria-invalid={isMissing("class10")} onFocus={replaceZeroOnFocus} onChange={(event) => number("class10Percent", event.target.value)} />
+              {isMissing("class10") && <p className="field-missing-note">You missed this field.</p>}
             </div>
-            <div className="field">
+            <div className={`field ${isMissing("class12") ? "field-missing" : ""}`}>
               <label htmlFor="class12">Class 12 percentage</label>
-              <input id="class12" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.class12Percent)} onFocus={replaceZeroOnFocus} onChange={(event) => number("class12Percent", event.target.value)} />
+              <input id="class12" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.class12Percent)} aria-invalid={isMissing("class12")} onFocus={replaceZeroOnFocus} onChange={(event) => number("class12Percent", event.target.value)} />
+              {isMissing("class12") && <p className="field-missing-note">You missed this field.</p>}
             </div>
             {(institute === "IIMB" || institute === "ALL") && (
               <>
-                <div className="field">
+                <div className={`field ${isMissing("class10-board") ? "field-missing" : ""}`}>
                   <label htmlFor="class10-board">Class 10 board</label>
-                  <select id="class10-board" value={candidate.class10Board ?? ""} onChange={(event) => update("class10Board", event.target.value || undefined)}>
+                  <select id="class10-board" value={candidate.class10Board ?? ""} aria-invalid={isMissing("class10-board")} onChange={(event) => update("class10Board", event.target.value || undefined)}>
                     <option value="">Select board</option>
                     <option value="CBSE">CBSE</option>
                     <option value="CISCE">CISCE / ISC</option>
@@ -241,10 +291,11 @@ export function CandidateForm({
                     <option value="INTERNATIONAL_BOARD">International board</option>
                     <option value="OTHER">Other board</option>
                   </select>
+                  {isMissing("class10-board") && <p className="field-missing-note">You missed this field.</p>}
                 </div>
-                <div className="field">
+                <div className={`field ${isMissing("class12-board") ? "field-missing" : ""}`}>
                   <label htmlFor="class12-board">Class 12 board</label>
-                  <select id="class12-board" value={candidate.class12Board ?? ""} onChange={(event) => update("class12Board", event.target.value || undefined)}>
+                  <select id="class12-board" value={candidate.class12Board ?? ""} aria-invalid={isMissing("class12-board")} onChange={(event) => update("class12Board", event.target.value || undefined)}>
                     <option value="">Select board</option>
                     <option value="CBSE">CBSE</option>
                     <option value="CISCE">CISCE / ISC</option>
@@ -252,6 +303,7 @@ export function CandidateForm({
                     <option value="INTERNATIONAL_BOARD">International board</option>
                     <option value="OTHER">Other board</option>
                   </select>
+                  {isMissing("class12-board") && <p className="field-missing-note">You missed this field.</p>}
                 </div>
               </>
             )}
@@ -263,9 +315,9 @@ export function CandidateForm({
                 <option value="ARTS_HUMANITIES">Arts / Humanities</option>
               </select>
             </div>
-            <div className="field field-full">
+            <div className={`field field-full ${isMissing("degree") ? "field-missing" : ""}`}>
               <label htmlFor="degree">Bachelor&apos;s degree / qualification</label>
-              <select id="degree" value={candidate.degreeName} onChange={(event) => selectDegree(event.target.value)}>
+              <select id="degree" value={candidate.degreeName} aria-invalid={isMissing("degree")} onChange={(event) => selectDegree(event.target.value)}>
                 {(Object.keys(ACADEMIC_CATEGORY_LABELS) as CandidateInput["academicCategory"][]).map((category) => (
                   <optgroup label={ACADEMIC_CATEGORY_LABELS[category]} key={category}>
                     {DEGREE_OPTIONS.filter((option) => option.academicCategory === category).map((option) => (
@@ -274,10 +326,12 @@ export function CandidateForm({
                   </optgroup>
                 ))}
               </select>
+              {isMissing("degree") && <p className="field-missing-note">You missed this field.</p>}
             </div>
-            <div className="field">
+            <div className={`field ${isMissing("bachelor") ? "field-missing" : ""}`}>
               <label htmlFor="bachelor">Bachelor / professional %</label>
-              <input id="bachelor" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.bachelorPercent)} onFocus={replaceZeroOnFocus} onChange={(event) => number("bachelorPercent", event.target.value)} />
+              <input id="bachelor" type="number" min="0" max="100" step="0.01" value={displayNumber(candidate.bachelorPercent)} aria-invalid={isMissing("bachelor")} onFocus={replaceZeroOnFocus} onChange={(event) => number("bachelorPercent", event.target.value)} />
+              {isMissing("bachelor") && <p className="field-missing-note">You missed this field.</p>}
             </div>
             <div className="field">
               <label htmlFor="professional">Professional qualification</label>
@@ -323,30 +377,33 @@ export function CandidateForm({
         <div className={`form-section ${mobileStep === 2 ? "active-mobile-step" : ""}`}>
           <div className="section-kicker"><BriefcaseBusiness size={14} /> Work experience</div>
           <div className="field-grid">
-            <div className="field field-full">
+            <div className={`field field-full ${isMissing("workex") ? "field-missing" : ""}`}>
               <label htmlFor="workex">Eligible completed work-experience months</label>
-              <input id="workex" type="number" min="0" max="600" step="1" value={displayNumber(candidate.workExperienceMonths)} onFocus={replaceZeroOnFocus} onChange={(event) => number("workExperienceMonths", event.target.value)} />
+              <input id="workex" type="number" min="0" max="600" step="1" value={candidate.workExperienceMonths} aria-invalid={isMissing("workex")} onFocus={replaceZeroOnFocus} onChange={(event) => number("workExperienceMonths", event.target.value)} />
+              {isMissing("workex") && <p className="field-missing-note">You missed this field.</p>}
               <p className="form-help"><span className="required-star" aria-hidden="true">*</span>{institute === "ALL" ? "The engines apply each institute's own official work-experience cut-off date." : institute === "IIMC" ? "Count only eligible full-time post-bachelor work completed by the official cut-off date." : "Counted as on the official work-experience cut-off date. Rating reaches its maximum at 36 months."}</p>
             </div>
           </div>
         </div>
 
         <div className={`form-section ${mobileStep === 3 ? "active-mobile-step" : ""}`}>
-          <div className="section-kicker"><BookOpen size={14} /> CAT Percentile Predictor</div>
-          <div className="cat-marking-key" aria-label="CAT marking scheme">
-            <span><strong>68</strong> questions · <strong>204</strong> marks</span>
-            <span>Correct MCQ <strong>+3</strong></span>
-            <span>Wrong MCQ <strong>−1</strong></span>
-            <span>Correct TITA <strong>+3</strong></span>
-            <span>Wrong TITA / unattempted <strong>0</strong></span>
+          <div className="cat-predictor-banner">
+            <div className="section-kicker"><BookOpen size={16} /> CAT Percentile Predictor</div>
+            <div className="cat-marking-key" aria-label="CAT marking scheme">
+              <span><ListChecks size={17} aria-hidden="true" /><strong>68</strong> questions · <strong>204</strong> marks</span>
+              <span><CircleCheckBig size={17} aria-hidden="true" />Correct MCQ <strong>+3</strong></span>
+              <span><CircleX size={17} aria-hidden="true" />Wrong MCQ <strong>−1</strong></span>
+              <span><Keyboard size={17} aria-hidden="true" />Correct TITA <strong>+3</strong></span>
+              <span><CircleMinus size={17} aria-hidden="true" />Wrong TITA / unattempted <strong>0</strong></span>
+            </div>
           </div>
           <div className="cat-score-grid-wrap">
             <table className="cat-score-grid">
               <thead>
                 <tr>
                   <th scope="col">CAT section</th>
-                  <th scope="col">MCQ <span>+3 / −1</span></th>
-                  <th scope="col">TITA <span>+3 / 0</span></th>
+                  <th scope="col">MCQ <div className="cat-answer-headings" aria-hidden="true"><b>Right</b><b>Wrong</b></div></th>
+                  <th scope="col">TITA <div className="cat-answer-headings" aria-hidden="true"><b>Right</b><b>Wrong</b></div></th>
                   <th scope="col">Attempted</th>
                   <th scope="col">Expected marks</th>
                   <th scope="col">Sectional percentile</th>
@@ -354,18 +411,19 @@ export function CandidateForm({
               </thead>
               <tbody>
                 {catRows.map((row) => (
-                  <tr key={row.id}>
+                  <tr key={row.id} className={isMissing(`cat-${row.id}-mcq-correct`) ? "cat-row-missing" : ""}>
                     <th scope="row"><strong>{row.label}</strong><span>{row.maxQuestions} questions</span></th>
                     <td>
                       <div className="cat-answer-pair">
-                        <label htmlFor={`cat-${row.id}-mcq-correct`}><span>Right</span><input id={`cat-${row.id}-mcq-correct`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.mcqCorrect)} step="1" inputMode="numeric" value={displayNumber(row.mcqCorrect)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "mcqCorrect", event.target.value)} /></label>
-                        <label htmlFor={`cat-${row.id}-mcq-wrong`}><span>Wrong</span><input id={`cat-${row.id}-mcq-wrong`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.mcqWrong)} step="1" inputMode="numeric" value={displayNumber(row.mcqWrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "mcqWrong", event.target.value)} /></label>
+                        <label htmlFor={`cat-${row.id}-mcq-correct`}><input className="cat-answer-correct" aria-label={`${row.label} MCQ right`} aria-invalid={isMissing(`cat-${row.id}-mcq-correct`)} id={`cat-${row.id}-mcq-correct`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.mcqCorrect)} step="1" inputMode="numeric" value={displayNumber(row.mcqCorrect)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "mcqCorrect", event.target.value)} /></label>
+                        <label htmlFor={`cat-${row.id}-mcq-wrong`}><input className="cat-answer-wrong" aria-label={`${row.label} MCQ wrong`} id={`cat-${row.id}-mcq-wrong`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.mcqWrong)} step="1" inputMode="numeric" value={displayNumber(row.mcqWrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "mcqWrong", event.target.value)} /></label>
                       </div>
+                      {isMissing(`cat-${row.id}-mcq-correct`) && <span className="cat-field-missing">You missed this field.</span>}
                     </td>
                     <td>
                       <div className="cat-answer-pair">
-                        <label htmlFor={`cat-${row.id}-tita-correct`}><span>Right</span><input id={`cat-${row.id}-tita-correct`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.titaCorrect)} step="1" inputMode="numeric" value={displayNumber(row.titaCorrect)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "titaCorrect", event.target.value)} /></label>
-                        <label htmlFor={`cat-${row.id}-tita-wrong`}><span>Wrong</span><input id={`cat-${row.id}-tita-wrong`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.titaWrong)} step="1" inputMode="numeric" value={displayNumber(row.titaWrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "titaWrong", event.target.value)} /></label>
+                        <label htmlFor={`cat-${row.id}-tita-correct`}><input className="cat-answer-correct" aria-label={`${row.label} TITA right`} id={`cat-${row.id}-tita-correct`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.titaCorrect)} step="1" inputMode="numeric" value={displayNumber(row.titaCorrect)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "titaCorrect", event.target.value)} /></label>
+                        <label htmlFor={`cat-${row.id}-tita-wrong`}><input className="cat-answer-wrong" aria-label={`${row.label} TITA wrong`} id={`cat-${row.id}-tita-wrong`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.titaWrong)} step="1" inputMode="numeric" value={displayNumber(row.titaWrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "titaWrong", event.target.value)} /></label>
                       </div>
                     </td>
                     <td className="cat-calculated-cell">{row.attempted} / {row.maxQuestions}</td>
@@ -388,11 +446,12 @@ export function CandidateForm({
           </div>
         </div>
 
-        {error && <div className="form-error" role="alert">{error}</div>}
+        {(missingMessage || error) && <div className="form-error" role="alert">{missingMessage || error}</div>}
 
         <div className="form-actions">
-          <button className="primary-button analyze-all-button" type="button" onClick={onAnalyze} disabled={loading}>
-            {loading ? "Analysing…" : analyzeLabel}
+          <button className={`primary-button analyze-all-button ${formComplete ? "is-ready" : "is-incomplete"}`} type="button" onClick={handleAnalyze} disabled={loading} aria-label={formComplete ? analyzeLabel : `${analyzeLabel}. Complete the missing details first.`}>
+            <span>{loading ? "Analysing…" : analyzeLabel}</span>
+            {!loading && <ArrowRight className="analyze-arrow" size={20} aria-hidden="true" />}
           </button>
         </div>
 
@@ -403,7 +462,7 @@ export function CandidateForm({
           {mobileStep < steps.length - 1 ? (
             <button className="primary-button" type="button" onClick={() => setMobileStep(mobileStep + 1)}>Next <ChevronRight size={14} /></button>
           ) : (
-            <button className="primary-button" type="button" onClick={onAnalyze} disabled={loading}>{loading ? "Analysing…" : "Analyse"}</button>
+            <button className={`primary-button ${formComplete ? "is-ready" : "is-incomplete"}`} type="button" onClick={handleAnalyze} disabled={loading}>{loading ? "Analysing…" : "Analyse"}</button>
           )}
         </div>
       </div>

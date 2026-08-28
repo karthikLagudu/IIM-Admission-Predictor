@@ -64,13 +64,6 @@ export function PredictorWorkbench() {
     }
   };
 
-  const loadSample = () => {
-    const sample = cloneSample();
-    setCandidate(sample);
-    setResults(calculateLocalResults(sample, policy));
-    setError(null);
-  };
-
   return (
     <div className="institute-workbench">
       <div className={`workspace combined-workspace ${showForm ? "form-only" : "results-only"}`}>
@@ -80,7 +73,6 @@ export function PredictorWorkbench() {
             candidate={candidate}
             setCandidate={setCandidate}
             onAnalyze={analyze}
-            onLoadSample={loadSample}
             loading={loading}
             error={error}
             mobileStep={mobileStep}

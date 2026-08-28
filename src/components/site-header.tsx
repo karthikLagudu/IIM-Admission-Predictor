@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BookOpen } from "lucide-react";
 import thinkplusLogo from "../../public/thinkplus-logo-clean.png";
 
 export function SiteHeader() {
@@ -42,9 +43,9 @@ export function SiteHeader() {
             ) : showResultsTitle ? (
               <button type="button" className="header-cta" onClick={() => window.dispatchEvent(new Event("iim-edit-candidate"))}>Enter candidate details</button>
             ) : (
-              <Link className="header-cta" href="/predictor">Enter candidate details</Link>
+              <Link className="header-cta header-methodology-cta" href="/methodology"><BookOpen size={14} aria-hidden="true" />Methodology</Link>
             )}
-            {!isHome && <Link className="header-methodology" href="/methodology">Methodology</Link>}
+            {!isHome && showResultsTitle && <Link className="header-methodology" href="/methodology">Methodology</Link>}
           </div>
         </div>
       </div>

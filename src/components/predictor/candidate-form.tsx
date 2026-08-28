@@ -68,7 +68,7 @@ export function CandidateForm({
   setMobileStep,
 }: CandidateFormProps) {
   const analyzeLabel = institute === "ALL"
-    ? "Want to know your expected CAT percentile and analyse all 21 IIM chances?"
+    ? "Analyze all 21 IIM Chances"
     : `Analyse ${institute} chances`;
   const update = <K extends keyof CandidateInput>(key: K, value: CandidateInput[K]) => {
     setCandidate((current) => ({ ...current, [key]: value }));

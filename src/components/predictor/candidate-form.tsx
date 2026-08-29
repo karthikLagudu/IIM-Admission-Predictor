@@ -413,33 +413,33 @@ export function CandidateForm({
                 {catRows.map((row) => (
                   <tr key={row.id} className={isMissing(`cat-${row.id}-mcq-correct`) ? "cat-row-missing" : ""}>
                     <th scope="row"><strong>{row.label}</strong><span>{row.maxQuestions} questions</span></th>
-                    <td>
+                    <td data-label="MCQ">
                       <div className="cat-answer-pair">
                         <label htmlFor={`cat-${row.id}-mcq-correct`}><input className="cat-answer-correct" aria-label={`${row.label} MCQ right`} aria-invalid={isMissing(`cat-${row.id}-mcq-correct`)} id={`cat-${row.id}-mcq-correct`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.mcqCorrect)} step="1" inputMode="numeric" value={displayNumber(row.mcqCorrect)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "mcqCorrect", event.target.value)} /></label>
                         <label htmlFor={`cat-${row.id}-mcq-wrong`}><input className="cat-answer-wrong" aria-label={`${row.label} MCQ wrong`} id={`cat-${row.id}-mcq-wrong`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.mcqWrong)} step="1" inputMode="numeric" value={displayNumber(row.mcqWrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "mcqWrong", event.target.value)} /></label>
                       </div>
                       {isMissing(`cat-${row.id}-mcq-correct`) && <span className="cat-field-missing">You missed this field.</span>}
                     </td>
-                    <td>
+                    <td data-label="TITA">
                       <div className="cat-answer-pair">
                         <label htmlFor={`cat-${row.id}-tita-correct`}><input className="cat-answer-correct" aria-label={`${row.label} TITA right`} id={`cat-${row.id}-tita-correct`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.titaCorrect)} step="1" inputMode="numeric" value={displayNumber(row.titaCorrect)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "titaCorrect", event.target.value)} /></label>
                         <label htmlFor={`cat-${row.id}-tita-wrong`}><input className="cat-answer-wrong" aria-label={`${row.label} TITA wrong`} id={`cat-${row.id}-tita-wrong`} type="number" min="0" max={row.maxQuestions - (row.attempted - row.titaWrong)} step="1" inputMode="numeric" value={displayNumber(row.titaWrong)} onFocus={replaceZeroOnFocus} onChange={(event) => updateCatAnswers(row.id, "titaWrong", event.target.value)} /></label>
                       </div>
                     </td>
-                    <td className="cat-calculated-cell">{row.attempted} / {row.maxQuestions}</td>
-                    <td className={`cat-marks-cell ${row.marks < 0 ? "negative" : ""}`}>{row.marks}</td>
-                    <td className="cat-percentile-cell">{row.percentile === 0 ? "—" : `${row.percentile.toFixed(2)}%`}</td>
+                    <td className="cat-calculated-cell" data-label="Attempted">{row.attempted} / {row.maxQuestions}</td>
+                    <td className={`cat-marks-cell ${row.marks < 0 ? "negative" : ""}`} data-label="Marks">{row.marks}</td>
+                    <td className="cat-percentile-cell" data-label="Percentile">{row.percentile === 0 ? "—" : `${row.percentile.toFixed(2)}%`}</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
                 <tr>
                   <th scope="row">Total</th>
-                  <td><span className="cat-total-pair"><b>{catTotals.mcqCorrect} right</b><b>{catTotals.mcqWrong} wrong</b></span></td>
-                  <td><span className="cat-total-pair"><b>{catTotals.titaCorrect} right</b><b>{catTotals.titaWrong} wrong</b></span></td>
-                  <td>{catTotals.attempted} / 68</td>
-                  <td className={catTotals.marks < 0 ? "negative" : ""}>{catTotals.marks}</td>
-                  <td>—</td>
+                  <td data-label="MCQ"><span className="cat-total-pair"><b>{catTotals.mcqCorrect} right</b><b>{catTotals.mcqWrong} wrong</b></span></td>
+                  <td data-label="TITA"><span className="cat-total-pair"><b>{catTotals.titaCorrect} right</b><b>{catTotals.titaWrong} wrong</b></span></td>
+                  <td data-label="Attempted">{catTotals.attempted} / 68</td>
+                  <td className={catTotals.marks < 0 ? "negative" : ""} data-label="Marks">{catTotals.marks}</td>
+                  <td data-label="Percentile">—</td>
                 </tr>
               </tfoot>
             </table>

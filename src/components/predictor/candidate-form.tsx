@@ -402,8 +402,8 @@ export function CandidateForm({
               <thead>
                 <tr>
                   <th scope="col">CAT section</th>
-                  <th scope="col">MCQ <div className="cat-answer-headings" aria-hidden="true"><b>Right</b><b>Wrong</b></div></th>
-                  <th scope="col">TITA <div className="cat-answer-headings" aria-hidden="true"><b>Right</b><b>Wrong</b></div></th>
+                  <th scope="col">MCQ <div className="cat-answer-headings" aria-hidden="true"><b><CircleCheckBig size={14} />Right</b><b><CircleX size={14} />Wrong</b></div></th>
+                  <th scope="col">TITA <div className="cat-answer-headings" aria-hidden="true"><b><CircleCheckBig size={14} />Right</b><b><CircleX size={14} />Wrong</b></div></th>
                   <th scope="col">Attempted</th>
                   <th scope="col">Expected marks</th>
                   <th scope="col">Sectional percentile</th>
@@ -435,8 +435,8 @@ export function CandidateForm({
               <tfoot>
                 <tr>
                   <th scope="row">Total</th>
-                  <td data-label="MCQ"><span className="cat-total-pair"><b>{catTotals.mcqCorrect} right</b><b>{catTotals.mcqWrong} wrong</b></span></td>
-                  <td data-label="TITA"><span className="cat-total-pair"><b>{catTotals.titaCorrect} right</b><b>{catTotals.titaWrong} wrong</b></span></td>
+                  <td data-label="MCQ"><span className="cat-total-pair"><b><CircleCheckBig size={13} />{catTotals.mcqCorrect} right</b><b><CircleX size={13} />{catTotals.mcqWrong} wrong</b></span></td>
+                  <td data-label="TITA"><span className="cat-total-pair"><b><CircleCheckBig size={13} />{catTotals.titaCorrect} right</b><b><CircleX size={13} />{catTotals.titaWrong} wrong</b></span></td>
                   <td data-label="Attempted">{catTotals.attempted} / 68</td>
                   <td className={catTotals.marks < 0 ? "negative" : ""} data-label="Marks">{catTotals.marks}</td>
                   <td data-label="Percentile">—</td>

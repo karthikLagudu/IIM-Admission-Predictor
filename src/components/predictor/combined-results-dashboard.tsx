@@ -398,7 +398,6 @@ export function CombinedResultsDashboard({
         <div className="results-overview-percentile">
           <span>Expected CAT percentile</span>
           <strong>{candidate.catOverallPercentile === 0 ? "—" : `${candidate.catOverallPercentile.toFixed(2)}%`}</strong>
-          <small>Estimated automatically from your expected marks</small>
         </div>
         <div className="results-overview-chances">
           <span>Your IIM chance summary</span>
@@ -408,7 +407,6 @@ export function CombinedResultsDashboard({
             <button type="button" className="results-overview-filter medium" aria-pressed={chanceFilter === "MEDIUM"} onClick={() => setChanceFilter((current) => current === "MEDIUM" ? "ALL" : "MEDIUM")}>{chanceCounts.MEDIUM} medium {chanceCounts.MEDIUM === 1 ? "chance" : "chances"}</button> and{" "}
             <button type="button" className="results-overview-filter low" aria-pressed={chanceFilter === "LOW"} onClick={() => setChanceFilter((current) => current === "LOW" ? "ALL" : "LOW")}>{chanceCounts.LOW} low {chanceCounts.LOW === 1 ? "chance" : "chances"}</button>.
           </h2>
-          <p>Click a chance range to filter the {chanceCounts.ALL} IIMs below. Click it again to show all.</p>
         </div>
       </section>
       <section className="panel results-table-panel" aria-labelledby="all-results-heading">

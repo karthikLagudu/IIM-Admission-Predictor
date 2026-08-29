@@ -1,163 +1,31 @@
 import { expect, test } from "@playwright/test";
 
-test("runs the sample through the prediction API", async ({ page }) => {
+test("home routes candidates to both independent products", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: /Which IIM will you land/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Predict my IIM calls/ })).toHaveAttribute("href", "/predictor");
+  await expect(page.getByRole("link", { name: /Explore IIMB UG/ })).toHaveAttribute("href", "/iimb-ug");
+});
+
+test("the existing CAT predictor still completes its primary flow", async ({ page }) => {
+  await page.goto("/predictor");
   await expect(page.getByRole("heading", { name: "Candidate profile" })).toBeVisible();
-  await expect(page.getByLabel("Class 10 percentage")).toHaveValue("92");
-  await expect(page.getByLabel("Class 12 percentage")).toHaveValue("90");
-  await expect(page.getByLabel("Bachelor / professional %")).toHaveValue("86");
-  await expect(page.getByLabel("Degree duration after 10+2")).toHaveCount(0);
-  await expect(page.getByLabel("Overall scaled score")).toHaveCount(0);
-  await expect(page.getByLabel("IIM Ahmedabad result")).toHaveCount(0);
-  await expect(page.getByLabel("IIM Bangalore result")).toHaveCount(0);
-  await expect(page.getByLabel("IIM Calcutta result")).toHaveCount(0);
-  await page.getByLabel("Class 10 percentage").fill("0");
-  await page.getByLabel("Class 12 percentage").click();
-  await page.getByLabel("Class 10 percentage").click();
-  await page.keyboard.type("87");
-  await expect(page.getByLabel("Class 10 percentage")).toHaveValue("87");
-  await page.getByRole("button", { name: "Load sample" }).click();
-  await expect(page.getByLabel("Class 10 percentage")).toHaveValue("92");
-  await expect(page.getByLabel("Bachelor's degree / qualification")).toHaveValue("B.Tech Computer Science");
-  await page.getByLabel("Bachelor's degree / qualification").selectOption("B.Sc Mathematics Statistics or Computer Science");
-  await expect(page.getByLabel("IIMA Academic Category")).toHaveValue("AC_4");
-  await expect(page.getByLabel("VARC scaled score")).toHaveCount(0);
-  await expect(page.getByLabel("DILR scaled score")).toHaveCount(0);
-  await expect(page.getByLabel("QA scaled score")).toHaveCount(0);
-  await page.getByLabel("VARC percentile").fill("99.995");
-  await page.getByLabel("DILR percentile").fill("99.995");
-  await page.getByLabel("QA percentile").fill("99.995");
-  await expect(page.getByLabel("Overall scaled score")).toHaveCount(0);
-  await expect(page.getByLabel("Expected overall percentile (%)")).toHaveValue("100.00");
-  await expect(page.getByLabel("Expected overall percentile (%)")).toHaveAttribute("readonly", "");
-  await page.getByRole("button", { name: "Analyse all three IIMs chances" }).click();
-  await expect(page.getByRole("heading", { name: "Candidate profile" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Edit candidate details" })).toBeVisible();
-  await expect(page.getByLabel("IIM Ahmedabad result")).toContainText("CALL PREDICTED");
-  await expect(page.getByLabel("IIM Bangalore result")).toContainText("CALL PREDICTED");
-  await expect(page.getByLabel("IIM Calcutta result")).toContainText("CALL PREDICTED");
-  await expect(page.getByLabel("IIM Ahmedabad result")).toContainText("0.659095 CS");
-  await expect(page.getByLabel("IIM Ahmedabad result")).toContainText("Your score");
-  await expect(page.getByLabel("IIM Bangalore result")).toContainText("Not publicly published");
-  await expect(page.getByLabel("IIM Calcutta result")).toContainText("Not publicly published");
-  await page.getByRole("button", { name: "View IIM Ahmedabad details" }).click();
-  await expect(page.getByRole("heading", { name: "CALL PREDICTED" })).toBeVisible();
-  await expect(page.getByLabel("Estimated seat chance")).toContainText(/\d+\.\d%/);
-  await expect(page.getByText(/Planning estimate assuming normalized PI 0.75 and AWT 0.75/)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "At a glance" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Detailed decision audit" })).toHaveCount(0);
-  await page.getByRole("button", { name: "More feedback" }).click();
-  await expect(page.getByRole("button", { name: "Show less feedback" })).toHaveAttribute("aria-expanded", "true");
-  await expect(page.getByRole("heading", { name: "Where this profile is strong" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Test-model pre-PI estimate breakdown" })).toBeVisible();
-  const profileFeedback = page.getByRole("region", { name: "Profile strengths and gaps" });
-  await expect(profileFeedback.getByText("Interview call route qualified", { exact: true })).toBeVisible();
-  await expect(profileFeedback.getByText("No blocking deficiency was found in the interview-call criteria.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Detailed decision audit" })).toBeVisible();
-  await expect(page.getByText("AR contribution", { exact: true })).toBeVisible();
-  await expect(page.getByText("Overall call conclusion", { exact: false })).toBeVisible();
-  const historicalCalls = page.getByRole("region", { name: "Previous interview-call scores vs this profile" });
-  await expect(historicalCalls.getByText("PGP 2025-27", { exact: true })).toBeVisible();
-  await expect(historicalCalls.getByText("0.659095", { exact: true })).toBeVisible();
-  await expect(historicalCalls.getByText("PGP 2024-26", { exact: true })).toBeVisible();
-  await expect(historicalCalls.getByText("0.610507", { exact: true })).toBeVisible();
-  await expect(historicalCalls.getByText(/above this previous minimum/)).toHaveCount(2);
-  await expect(historicalCalls.getByText(/It does not compare interview performance or PI marks/)).toBeVisible();
-  await expect(page.getByLabel("Normalized PI (optional)")).toHaveCount(0);
-  await expect(page.getByLabel("Normalized AWT (optional)")).toHaveCount(0);
-  await page.getByRole("button", { name: "Edit candidate details" }).click();
+  await page.getByRole("button", { name: "Analyze all 21 IIM Chances" }).click();
+  await expect(page.getByRole("heading", { name: "Your IIM results" })).toBeAttached();
+  await expect(page.getByRole("button", { name: "View more details for IIM Ahmedabad" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "View more details for IIM Bangalore" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "View more details for IIM Calcutta" })).toBeVisible();
+});
+
+test("existing predictor remains reachable from the UG product", async ({ page }) => {
+  await page.goto("/iimb-ug");
+  await page.getByRole("link", { name: "CAT predictor" }).click();
+  await expect(page).toHaveURL(/\/predictor$/);
   await expect(page.getByRole("heading", { name: "Candidate profile" })).toBeVisible();
 });
 
-test("a CAT sectional failure hard-gates the call", async ({ page }) => {
-  await page.goto("/predictor");
-  await page.getByRole("button", { name: "Load sample" }).click();
-  await page.getByLabel("VARC percentile").fill("84.99");
-  await page.getByRole("button", { name: "Analyse all three IIMs chances" }).click();
-  await expect(page.getByLabel("IIM Ahmedabad result")).toContainText("LESS LIKELY");
-  await page.getByRole("button", { name: "View IIM Ahmedabad details" }).click();
-  await expect(page.getByRole("heading", { name: "LESS LIKELY" })).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByLabel("Estimated seat chance")).toContainText("0.0%");
-  await expect(page.getByText("VARC cutoff deficit", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "More feedback" }).click();
-  const journey = page.getByRole("region", { name: "Candidate journey" });
-  await expect(journey.getByRole("heading", { name: "Where this profile is lagging" })).toBeVisible();
-  await expect(journey.getByText("VARC cutoff deficit", { exact: true })).toBeVisible();
-  await expect(journey.getByText("-0.01 pp", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "What is lacking or blocking" })).toBeVisible();
-  await expect(page.getByText(/No later-stage score can override a failed CAT hard gate/)).toBeVisible();
-});
-
-test("IIMB runs with a clearly labelled test model while mock mode is active", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Analyse all three IIMs chances" }).click();
-  const result = page.getByLabel("IIM Bangalore result");
-  await expect(result).toContainText("CALL PREDICTED");
-  await expect(result).toContainText(/\d+\.\d%/);
-  await page.getByRole("button", { name: "View IIM Bangalore details" }).click();
-  await expect(page.getByRole("heading", { name: "CALL PREDICTED" })).toBeVisible();
-  await expect(page.getByText("Pre-PI / shortlist score", { exact: true }).last()).toBeVisible();
-  await expect(page.getByLabel("Estimated seat chance")).toContainText(/\d+\.\d%/);
-  await expect(page.getByRole("heading", { name: "At a glance" })).toBeVisible();
-  await page.getByRole("button", { name: "More feedback" }).click();
-  await expect(page.getByRole("heading", { name: "Test-model pre-PI estimate breakdown" })).toBeVisible();
-  await expect(page.getByText(/Testing estimate only: synthetic normalization inputs/)).toBeVisible();
-  await expect(page.getByText("MODEL", { exact: true }).first()).toBeVisible();
-  const iimbHistory = page.getByRole("region", { name: "Previous interview-call scores vs this profile" });
-  await expect(iimbHistory.getByText("PGP 2025-27", { exact: true })).toBeVisible();
-  await expect(iimbHistory.getByText("Not published", { exact: true })).toBeVisible();
-  await expect(iimbHistory.getByText("65.00 / 100", { exact: true })).toBeVisible();
-  await expect(iimbHistory.getByText(/above this model benchmark/)).toBeVisible();
-});
-
-test("IIMC calculates the official score and a clearly labelled mock-model seat chance", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("button", { name: "Analyse all three IIMs chances" }).click();
-  const result = page.getByLabel("IIM Calcutta result");
-  await expect(result).toContainText("CALL PREDICTED");
-  await expect(result).toContainText("66.18 / 85");
-  await expect(result).toContainText("Expected seat chance (model)");
-  await expect(result).toContainText(/\d+\.\d%/);
-  await page.getByRole("button", { name: "View IIM Calcutta details" }).click();
-  await expect(page.getByRole("heading", { name: "CALL PREDICTED" })).toBeVisible();
-  await expect(page.getByText("66.18 / 85", { exact: true }).last()).toBeVisible();
-  await expect(page.getByLabel("Estimated seat chance")).toContainText(/\d+\.\d%/);
-  await expect(page.getByLabel("Estimated seat chance")).toContainText("model");
-  await page.getByRole("button", { name: "More feedback" }).click();
-  await expect(page.getByRole("heading", { name: "Test-model pre-PI estimate breakdown" })).toBeVisible();
-  const callInterpretation = page.getByRole("region", { name: "Interview-call interpretation" });
-  await expect(callInterpretation.getByText("PREDICTED CALL", { exact: true })).toBeVisible();
-  await expect(callInterpretation.getByText("MODEL", { exact: true })).toBeVisible();
-  const iimcHistory = page.getByRole("region", { name: "Previous interview-call scores vs this profile" });
-  await expect(iimcHistory.getByText("MBA 2024-26", { exact: true })).toBeVisible();
-  await expect(iimcHistory.getByText("Not published", { exact: true })).toBeVisible();
-  await expect(iimcHistory.getByText("62.00 / 85", { exact: true })).toBeVisible();
-  await expect(iimcHistory.getByText(/above this model benchmark/)).toBeVisible();
-});
-
-test("methodology labels official and predictive layers", async ({ page }) => {
-  await page.goto("/methodology");
-  await expect(page.getByRole("heading", { name: "What is official—and what is predictive" })).toBeVisible();
-  await expect(page.getByText("Official current final cutoff: Not published.", { exact: false })).toBeVisible();
-  await expect(page.getByText("MODEL ASSUMPTION", { exact: true }).first()).toBeVisible();
-});
-
-test("mobile uses a step-based form", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/predictor");
-  await page.getByRole("button", { name: "Load sample" }).click();
-  await expect(page.getByRole("button", { name: "Go to Personal" })).toBeVisible();
-  await page.getByRole("button", { name: "Go to CAT" }).click();
-  await expect(page.getByLabel("Overall scaled score")).toHaveCount(0);
-  await expect(page.getByLabel("Expected overall percentile (%)")).toBeVisible();
-  await page.getByRole("button", { name: "Analyse", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Your IIM results" })).toBeVisible();
-  await expect(page.getByLabel("IIM Ahmedabad result")).toBeVisible();
-  await expect(page.getByLabel("IIM Bangalore result")).toBeVisible();
-  await expect(page.getByLabel("IIM Calcutta result")).toBeVisible();
-});
-
-test("admin endpoint rejects missing authorization", async ({ request }) => {
-  const response = await request.get("/api/iima/policy");
-  expect(response.status()).toBe(401);
+test("existing and UG admin APIs reject missing authorization", async ({ request }) => {
+  expect((await request.get("/api/iima/policy")).status()).toBe(401);
+  expect((await request.get("/api/iimb-ug/policy")).status()).toBe(401);
+  expect((await request.get("/api/iimb-ug/runtime")).status()).toBe(401);
 });

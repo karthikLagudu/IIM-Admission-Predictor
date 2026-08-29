@@ -1,0 +1,98 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import type {
+  CalculationMode,
+  IimbUgCandidateInput,
+  IimbUgPolicyConfig,
+  IimbUgPredictionResult,
+  IimbUgRuntimeData,
+} from "@/types/iimb-ug";
+import { SAMPLE_IIMB_UG_CANDIDATE } from "@/lib/iimb-ug/2027_31/predictor";
+import { CandidateForm } from "./candidate-form";
+import { EligibilityPanel } from "./eligibility-panel";
+import { ExamScorePanel } from "./exam-score-panel";
+import { HistoricalBenchmark } from "./historical-benchmark";
+import { PrePiBreakdown } from "./prepi-breakdown";
+import { CallOutlookPanel } from "./call-outlook";
+import { PostPiBreakdown } from "./postpi-breakdown";
+import { SensitivityAnalysis } from "./sensitivity-analysis";
+import { ProgrammePreference } from "./programme-preference";
+import { ReadinessPanel } from "./readiness-panel";
+import { SourcesPanel } from "./sources-panel";
+
+type PredictionResponse = IimbUgPredictionResult & {
+  policyConfig: IimbUgPolicyConfig;
+  runtimeData: IimbUgRuntimeData;
+  persistence: { persisted: boolean; runId: string | null; reason?: string };
+};
+
+function freshSample(): IimbUgCandidateInput {
+  return JSON.parse(JSON.stringify(SAMPLE_IIMB_UG_CANDIDATE)) as IimbUgCandidateInput;
+}
+
+export function IimbUgWorkbench() {
+  const [candidate, setCandidate] = useState<IimbUgCandidateInput>(freshSample);
+  const [mode, setMode] = useState<CalculationMode>("PLANNING");
+  const [targetFinalComposite, setTargetFinalComposite] = useState(70);
+  const [result, setResult] = useState<PredictionResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [issues, setIssues] = useState<Array<{ path: string; message: string }>>([]);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+    setIssues([]);
+    try {
+      const response = await fetch("/api/iimb-ug/predict", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ candidate, calculationMode: mode, targetFinalComposite }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        setIssues(payload.issues ?? []);
+        throw new Error(payload.error ?? "Prediction request failed.");
+      }
+      setResult(payload as PredictionResponse);
+      window.setTimeout(() => document.getElementById("ug-results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Prediction request failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="ug-workbench">
+      <div className="ug-workbench-grid">
+        <aside className="ug-form-panel">
+          <CandidateForm candidate={candidate} setCandidate={setCandidate} mode={mode} setMode={setMode} targetFinalComposite={targetFinalComposite} setTargetFinalComposite={setTargetFinalComposite} busy={busy} onSubmit={submit} onLoadExample={() => { setCandidate(freshSample()); setMode("PLANNING"); setTargetFinalComposite(70); setError(null); setIssues([]); }} />
+          {error && <div className="ug-form-error" role="alert"><strong>{error}</strong>{issues.length ? <ul>{issues.map((issue, index) => <li key={`${issue.path}-${index}`}><code>{issue.path || "request"}</code>: {issue.message}</li>)}</ul> : null}</div>}
+        </aside>
+
+        <div className="ug-results" id="ug-results" aria-live="polite">
+          {!result ? (
+            <section className="ug-empty-state"><span>Source-aware planning</span><h2>Your analysis will appear here</h2><p>Complete the candidate profile to check exact eligibility gates, calculate your raw score, compare it with the published previous cycle, and explore transparent Pre-PI and final-score scenarios.</p><div><strong>No fake probability</strong><strong>No hidden cutoff assumptions</strong><strong>Full formula provenance</strong></div></section>
+          ) : (
+            <>
+              <div className="ug-result-summary"><div><span>Policy snapshot</span><strong>{result.policy.policyId}</strong></div><div><span>Calculation mode</span><strong>{result.policy.mode}</strong></div><div><span>Runtime data</span><strong>{result.runtimeData.version ?? "Data required"}</strong></div></div>
+              <EligibilityPanel result={result} />
+              <ExamScorePanel result={result} />
+              <HistoricalBenchmark result={result} />
+              <PrePiBreakdown result={result} />
+              <CallOutlookPanel result={result} />
+              <PostPiBreakdown result={result} />
+              <SensitivityAnalysis result={result} />
+              <ProgrammePreference result={result} policy={result.policyConfig} />
+              <ReadinessPanel result={result} />
+              <SourcesPanel result={result} />
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

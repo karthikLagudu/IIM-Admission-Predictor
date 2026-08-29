@@ -284,3 +284,102 @@ model PredictionResult {
   createdAt           DateTime      @default(now())
   predictionRun       PredictionRun @relation(fields: [predictionRunId], references: [id], onDelete: Cascade)
 }
+
+// The undergraduate admissions domain is intentionally independent from the
+// CAT/MBA AdmissionCycle graph above. A run always retains immutable policy,
+// runtime-data, and result snapshots so later admin updates cannot rewrite it.
+model IimbUgPolicy {
+  id               String                  @id @default(cuid())
+  policyId         String
+  version          String                  @unique
+  admissionCycle   String
+  active           Boolean                 @default(false)
+  effectiveYear    Int
+  source           String
+  sourceType       String
+  verifiedDate     DateTime
+  notes            String?
+  config           Json
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  runtimeDatasets  IimbUgRuntimeDataset[]
+  historicalCycles IimbUgHistoricalCycle[]
+  predictionRuns   IimbUgPredictionRun[]
+  sources          IimbUgSource[]
+
+  @@index([active, updatedAt])
+  @@index([policyId])
+}
+
+model IimbUgRuntimeDataset {
+  id             String                @id @default(cuid())
+  iimbUgPolicyId String
+  version        String                @unique
+  active         Boolean               @default(false)
+  data           Json
+  sourceType     String
+  sourceLabel    String
+  observedAt     DateTime?
+  verifiedDate   DateTime
+  notes          String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  policy         IimbUgPolicy          @relation(fields: [iimbUgPolicyId], references: [id], onDelete: Restrict)
+  predictionRuns IimbUgPredictionRun[]
+
+  @@index([iimbUgPolicyId, active])
+}
+
+model IimbUgHistoricalCycle {
+  id             String       @id @default(cuid())
+  iimbUgPolicyId String
+  cycle          String
+  data           Json
+  source         String
+  sourceType     String
+  verifiedDate   DateTime
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  policy         IimbUgPolicy @relation(fields: [iimbUgPolicyId], references: [id], onDelete: Restrict)
+
+  @@unique([iimbUgPolicyId, cycle])
+}
+
+model IimbUgPredictionRun {
+  id                     String                @id @default(cuid())
+  iimbUgPolicyId         String
+  iimbUgRuntimeDatasetId String?
+  policyVersion          String
+  runtimeVersion         String?
+  calculationMode        String
+  candidateInputs        Json
+  policySnapshot         Json
+  runtimeSnapshot        Json
+  resultSnapshot         Json
+  createdAt              DateTime              @default(now())
+  policy                 IimbUgPolicy          @relation(fields: [iimbUgPolicyId], references: [id], onDelete: Restrict)
+  runtimeDataset         IimbUgRuntimeDataset? @relation(fields: [iimbUgRuntimeDatasetId], references: [id], onDelete: SetNull)
+
+  @@index([policyVersion, createdAt])
+}
+
+model IimbUgSource {
+  id             String       @id @default(cuid())
+  iimbUgPolicyId String
+  sourceKey      String
+  title          String
+  institution    String
+  url            String
+  cycle          String?
+  sourceType     String
+  verifiedDate   DateTime
+  supports       Json
+  notes          String?
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  policy         IimbUgPolicy @relation(fields: [iimbUgPolicyId], references: [id], onDelete: Restrict)
+
+  @@unique([iimbUgPolicyId, sourceKey])
+}

@@ -10,9 +10,9 @@ const openSans = Open_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "CAT IIM Admission Predictor",
+  title: "IIM Admission Predictors | ThinkPlus",
   description:
-    "Explainable CAT call and seat analysis across all 21 IIMs.",
+    "Explainable CAT call analysis across 21 IIMs and source-aware IIM Bangalore undergraduate admissions planning.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

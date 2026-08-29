@@ -1,6 +1,11 @@
 import { Prisma, PrismaClient, SourceType } from "@prisma/client";
 import { ACADEMIC_CATEGORY_LABELS } from "../src/lib/iima/academic-category";
 import { IIMA_CAT_2025_POLICY } from "../src/lib/iima/constants";
+import {
+  EMPTY_IIMB_UG_RUNTIME_DATA,
+  IIMB_UG_2027_POLICY,
+} from "../src/lib/iimb-ug/2027_31/policy";
+import { IIMB_UG_SOURCES } from "../src/lib/iimb-ug/2027_31/sources";
 
 const prisma = new PrismaClient();
 const policy = IIMA_CAT_2025_POLICY;
@@ -306,6 +311,94 @@ async function main() {
       ...metadata("probabilityModel"),
     },
   });
+
+  const existingUgPolicy = await prisma.iimbUgPolicy.findUnique({
+    where: { version: IIMB_UG_2027_POLICY.version },
+  });
+  const anyActiveUgPolicy = await prisma.iimbUgPolicy.findFirst({ where: { active: true } });
+  const ugPolicy = existingUgPolicy ?? await prisma.iimbUgPolicy.create({
+    data: {
+      policyId: IIMB_UG_2027_POLICY.policyId,
+      version: IIMB_UG_2027_POLICY.version,
+      admissionCycle: IIMB_UG_2027_POLICY.admissionCycle,
+      active: !anyActiveUgPolicy,
+      effectiveYear: IIMB_UG_2027_POLICY.admissionYear,
+      source: "IIMB UG Admission Procedure 2027–31",
+      sourceType: "OFFICIAL_CURRENT",
+      verifiedDate: new Date("2026-08-29T00:00:00Z"),
+      notes: "Bundled, source-backed UG policy. Admin updates must use a new version.",
+      config: jsonSafe(IIMB_UG_2027_POLICY),
+    },
+  });
+
+  const emptyRuntimeVersion = "IIMB-UG-RUNTIME-EMPTY-v1";
+  const existingUgRuntime = await prisma.iimbUgRuntimeDataset.findUnique({
+    where: { version: emptyRuntimeVersion },
+  });
+  if (!existingUgRuntime) {
+    const anyActiveRuntime = await prisma.iimbUgRuntimeDataset.findFirst({
+      where: { iimbUgPolicyId: ugPolicy.id, active: true },
+    });
+    await prisma.iimbUgRuntimeDataset.create({
+      data: {
+        iimbUgPolicyId: ugPolicy.id,
+        version: emptyRuntimeVersion,
+        active: !anyActiveRuntime,
+        data: jsonSafe({ ...EMPTY_IIMB_UG_RUNTIME_DATA, version: emptyRuntimeVersion }),
+        sourceType: "DATA_REQUIRED",
+        sourceLabel: "No current-cycle runtime dataset configured",
+        verifiedDate: new Date("2026-08-29T00:00:00Z"),
+        notes: "Explicit empty dataset; it contains no fabricated thresholds or normalization inputs.",
+      },
+    });
+  }
+
+  const existingHistorical = await prisma.iimbUgHistoricalCycle.findUnique({
+    where: { iimbUgPolicyId_cycle: { iimbUgPolicyId: ugPolicy.id, cycle: IIMB_UG_2027_POLICY.historical.cycle } },
+  });
+  if (!existingHistorical) {
+    await prisma.iimbUgHistoricalCycle.create({
+      data: {
+        iimbUgPolicyId: ugPolicy.id,
+        cycle: IIMB_UG_2027_POLICY.historical.cycle,
+        data: jsonSafe(IIMB_UG_2027_POLICY.historical),
+        source: "IIMB UG Admission Procedure 2027–31, historical shortlist table",
+        sourceType: "OFFICIAL_HISTORICAL",
+        verifiedDate: new Date("2026-08-29T00:00:00Z"),
+        notes: "Historical comparison only; not a current 2027 cutoff.",
+      },
+    });
+  }
+
+  for (const source of IIMB_UG_SOURCES) {
+    await prisma.iimbUgSource.upsert({
+      where: { iimbUgPolicyId_sourceKey: { iimbUgPolicyId: ugPolicy.id, sourceKey: source.id } },
+      update: {
+        title: source.title,
+        institution: source.institution,
+        url: source.url,
+        cycle: source.cycle,
+        sourceType: source.sourceType,
+        verifiedDate: new Date(`${source.verifiedAt}T00:00:00Z`),
+        supports: jsonSafe(source.supports),
+        notes: source.notes,
+        active: true,
+      },
+      create: {
+        iimbUgPolicyId: ugPolicy.id,
+        sourceKey: source.id,
+        title: source.title,
+        institution: source.institution,
+        url: source.url,
+        cycle: source.cycle,
+        sourceType: source.sourceType,
+        verifiedDate: new Date(`${source.verifiedAt}T00:00:00Z`),
+        supports: jsonSafe(source.supports),
+        notes: source.notes,
+        active: true,
+      },
+    });
+  }
 }
 
 main()

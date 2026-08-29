@@ -15,6 +15,7 @@ export default function HomePage() {
             <p className="cat-product-lead">Enter your CAT score and academic profile to get clear, explainable estimates of interview calls across all 21 IIMs.</p>
             <div className="cat-product-actions">
               <Link className="cat-primary-cta" href="/predictor">Predict my IIM calls <ArrowRight size={22} aria-hidden="true" /></Link>
+              <Link className="cat-secondary-cta" href="/iimb-ug">Explore IIMB UG <ArrowRight size={20} aria-hidden="true" /></Link>
             </div>
           </div>
         </div>

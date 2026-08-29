@@ -1,6 +1,8 @@
-# IIMA CAT 2025 Admission & Seat Predictor
+# IIM Admission Predictors
 
 Production-oriented Next.js application for IIM Ahmedabad PGP 2026–28 admissions through CAT 2025. It implements official gates and formulas as a deterministic rules engine, then applies an explicitly labelled historical/logistic model only because IIMA does not publish a fixed current final category-wise FCS cutoff.
+
+It also contains a fully separate **IIM Bangalore Undergraduate Admission Predictor for 2027–31** at `/iimb-ug`. The UG engine covers exact eligibility and raw scoring, historical benchmark context, transparent Pre-PI and Post-PI planning, PI target solving, programme preferences, readiness, source provenance, and typed `DATA_REQUIRED` states. It never reuses the MBA/CAT engine and does not fabricate current cutoffs or admission probability.
 
 ## What is included
 
@@ -45,6 +47,22 @@ The calculation engine and predictor also run without a database. If `DATABASE_U
 Set a long random `ADMIN_TOKEN` in `.env`. Open `/admin`, enter the token and load the active policy. The complete JSON editor supports all rule groups, while quick controls expose the model safety margin and logistic slope. Recency weights and the three-cycle benchmark series are versioned in the same policy. The degree-mapping editor writes explicit degree-to-AC mappings.
 
 Saving a policy version does not update old predictions: each `PredictionRun` stores the complete candidate input, policy version, policy snapshot and result snapshot.
+
+The independent UG administrator is at `/admin/iimb-ug`. Its policy and runtime-data editors require `ADMIN_TOKEN`; saving requires a new version identifier. `IimbUgPredictionRun` stores immutable candidate, policy, runtime, and result snapshots. UG policy, runtime, historical cycles, and source records have separate Prisma models.
+
+## IIMB UG API
+
+`POST /api/iimb-ug/predict` accepts `{ candidate, calculationMode, targetFinalComposite }`. Candidate test input may use complete correct/wrong/unattempted counts or a raw-score route. Invalid inputs return HTTP 422. Missing means, standard deviations, current thresholds, or programme allocation data return typed domain states and do not become HTTP errors.
+
+Protected version APIs are `GET|POST /api/iimb-ug/policy` and `GET|POST /api/iimb-ug/runtime`.
+
+The source and formula audit is documented in:
+
+- `docs/IIMB_UG_2027_POLICY.md`
+- `docs/IIMB_UG_FORMULAS.md`
+- `docs/IIMB_UG_SOURCES.md`
+- `docs/IIMB_UG_ASSUMPTIONS.md`
+- `docs/IIMB_UG_TEST_CASES.md`
 
 ## API
 

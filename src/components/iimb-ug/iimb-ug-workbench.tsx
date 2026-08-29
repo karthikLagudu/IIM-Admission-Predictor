@@ -8,7 +8,15 @@ import type {
   IimbUgPredictionResult,
   IimbUgRuntimeData,
 } from "@/types/iimb-ug";
-import { SAMPLE_IIMB_UG_CANDIDATE } from "@/lib/iimb-ug/2027_31/predictor";
+import {
+  predictIimbUgAdmission,
+  SAMPLE_IIMB_UG_CANDIDATE,
+} from "@/lib/iimb-ug/2027_31/predictor";
+import {
+  EMPTY_IIMB_UG_RUNTIME_DATA,
+  IIMB_UG_2027_POLICY,
+} from "@/lib/iimb-ug/2027_31/policy";
+import { iimbUgPredictRequestSchema } from "@/validation/iimb-ug";
 import { CandidateForm } from "./candidate-form";
 import { EligibilityPanel } from "./eligibility-panel";
 import { ExamScorePanel } from "./exam-score-panel";
@@ -31,6 +39,29 @@ function freshSample(): IimbUgCandidateInput {
   return JSON.parse(JSON.stringify(SAMPLE_IIMB_UG_CANDIDATE)) as IimbUgCandidateInput;
 }
 
+function calculateStaticPrediction(
+  candidate: IimbUgCandidateInput,
+  calculationMode: CalculationMode,
+  targetFinalComposite: number,
+): PredictionResponse {
+  const result = predictIimbUgAdmission(candidate, {
+    policy: IIMB_UG_2027_POLICY,
+    runtime: EMPTY_IIMB_UG_RUNTIME_DATA,
+    calculationMode,
+    targetFinalComposite,
+  });
+  return {
+    ...result,
+    policyConfig: IIMB_UG_2027_POLICY,
+    runtimeData: EMPTY_IIMB_UG_RUNTIME_DATA,
+    persistence: {
+      persisted: false,
+      runId: null,
+      reason: "This static GitHub Pages deployment calculates locally and does not store candidate data.",
+    },
+  };
+}
+
 export function IimbUgWorkbench() {
   const [candidate, setCandidate] = useState<IimbUgCandidateInput>(freshSample);
   const [mode, setMode] = useState<CalculationMode>("PLANNING");
@@ -46,10 +77,32 @@ export function IimbUgWorkbench() {
     setError(null);
     setIssues([]);
     try {
+      const parsedRequest = iimbUgPredictRequestSchema.safeParse({
+        candidate,
+        calculationMode: mode,
+        targetFinalComposite,
+      });
+      if (!parsedRequest.success) {
+        setIssues(parsedRequest.error.issues.map((issue) => ({
+          path: issue.path.join("."),
+          message: issue.message,
+        })));
+        throw new Error("Please correct the highlighted candidate data.");
+      }
+
+      if (window.location.hostname.endsWith("github.io")) {
+        setResult(calculateStaticPrediction(
+          parsedRequest.data.candidate,
+          parsedRequest.data.calculationMode,
+          parsedRequest.data.targetFinalComposite,
+        ));
+        window.setTimeout(() => document.getElementById("ug-results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+        return;
+      }
       const response = await fetch("/api/iimb-ug/predict", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ candidate, calculationMode: mode, targetFinalComposite }),
+        body: JSON.stringify(parsedRequest.data),
       });
       const payload = await response.json();
       if (!response.ok) {

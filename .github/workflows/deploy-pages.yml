@@ -24,7 +24,7 @@ jobs:
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 11
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -43,6 +43,7 @@ jobs:
       - name: Build static predictor
         env:
           GITHUB_PAGES: "true"
+          NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
         run: pnpm build
 
       - name: Preserve Next.js assets on Pages

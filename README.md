@@ -40,6 +40,8 @@ pnpm dev
 
 Open `http://localhost:3000`.
 
+The repository deploys its static public build to GitHub Pages on each push to `main`. Server-only APIs and admin pages are excluded from that build; the UG predictor runs the same pure TypeScript engine locally in the browser and stores no candidate data. Database-backed APIs and administration remain available in the normal Next.js server deployment.
+
 The calculation engine and predictor also run without a database. If `DATABASE_URL` is absent, prediction responses state that persistence was skipped. Set `PERSIST_PREDICTIONS=true` in production to make persistence failures fatal.
 
 ## Admin configuration

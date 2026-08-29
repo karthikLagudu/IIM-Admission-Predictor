@@ -3,7 +3,9 @@ import { BarChart3, BookOpenCheck, Calculator, ShieldCheck } from "lucide-react"
 import { IimbUgWorkbench } from "@/components/iimb-ug/iimb-ug-workbench";
 
 const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-const socialImage = configuredSiteUrl ? new URL("/og.png", configuredSiteUrl).toString() : undefined;
+const socialImage = configuredSiteUrl
+  ? `${configuredSiteUrl.replace(/\/$/, "")}/og.png`
+  : undefined;
 
 export const metadata: Metadata = {
   title: "IIM Bangalore UG Admission Predictor · 2027–31",

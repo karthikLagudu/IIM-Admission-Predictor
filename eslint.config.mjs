@@ -8,7 +8,7 @@ const compat = new FlatCompat({ baseDirectory: directory });
 
 const config = [
   {
-    ignores: [".next/**", ".next-dev/**", "node_modules/**", "dist/**", ".wrangler/**", "playwright-report/**", "test-results/**", "next-env.d.ts"],
+    ignores: [".next/**", ".next-dev/**", ".codex-tmp/**", "node_modules/**", "dist/**", "out/**", ".wrangler/**", "playwright-report/**", "test-results/**", "next-env.d.ts"],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {

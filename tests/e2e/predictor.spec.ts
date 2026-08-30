@@ -17,11 +17,11 @@ test("the existing CAT predictor still completes its primary flow", async ({ pag
   await expect(page.getByRole("button", { name: "View more details for IIM Calcutta" })).toBeVisible();
 });
 
-test("existing predictor remains reachable from the UG product", async ({ page }) => {
+test("UG product header keeps the requested minimal branding", async ({ page }) => {
   await page.goto("/iimb-ug");
-  await page.getByRole("link", { name: "CAT predictor" }).click();
-  await expect(page).toHaveURL(/\/predictor$/);
-  await expect(page.getByRole("heading", { name: "Candidate profile" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "CAT IIM Predictor home" })).toBeVisible();
+  await expect(page.getByText("IIMB UG · 2027–31", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "CAT predictor" })).toHaveCount(0);
 });
 
 test("existing and UG admin APIs reject missing authorization", async ({ request }) => {

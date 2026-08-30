@@ -31,15 +31,13 @@ export function SiteHeader() {
         <Link className="site-wordmark" href="/" aria-label="CAT IIM Predictor home">
           <Image src={thinkplusLogo} alt="Thinkplus" priority />
         </Link>
-        {isHome ? <span aria-hidden="true" /> : isIimbUg ? <strong className="header-results-title">IIMB UG · 2027–31</strong> : showResultsTitle ? <strong className="header-results-title">Your IIM results</strong> : <span aria-hidden="true" />}
+        {isHome || isIimbUg ? <span aria-hidden="true" /> : showResultsTitle ? <strong className="header-results-title">Your IIM results</strong> : <span aria-hidden="true" />}
         <div className="header-tools">
           <div className="header-results-filter-host" id="header-results-filter-host" />
           <div className="header-actions">
             {isHome ? (
               <Link className="home-header-join" href="/predictor">Join now</Link>
-            ) : isIimbUg ? (
-              <Link className="header-cta" href="/predictor">CAT predictor</Link>
-            ) : showResultsTitle ? (
+            ) : isIimbUg ? null : showResultsTitle ? (
               <button type="button" className="header-cta" onClick={() => window.dispatchEvent(new Event("iim-edit-candidate"))}>Enter candidate details</button>
             ) : null}
           </div>

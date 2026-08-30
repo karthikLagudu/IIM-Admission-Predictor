@@ -26,7 +26,7 @@ export function SiteHeader() {
   }, []);
 
   return (
-    <header className={`site-header ${isHome ? "home-site-header" : ""}`}>
+    <header className={`site-header ${isHome ? "home-site-header" : isIimbUg ? "ipmat-site-header" : ""}`}>
       <div className="shell site-header-inner">
         <Link className="site-wordmark" href="/" aria-label="CAT IIM Predictor home">
           <Image src={thinkplusLogo} alt="Thinkplus" priority />

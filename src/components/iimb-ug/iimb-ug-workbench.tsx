@@ -87,7 +87,7 @@ export function IimbUgWorkbench() {
           path: issue.path.join("."),
           message: issue.message,
         })));
-        throw new Error("Please correct the highlighted candidate data.");
+        throw new Error("Validation failed. Please correct the highlighted candidate data.");
       }
 
       if (window.location.hostname.endsWith("github.io")) {

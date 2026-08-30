@@ -30,8 +30,9 @@ export default function IimbUgPage() {
       <section className="ug-hero">
         <div className="shell ug-hero-grid">
           <div>
+            <div className="ug-brand-kicker">Thinkplus IPMAT intelligence</div>
             <p className="ug-eyebrow">Independent planning tool · Not affiliated with IIM Bangalore</p>
-            <h1>IIM Bangalore UG Admission Predictor</h1>
+            <h1><span>IIM Bangalore UG</span>{" "}<span className="ug-gradient-title">Admission Predictor</span></h1>
             <h2>B.Sc. (Hons) Data Sciences &amp; Economics · 2027–31</h2>
             <p>Check eligibility, benchmark your UG Admission Test performance, estimate your interview-call position and simulate your final admission score.</p>
           </div>

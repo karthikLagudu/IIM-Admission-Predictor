@@ -13,7 +13,11 @@ import {
   iimaHistoricalCallThreshold,
 } from "@/lib/iima/historical-call-records";
 import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
-import { estimateInterviewCallChance } from "@/lib/institutes/call-probability";
+import {
+  estimateInterviewCallChance,
+  probabilityChanceBand,
+  type ChanceBand,
+} from "@/lib/institutes/call-probability";
 import { ResultsDashboard } from "./results-dashboard";
 import { InstituteResultsDashboard } from "./institute-results-dashboard";
 import type { ReportNavigationRequest, ReportSection } from "./report-navigation";
@@ -22,8 +26,6 @@ export interface CombinedPredictionResults {
   IIMA: IimaPredictionResult;
   institutes: InstitutePredictionResult[];
 }
-
-type ChanceBand = "HIGH" | "MEDIUM" | "LOW";
 
 interface ResultSummary {
   key: InstituteKey;
@@ -34,7 +36,8 @@ interface ResultSummary {
   score: string;
   chanceLabel: string;
   chance: string;
-  chanceBand: ChanceBand;
+  callChanceBand: ChanceBand;
+  seatChanceBand: ChanceBand;
   callChance: string;
   callChanceDetail: string;
   tone: "positive" | "negative" | "pending";
@@ -63,12 +66,6 @@ interface HistoricalYearComparison {
   tone: "above" | "below" | "unavailable";
   note: string;
   sourceUrl?: string;
-}
-
-function seatChanceBand(probability: number | null | undefined): ChanceBand {
-  if (probability != null && probability >= 0.7) return "HIGH";
-  if (probability != null && probability >= 0.4) return "MEDIUM";
-  return "LOW";
 }
 
 function iimaCallTiming(result: IimaPredictionResult): string {
@@ -140,7 +137,8 @@ export function CombinedResultsDashboard({
       score: results.IIMA.compositeScore == null ? "Not calculated" : formatScoreOutOf100(results.IIMA.compositeScore, 1),
       chanceLabel: "Expected seat chance (model)",
       chance: formatProbability(iimaChance),
-      chanceBand: seatChanceBand(iimaChance),
+      callChanceBand: probabilityChanceBand(iimaCallChance.probability),
+      seatChanceBand: probabilityChanceBand(iimaChance),
       callChance: iimaCallChance.label,
       callChanceDetail: iimaCallChance.detail,
       tone: results.IIMA.callPrediction ? "positive" : "negative",
@@ -170,7 +168,8 @@ export function CombinedResultsDashboard({
           : formatScoreOutOf100(result.preInterview.score, result.preInterview.maxScore),
         chanceLabel: "Expected seat chance (model)",
         chance: result.prediction.probability == null ? "Not estimated yet" : formatProbability(result.prediction.probability),
-        chanceBand: seatChanceBand(result.prediction.probability),
+        callChanceBand: probabilityChanceBand(callChance.probability),
+        seatChanceBand: probabilityChanceBand(result.prediction.probability),
         callChance: callChance.label,
         callChanceDetail: callChance.detail,
         tone: result.call.status === "NO_CALL" ? "negative" : result.call.status === "DATA_REQUIRED" ? "pending" : "positive",
@@ -187,13 +186,13 @@ export function CombinedResultsDashboard({
   const activeSummary = summaries.find((summary) => summary.key === activeDetail) ?? null;
   const chanceCounts: Record<ChanceBand | "ALL", number> = {
     ALL: summaries.length,
-    HIGH: summaries.filter((summary) => summary.chanceBand === "HIGH").length,
-    MEDIUM: summaries.filter((summary) => summary.chanceBand === "MEDIUM").length,
-    LOW: summaries.filter((summary) => summary.chanceBand === "LOW").length,
+    HIGH: summaries.filter((summary) => summary.callChanceBand === "HIGH").length,
+    MEDIUM: summaries.filter((summary) => summary.callChanceBand === "MEDIUM").length,
+    LOW: summaries.filter((summary) => summary.callChanceBand === "LOW").length,
   };
   const filteredSummaries = chanceFilter === "ALL"
     ? summaries
-    : summaries.filter((summary) => summary.chanceBand === chanceFilter);
+    : summaries.filter((summary) => summary.callChanceBand === chanceFilter);
   const activeInstituteResult = activeDetail === "IIMA" ? null : results.institutes.find((result) => result.institute === activeDetail) ?? null;
   const latestIimaHistory = IIMA_HISTORICAL_STAGE2_CALL_RECORDS[0];
   const latestIimaThreshold = iimaHistoricalCallThreshold(latestIimaHistory, candidate);
@@ -402,7 +401,7 @@ export function CombinedResultsDashboard({
           <strong>{candidate.catOverallPercentile === 0 ? "—" : `${candidate.catOverallPercentile.toFixed(2)}%`}</strong>
         </div>
         <div className="results-overview-chances">
-          <span>Your IIM chance summary</span>
+          <span>Your IIM interview-call chance summary</span>
           <h2 id="results-overview-heading">
             You have{" "}
             <button type="button" className="results-overview-filter high" aria-pressed={chanceFilter === "HIGH"} onClick={() => setChanceFilter((current) => current === "HIGH" ? "ALL" : "HIGH")}>{chanceCounts.HIGH} high {chanceCounts.HIGH === 1 ? "chance" : "chances"}</button>,{" "}
@@ -450,9 +449,9 @@ export function CombinedResultsDashboard({
                   <td className="result-table-call-chance">
                     <strong>{summary.callChance}</strong>
                   </td>
-                  <td className="result-table-chance" aria-label={`Expected seat chance: ${summary.chanceBand.toLowerCase()}`}>
-                    <small className={`seat-chance-band ${summary.chanceBand.toLowerCase()}`}>
-                      {summary.chanceBand === "MEDIUM" ? "med" : summary.chanceBand.toLowerCase()}
+                  <td className="result-table-chance" aria-label={`Expected seat chance: ${summary.seatChanceBand.toLowerCase()}`}>
+                    <small className={`seat-chance-band ${summary.seatChanceBand.toLowerCase()}`}>
+                      {summary.seatChanceBand === "MEDIUM" ? "med" : summary.seatChanceBand.toLowerCase()}
                     </small>
                   </td>
                   <td className="result-table-timing">{summary.callTiming}</td>
@@ -460,7 +459,7 @@ export function CombinedResultsDashboard({
               ))}
               {filteredSummaries.length === 0 && (
                 <tr>
-                  <td className="results-filter-empty" colSpan={6}>No IIMs match the selected seat-chance filter.</td>
+                  <td className="results-filter-empty" colSpan={6}>No IIMs match the selected interview-call chance filter.</td>
                 </tr>
               )}
             </tbody>
@@ -524,7 +523,7 @@ function ChanceBandFilters({
   ];
 
   return (
-    <div className={`chance-filter-group ${className}`} role="group" aria-label="Filter IIMs by expected seat chance">
+    <div className={`chance-filter-group ${className}`} role="group" aria-label="Filter IIMs by expected interview-call chance">
       {options.map((option) => (
         <button
           type="button"

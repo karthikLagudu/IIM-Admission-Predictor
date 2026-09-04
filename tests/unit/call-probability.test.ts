@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { estimateInterviewCallChance } from "@/lib/institutes/call-probability";
+import { estimateInterviewCallChance, probabilityChanceBand } from "@/lib/institutes/call-probability";
 
 describe("interview-call chance", () => {
+  it("classifies the summary band from interview-call probability", () => {
+    expect(probabilityChanceBand(0.7)).toBe("HIGH");
+    expect(probabilityChanceBand(0.4)).toBe("MEDIUM");
+    expect(probabilityChanceBand(0.399)).toBe("LOW");
+    expect(probabilityChanceBand(null)).toBe("LOW");
+  });
+
   it("is 50% at the configured shortlist benchmark", () => {
     const result = estimateInterviewCallChance({ eligible: true, score: 60, maxScore: 100, benchmark: 60 });
     expect(result.probability).toBe(0.5);

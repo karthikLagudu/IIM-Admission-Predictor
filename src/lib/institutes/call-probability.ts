@@ -2,6 +2,14 @@ import type { BenchmarkType, InstituteCallStatus } from "@/types/institutes";
 
 const CALL_CURVE_STEEPNESS = 16;
 
+export type ChanceBand = "HIGH" | "MEDIUM" | "LOW";
+
+export function probabilityChanceBand(probability: number | null | undefined): ChanceBand {
+  if (probability != null && probability >= 0.7) return "HIGH";
+  if (probability != null && probability >= 0.4) return "MEDIUM";
+  return "LOW";
+}
+
 function evidenceCalibratedProbability(rawProbability: number, benchmarkType: BenchmarkType): number {
   const calibration = benchmarkType === "OFFICIAL_RESULT"
     ? { weight: 1, floor: 0.02, ceiling: 0.98 }

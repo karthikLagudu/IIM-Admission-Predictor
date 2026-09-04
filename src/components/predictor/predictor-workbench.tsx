@@ -8,7 +8,7 @@ import { candidateInputSchema } from "@/lib/validation/iima";
 import { CandidateForm, cloneSample, createEmptyCandidate } from "./candidate-form";
 import { CombinedResultsDashboard, type CombinedPredictionResults } from "./combined-results-dashboard";
 
-const MOCK_DATA_TEST_MODE = true;
+const MOCK_DATA_TEST_MODE = false;
 
 function calculateLocalResults(candidate: CandidateInput, policy: IimaPolicyConfig): CombinedPredictionResults {
   return {

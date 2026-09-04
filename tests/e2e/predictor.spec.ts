@@ -42,8 +42,8 @@ test("runs the sample through the prediction API", async ({ page }) => {
   await expect(page.getByLabel("IIM Calcutta result")).toContainText("Not publicly published");
   await page.getByRole("button", { name: "View IIM Ahmedabad details" }).click();
   await expect(page.getByRole("heading", { name: "CALL PREDICTED" })).toBeVisible();
-  await expect(page.getByLabel("Estimated seat chance")).toContainText(/\d+\.\d%/);
-  await expect(page.getByText(/Planning estimate assuming normalized PI 0.75 and AWT 0.75/)).toBeVisible();
+  await expect(page.getByText("Expected interview-call chance", { exact: true })).toBeVisible();
+  await expect(page.getByText("Final selection planning", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "At a glance" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Detailed decision audit" })).toHaveCount(0);
   await page.getByRole("button", { name: "More feedback" }).click();
@@ -77,7 +77,7 @@ test("a CAT sectional failure hard-gates the call", async ({ page }) => {
   await expect(page.getByLabel("IIM Ahmedabad result")).toContainText("LESS LIKELY");
   await page.getByRole("button", { name: "View IIM Ahmedabad details" }).click();
   await expect(page.getByRole("heading", { name: "LESS LIKELY" })).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByLabel("Estimated seat chance")).toContainText("0.0%");
+  await expect(page.getByLabel(/Expected interview-call chance 0.0%/)).toBeVisible();
   await expect(page.getByText("VARC cutoff deficit", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "More feedback" }).click();
   const journey = page.getByRole("region", { name: "Candidate journey" });
@@ -93,11 +93,11 @@ test("IIMB runs with a clearly labelled test model while mock mode is active", a
   await page.getByRole("button", { name: "Analyse all three IIMs chances" }).click();
   const result = page.getByLabel("IIM Bangalore result");
   await expect(result).toContainText("CALL PREDICTED");
-  await expect(result).toContainText(/\d+\.\d%/);
+  await expect(result.getByLabel(/Expected call chance:/)).toBeVisible();
   await page.getByRole("button", { name: "View IIM Bangalore details" }).click();
   await expect(page.getByRole("heading", { name: "CALL PREDICTED" })).toBeVisible();
   await expect(page.getByText("Pre-PI / shortlist score", { exact: true }).last()).toBeVisible();
-  await expect(page.getByLabel("Estimated seat chance")).toContainText(/\d+\.\d%/);
+  await expect(page.getByText("Expected interview-call chance", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "At a glance" })).toBeVisible();
   await page.getByRole("button", { name: "More feedback" }).click();
   await expect(page.getByRole("heading", { name: "Test-model pre-PI estimate breakdown" })).toBeVisible();
@@ -110,19 +110,18 @@ test("IIMB runs with a clearly labelled test model while mock mode is active", a
   await expect(iimbHistory.getByText(/above this model benchmark/)).toBeVisible();
 });
 
-test("IIMC calculates the official score and a clearly labelled mock-model seat chance", async ({ page }) => {
+test("IIMC calculates the official score and predicts the interview call", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Analyse all three IIMs chances" }).click();
   const result = page.getByLabel("IIM Calcutta result");
   await expect(result).toContainText("CALL PREDICTED");
   await expect(result).toContainText("66.18 / 85");
-  await expect(result).toContainText("Expected seat chance (model)");
-  await expect(result).toContainText(/\d+\.\d%/);
+  await expect(result.getByLabel(/Expected call chance:/)).toBeVisible();
   await page.getByRole("button", { name: "View IIM Calcutta details" }).click();
   await expect(page.getByRole("heading", { name: "CALL PREDICTED" })).toBeVisible();
   await expect(page.getByText("66.18 / 85", { exact: true }).last()).toBeVisible();
-  await expect(page.getByLabel("Estimated seat chance")).toContainText(/\d+\.\d%/);
-  await expect(page.getByLabel("Estimated seat chance")).toContainText("model");
+  await expect(page.getByText("Expected interview-call chance", { exact: true })).toBeVisible();
+  await expect(page.getByText("Expected seat chance", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "More feedback" }).click();
   await expect(page.getByRole("heading", { name: "Test-model pre-PI estimate breakdown" })).toBeVisible();
   const callInterpretation = page.getByRole("region", { name: "Interview-call interpretation" });

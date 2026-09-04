@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { CandidateInput, IimaPolicyConfig } from "@/types/iima";
 import { IIMA_CAT_2025_POLICY, predictIimaAdmission } from "@/lib/iima";
-import { predictAllNonIimaInstitutes } from "@/lib/institutes";
+import { applyCallDifficultyConsistency, predictAllNonIimaInstitutes } from "@/lib/institutes";
 import { candidateInputSchema } from "@/lib/validation/iima";
 import { CandidateForm, createEmptyCandidate } from "./candidate-form";
 import { CombinedResultsDashboard, type CombinedPredictionResults } from "./combined-results-dashboard";
@@ -11,9 +11,11 @@ import { CombinedResultsDashboard, type CombinedPredictionResults } from "./comb
 const ENABLE_MODEL_ASSUMPTIONS = true;
 
 function calculateLocalResults(candidate: CandidateInput, policy: IimaPolicyConfig): CombinedPredictionResults {
+  const iima = predictIimaAdmission(candidate, policy);
+  const institutes = predictAllNonIimaInstitutes(candidate, ENABLE_MODEL_ASSUMPTIONS);
   return {
-    IIMA: predictIimaAdmission(candidate, policy),
-    institutes: predictAllNonIimaInstitutes(candidate, ENABLE_MODEL_ASSUMPTIONS),
+    IIMA: iima,
+    institutes: applyCallDifficultyConsistency(institutes, iima.callPrediction),
   };
 }
 

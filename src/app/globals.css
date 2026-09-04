@@ -195,12 +195,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .institute-results-table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
 .institute-results-table th, .institute-results-table td { padding: 9px 12px; text-align: left; vertical-align: middle; }
 .institute-results-table thead th { border-bottom: 1px solid var(--line); background: #f5f8fa; color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
-.institute-results-table thead th:nth-child(1) { width: 25%; }
-.institute-results-table thead th:nth-child(2) { width: 10%; }
-.institute-results-table thead th:nth-child(3) { width: 17%; }
+.institute-results-table thead th:nth-child(1) { width: 28%; }
+.institute-results-table thead th:nth-child(2) { width: 12%; }
+.institute-results-table thead th:nth-child(3) { width: 18%; }
 .institute-results-table thead th:nth-child(4) { width: 15%; }
-.institute-results-table thead th:nth-child(5) { width: 11%; }
-.institute-results-table thead th:nth-child(6) { width: 22%; }
+.institute-results-table thead th:nth-child(5) { width: 27%; }
 .institute-results-table tbody tr + tr > * { border-top: 1px solid #e6ecef; }
 .institute-results-table tbody tr:hover { background: #f8fbfc; }
 .institute-results-table thead th:first-child { position: static; min-width: 0; box-shadow: none; }
@@ -225,7 +224,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .institute-results-table tr.positive .result-table-status { border-color: #8fd2b8; background: #f0fdf8; color: var(--green); }
 .institute-results-table tr.negative .result-table-status { border-color: #e8aeb3; background: #fff5f5; color: var(--red); }
 .institute-results-table tr.pending .result-table-status { border-color: #dfc173; background: #fffbeb; color: #976d18; }
-.result-table-chance { color: var(--green) !important; font-weight: 850; white-space: nowrap; }
 .result-table-timing { min-width: 0; color: var(--navy-900) !important; font-weight: 750; line-height: 1.3; overflow-wrap: anywhere; white-space: normal; }
 .call-window-disclaimer { margin: 10px 2px 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
 .all-history-panel { padding: 20px; }
@@ -267,12 +265,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .history-student-score { color: var(--navy-900) !important; font-size: 12px !important; font-weight: 800; white-space: nowrap; }
 .history-unavailable { color: var(--muted) !important; font-weight: 700; }
 .all-history-note { margin: 12px 2px 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
-.seat-chance-band { display: inline-flex; min-width: 48px; min-height: 24px; align-items: center; justify-content: center; margin: 0; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; background: white; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 8px; font-weight: 850; letter-spacing: .05em; line-height: 1; text-transform: uppercase; vertical-align: middle; }
-.seat-chance-band.high { color: var(--green) !important; }
-.seat-chance-band.medium { color: #976d18 !important; }
-.seat-chance-band.low { color: var(--red) !important; }
-.institute-results-table tr.negative .result-table-chance { color: var(--red) !important; }
-.institute-results-table tr.pending .result-table-chance { color: #976d18 !important; }
+.call-chance-band { display: inline-flex; min-width: 48px; min-height: 24px; align-items: center; justify-content: center; margin: 0; padding: 4px 9px; border: 1px solid currentColor; border-radius: 999px; background: white; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 8px; font-weight: 850; letter-spacing: .05em; line-height: 1; text-transform: uppercase; vertical-align: middle; }
+.call-chance-band.high { color: var(--green) !important; }
+.call-chance-band.medium { color: #976d18 !important; }
+.call-chance-band.low { color: var(--red) !important; }
 .result-table-detail-button { min-height: 34px; padding: 7px 10px; border: 1px solid #b9ccd7; border-radius: 7px; background: white; color: var(--blue-700); font-size: 9px; font-weight: 800; white-space: nowrap; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .result-table-detail-button:hover { border-color: var(--blue-600); background: #edf5f9; transform: translateX(1px); }
 .institute-results-table tbody th .result-table-detail-button { width: 108px; min-height: 32px; margin: 0; padding: 6px 9px; border: 0; color: var(--blue-600); box-shadow: 0 2px 8px rgba(7,21,34,.07); vertical-align: middle; }

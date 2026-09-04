@@ -10,56 +10,10 @@ import {
   iimaHistoricalCallCategoryLabel,
   iimaHistoricalCallThreshold,
 } from "@/lib/iima/historical-call-records";
-import { formatProbability, formatScore, formatScoreOutOf100, humanize, normalizeScoreOutOf100 } from "@/lib/utils";
-import { PiScoreSimulator } from "./pi-score-simulator";
+import { formatScore, formatScoreOutOf100, humanize, normalizeScoreOutOf100 } from "@/lib/utils";
 import { REPORT_SECTION_IDS, type ReportNavigationRequest } from "./report-navigation";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
-
-function sensitivityScenarioDetail(key: string, candidate: CandidateInput, policy: IimaPolicyConfig) {
-  const currentPi = candidate.normalizedPi ?? 0;
-  const currentAwt = candidate.normalizedAwt ?? 0;
-  switch (key) {
-    case "cat-plus-5": {
-      const next = Math.min(policy.catNormalizationDenominator, candidate.catOverallScaledScore + 5);
-      return {
-        change: `CAT overall scaled score changes from ${candidate.catOverallScaledScore.toFixed(2)} to ${next.toFixed(2)}.`,
-        basis: "CAT contributes 25% to IIMA's final Composite Score. Sectional percentiles, academics, PI and AWT stay unchanged.",
-      };
-    }
-    case "cat-plus-10": {
-      const next = Math.min(policy.catNormalizationDenominator, candidate.catOverallScaledScore + 10);
-      return {
-        change: `CAT overall scaled score changes from ${candidate.catOverallScaledScore.toFixed(2)} to ${next.toFixed(2)}.`,
-        basis: "This is the larger CAT scenario. The gain is capped at the configured CAT normalization denominator; every non-CAT input stays fixed.",
-      };
-    }
-    case "pi-plus-005":
-      return {
-        change: `Normalized PI changes from ${currentPi.toFixed(2)} to ${Math.min(1, currentPi + 0.05).toFixed(2)} (${(currentPi * 100).toFixed(0)}% to ${(Math.min(1, currentPi + 0.05) * 100).toFixed(0)}%).`,
-        basis: "PI carries the largest final-selection weight at 50%, so even a small normalized improvement can materially change the final score.",
-      };
-    case "pi-plus-010":
-      return {
-        change: `Normalized PI changes from ${currentPi.toFixed(2)} to ${Math.min(1, currentPi + 0.10).toFixed(2)} (${(currentPi * 100).toFixed(0)}% to ${(Math.min(1, currentPi + 0.10) * 100).toFixed(0)}%).`,
-        basis: "This is the stronger PI scenario. The value is capped at 1.00 and all CAT, academic, AWT and work-experience inputs stay fixed.",
-      };
-    case "awt-plus-005":
-      return {
-        change: `Normalized AWT changes from ${currentAwt.toFixed(2)} to ${Math.min(1, currentAwt + 0.05).toFixed(2)} (${(currentAwt * 100).toFixed(0)}% to ${(Math.min(1, currentAwt + 0.05) * 100).toFixed(0)}%).`,
-        basis: "AWT contributes 10% to the final Composite Score. The scenario isolates writing-test improvement and leaves PI and the profile unchanged.",
-      };
-    case "workex-plus-6": {
-      const next = Math.min(36, candidate.workExperienceMonths + 6);
-      return {
-        change: `Eligible work experience changes from ${candidate.workExperienceMonths} to ${next} completed months.`,
-        basis: "Work experience can change the Application Rating and therefore both shortlist and final-score contributions. The scenario is capped at 36 rated months.",
-      };
-    }
-    default:
-      return { change: "One candidate input changes while all others stay fixed.", basis: "The model recalculates the complete result using the same gates, weights and planning benchmarks." };
-  }
-}
 
 function PipelineStep({ label, value, state }: { label: string; value: string; state: StepState }) {
   return (
@@ -160,9 +114,7 @@ export function ResultsDashboard({
   const [showMoreFeedback, setShowMoreFeedback] = useState(false);
   const [showDecisionAudit, setShowDecisionAudit] = useState(false);
   const handledNavigationRequestRef = useRef<number | null>(null);
-  const final = result.finalSelection;
   const cat = result.catEligibility;
-  const callLabel = result.callPrediction ? "CALL PREDICTED" : "LESS LIKELY";
   const route = result.callRoute ? humanize(result.callRoute) : "No route cleared";
   const rating = result.applicationRating;
   const diagnostics = result.diagnostics;
@@ -173,16 +125,6 @@ export function ResultsDashboard({
     ? policy.compositeWeights.ar * rating.total / policy.arNormalizationDenominator
     : null;
   const prePiCatContribution = policy.compositeWeights.cat * candidate.catOverallScaledScore / policy.catNormalizationDenominator;
-  const initialPiPercent = Math.round((candidate.normalizedPi ?? final?.normalizedPi ?? 0.75) * 100);
-  const iimaOtherFinalContribution = final == null ? null : final.finalCompositeScore - policy.finalWeights.pi * final.normalizedPi;
-  const iimaAcademicCriterion = result.stage1?.c2 ?? result.stage2?.c2 ?? result.academicConsistency;
-  const iimaCallCriteria = [
-    { label: "Bachelor eligibility", detail: `${candidate.bachelorPercent.toFixed(2)}% against ${result.basicEligibility.bachelorRequired.toFixed(0)}% minimum`, passed: result.basicEligibility.bachelorPass },
-    { label: "CAT overall", detail: result.catEligibility == null ? "CAT screen not reached" : `${candidate.catOverallPercentile.toFixed(2)} percentile against ${result.catEligibility.cutoff.overall.toFixed(2)}`, passed: result.catEligibility?.overallPass ?? null },
-    { label: "CAT sectionals", detail: result.catEligibility == null ? "Sectional screen not reached" : `VARC ${candidate.catVarcPercentile.toFixed(2)}/${result.catEligibility.cutoff.varc.toFixed(2)} · DILR ${candidate.catDilrPercentile.toFixed(2)}/${result.catEligibility.cutoff.dilr.toFixed(2)} · QA ${candidate.catQaPercentile.toFixed(2)}/${result.catEligibility.cutoff.qa.toFixed(2)}`, passed: result.catEligibility == null ? null : result.catEligibility.varcPass && result.catEligibility.dilrPass && result.catEligibility.qaPass },
-    { label: "Academic consistency", detail: iimaAcademicCriterion == null || iimaAcademicCriterion.required == null ? "Academic gate not reached" : `${iimaAcademicCriterion.actual.toFixed(2)}% against ${iimaAcademicCriterion.required.toFixed(2)}%`, passed: iimaAcademicCriterion?.passed ?? null },
-    { label: "Composite Score boundary", detail: result.applicableCallThreshold == null ? "No applicable shortlist boundary was reached" : `${result.compositeScore == null ? "Score unavailable" : result.compositeScore.toFixed(6)} against ${result.applicableCallThreshold.toFixed(6)}`, passed: result.callMargin == null ? null : result.callMargin >= 0 },
-  ];
   useEffect(() => {
     setShowMoreFeedback(false);
     setShowDecisionAudit(false);
@@ -216,8 +158,7 @@ export function ResultsDashboard({
     { label: "Application rating", value: rating ? `${rating.total.toFixed(1)}/38` : "Not reached", state: rating ? "pass" : "neutral" },
     { label: "Stage 1", value: result.stage1?.predictedShortlist ? "Selected" : result.stage1 ? "Not selected" : "Not reached", state: result.stage1?.predictedShortlist ? "pass" : result.stage1 ? "fail" : "neutral" },
     { label: "Stage 2", value: result.stage2?.predictedShortlist ? "Selected" : result.stage2 ? "Not selected" : result.stage1?.predictedShortlist ? "Not required" : "Not reached", state: result.stage2?.predictedShortlist ? "pass" : result.stage2 ? "fail" : "neutral" },
-    { label: "AWT / PI", value: result.callPrediction ? "Call predicted" : "No call", state: result.callPrediction ? (final ? "pass" : "current") : "fail" },
-    { label: "Final model", value: final ? humanize(final.predictionBand) : result.callPrediction ? "Add PI & AWT" : "Hard-gated", state: final ? "current" : result.callPrediction ? "current" : "fail" },
+    { label: "Interview call", value: result.callPrediction ? "Call predicted" : "No call", state: result.callPrediction ? "pass" : "fail" },
   ];
 
   return (
@@ -418,68 +359,6 @@ export function ResultsDashboard({
         </div>
       )}
 
-      {final && (
-        <section className="panel final-panel" aria-labelledby="final-heading">
-          <div className="final-top">
-            <div className="final-details">
-              <div className="section-heading"><div><h3 id="final-heading">Final selection planning</h3><p>Official FCS formula; predictive threshold layer</p></div><SourceBadge source="MODEL_ASSUMPTION" /></div>
-              <div className="metric-grid">
-                <Metric label="Final Composite Score" value={formatScore(final.finalCompositeScore)} />
-                <Metric label="Historical benchmark" value={formatScore(final.historicalBenchmark)} note="Not current cutoff" />
-                <Metric label="Planning target" value={formatScore(final.planningTarget)} note="Benchmark + safety margin" />
-                <Metric label="Calibrated target" value={formatScore(final.calibration.weightedTarget)} note="50% / 30% / 20% recency blend" />
-                <Metric label="Historical scenario range" value={`${formatProbability(final.calibration.probabilityLow)}–${formatProbability(final.calibration.probabilityHigh)}`} note="Across three completed cycles" />
-                <Metric label="Target difference" value={`${final.targetDifference >= 0 ? "+" : ""}${final.targetDifference.toFixed(6)}`} tone={final.targetDifference >= 0 ? "success" : "warning"} />
-                <Metric label="Required normalized PI" value={final.requiredNormalizedPi.toFixed(4)} note={`Gap ${final.piGap >= 0 ? "+" : ""}${final.piGap.toFixed(4)}`} />
-                <Metric label="Largest final weight" value="PI · 50%" note="AWT 10% · CAT 25% · AR 15%" />
-              </div>
-              <div className="disclosure"><strong>Official current final cutoff: Not published.</strong> The displayed probability blends three historical thresholds instead of relying on one year. Confidence remains limited because individual candidate outcomes and the current merit list are unavailable.</div>
-              <div className="calibration-table-wrap">
-                <table className="policy-table calibration-table">
-                  <thead><tr><th>Completed batch</th><th>Minimum joined FCS</th><th>Model weight</th><th>Scenario probability</th></tr></thead>
-                  <tbody>{final.calibration.cycles.map((cycle) => (
-                    <tr key={cycle.batch}>
-                      <td>{cycle.batch}</td>
-                      <td>{formatScore(cycle.benchmark)}</td>
-                      <td>{(cycle.weight * 100).toFixed(0)}%</td>
-                      <td>{formatProbability(cycle.probability)}</td>
-                    </tr>
-                  ))}</tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {final && result.sensitivity.length > 0 && (
-        <section className="panel detail-panel sensitivity-panel" aria-labelledby="sensitivity-heading">
-          <div className="section-heading"><div><h3 id="sensitivity-heading">What improves my chance?</h3><p>Each scenario changes one input only and recalculates the complete result</p></div><SourceBadge source="MODEL_ASSUMPTION" /></div>
-          <div className="sensitivity-intro"><strong>Current baseline</strong><span>Final Composite Score {formatScore(final.finalCompositeScore)} · Estimated seat chance {formatProbability(final.seatProbability)}</span><p>Use these scenarios to see which improvement has the greatest modelled effect. They are planning comparisons, not promises of admission.</p></div>
-          <div className="sensitivity-list">
-            {result.sensitivity.map((scenario) => {
-              const detail = sensitivityScenarioDetail(scenario.key, candidate, policy);
-              const finalScoreDelta = scenario.finalCompositeScore == null ? null : scenario.finalCompositeScore - final.finalCompositeScore;
-              const probabilityDeltaPoints = scenario.probabilityDelta * 100;
-              const impact = probabilityDeltaPoints >= 5 ? "Strong impact" : probabilityDeltaPoints >= 2 ? "Moderate impact" : probabilityDeltaPoints > 0 ? "Small impact" : "No modelled gain";
-              return (
-                <article className="sensitivity-card" key={scenario.key}>
-                  <div className="sensitivity-card-heading"><div><h4>{scenario.label}</h4><span>{impact}</span></div><strong>{scenario.probabilityDelta >= 0 ? "+" : ""}{probabilityDeltaPoints.toFixed(1)} percentage points</strong></div>
-                  <p>{detail.change}</p>
-                  <div className="sensitivity-card-metrics">
-                    <div><span>New final score</span><strong>{formatScore(scenario.finalCompositeScore)}</strong><small>{finalScoreDelta == null ? "Change unavailable" : `${finalScoreDelta >= 0 ? "+" : ""}${finalScoreDelta.toFixed(6)} vs current`}</small></div>
-                    <div><span>New seat chance</span><strong>{formatProbability(scenario.probability)}</strong><small>Current: {formatProbability(final.seatProbability)}</small></div>
-                    <div><span>Chance improvement</span><strong className={scenario.probabilityDelta > 0 ? "positive-delta" : ""}>{scenario.probabilityDelta >= 0 ? "+" : ""}{probabilityDeltaPoints.toFixed(1)} pp</strong><small>{impact}</small></div>
-                  </div>
-                  <div className="sensitivity-track" role="img" aria-label={`${scenario.label} produces ${formatProbability(scenario.probability)} estimated seat chance`}><div className="sensitivity-fill" style={{ width: `${Math.min(100, scenario.probability * 100)}%` }} /></div>
-                  <small className="sensitivity-basis"><strong>Why it matters:</strong> {detail.basis}</small>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
       <section className="panel detail-panel" aria-labelledby="why-heading">
         <div className="section-heading"><div><h3 id="why-heading">Why this result?</h3><p>Generated from the exact gate sequence</p></div><SourceBadge source="CALCULATED" /></div>
         <ol className="explain-list">{result.explanation.map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</ol>
@@ -583,41 +462,13 @@ export function ResultsDashboard({
               <article className="audit-card outcome-audit-card">
                 <h4>{result.stage2 ? "6" : "5"}. Overall call conclusion</h4>
                 <AuditRow label="AWT/PI call" value={result.callPrediction ? `YES · ${route}` : "NO"} explanation={result.callPrediction ? "At least one official shortlist route clears all its hard gates and score boundary." : "Neither Stage 1 nor Stage 2 clears every required condition."} state={result.callPrediction ? "pass" : "fail"} />
-                <AuditRow label="Applicable CS margin" value={result.callMargin == null ? "Unavailable" : `${result.callMargin >= 0 ? "+" : ""}${result.callMargin.toFixed(6)}`} explanation="Positive means the unrounded CS is above the boundary used for the successful/final route." state={result.callMargin == null ? "info" : result.callMargin >= 0 ? "pass" : "fail"} />
+                <AuditRow label="Applicable CS margin" value={result.callMargin == null ? "Unavailable" : `${result.callMargin >= 0 ? "+" : ""}${result.callMargin.toFixed(6)}`} explanation="Positive means the unrounded CS is above the interview-call boundary used for this route." state={result.callMargin == null ? "info" : result.callMargin >= 0 ? "pass" : "fail"} />
                 <AuditRow label="Required CAT scaled score" value={result.requiredCatScaledScore ? result.requiredCatScaledScore.required.toFixed(2) : "Unavailable"} explanation={result.requiredCatScaledScore ? `At the current AR, Stage 2 requires approximately this CAT scaled score. Current score: ${result.requiredCatScaledScore.current.toFixed(2)}; gap: ${result.requiredCatScaledScore.gap >= 0 ? "+" : ""}${result.requiredCatScaledScore.gap.toFixed(2)}.` : "This calculation was not reached."} state={result.requiredCatScaledScore?.achievable ? (result.requiredCatScaledScore.gap >= 0 ? "pass" : "fail") : "info"} />
               </article>
             )}
           </div>
         </section>
       )}
-
-      <PiScoreSimulator
-        instituteName="IIM Ahmedabad"
-        simulatorKey={`${result.policyVersion}-${result.compositeScore ?? "none"}`}
-        initialPercent={initialPiPercent}
-        piMaxScore={policy.finalWeights.pi * 100}
-        finalMaxScore={1}
-        scorePrecision={4}
-        benchmarkLabel="Probability uses the existing historical-cycle planning model, not an official current cutoff."
-        callPredictionLabel={callLabel}
-        callPredictionReason={result.callPrediction ? `${route} clears the applicable shortlist boundary after all hard gates.` : diagnostics?.gaps[0]?.detail ?? "The profile does not clear every required interview-call condition."}
-        callPredictionTone={result.callPrediction ? "positive" : "negative"}
-        callCriteria={iimaCallCriteria}
-        unavailableReason={final == null || iimaOtherFinalContribution == null ? "The other final-selection inputs, including AWT, must be available before a new final score can be calculated." : undefined}
-        simulate={(piPercent) => {
-          const normalizedPi = piPercent / 100;
-          const finalScore = iimaOtherFinalContribution == null ? null : iimaOtherFinalContribution + policy.finalWeights.pi * normalizedPi;
-          const seatProbability = finalScore == null
-            ? null
-            : result.callPrediction
-              ? final!.calibration.cycles.reduce((sum, cycle) => sum + cycle.weight * (1 / (1 + Math.exp(-policy.model.logisticSlope * (finalScore - cycle.planningTarget)))), 0)
-              : 0;
-          const band = seatProbability == null
-            ? null
-            : policy.probabilityBands.find((item) => seatProbability < item.maxExclusive)?.band ?? "VERY_STRONG";
-          return { piPoints: normalizedPi * policy.finalWeights.pi * 100, finalScore, seatProbability, band };
-        }}
-      />
 
       <section id={REPORT_SECTION_IDS.history} className="panel detail-panel historical-call-panel report-navigation-target" tabIndex={-1} aria-labelledby="historical-call-heading">
         <div className="section-heading">

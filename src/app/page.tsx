@@ -25,7 +25,7 @@ export default function HomePage() {
           <article><div><ShieldCheck size={20} aria-hidden="true" /><strong>Official gates</strong></div><span>Hard-gate checks</span></article>
           <article><div><Landmark size={20} aria-hidden="true" /><strong>21 IIMs</strong></div><span>Institute scoring</span></article>
           <article><div><History size={20} aria-hidden="true" /><strong>Past cycles</strong></div><span>Historical context</span></article>
-          <article><div><BarChart3 size={20} aria-hidden="true" /><strong>Clear outlook</strong></div><span>Call &amp; seat chances</span></article>
+          <article><div><BarChart3 size={20} aria-hidden="true" /><strong>Clear outlook</strong></div><span>Interview-call prediction</span></article>
         </div>
       </section>
 

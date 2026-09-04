@@ -4,6 +4,16 @@ const CALL_CURVE_STEEPNESS = 16;
 
 export type ChanceBand = "HIGH" | "MEDIUM" | "LOW";
 
+export function callStatusChanceBand(
+  status: InstituteCallStatus,
+  eligible: boolean,
+  directMerit = false,
+): ChanceBand {
+  if (directMerit || !eligible || status === "NO_CALL") return "LOW";
+  if (status === "PREDICTED_CALL") return "HIGH";
+  return "MEDIUM";
+}
+
 export function probabilityChanceBand(probability: number | null | undefined): ChanceBand {
   if (probability != null && probability >= 0.7) return "HIGH";
   if (probability != null && probability >= 0.4) return "MEDIUM";

@@ -6,10 +6,8 @@ import { Check, ChevronDown, ChevronUp, Circle, Database, X } from "lucide-react
 import type { CandidateInput } from "@/types/iima";
 import type { InstitutePredictionResult, InstituteScoreComponent } from "@/types/institutes";
 import { SourceBadge } from "@/components/ui/source-badge";
-import { formatProbability, formatScore, formatScoreOutOf100, humanize, normalizeScoreOutOf100 } from "@/lib/utils";
-import { institutePredictionBand } from "@/lib/institutes/prediction";
+import { formatScore, formatScoreOutOf100, humanize, normalizeScoreOutOf100 } from "@/lib/utils";
 import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
-import { PiScoreSimulator } from "./pi-score-simulator";
 import { REPORT_SECTION_IDS, type ReportNavigationRequest } from "./report-navigation";
 
 type StepState = "pass" | "fail" | "current" | "neutral";
@@ -125,30 +123,15 @@ export function InstituteResultsDashboard({ candidate, result, afterScore, navig
   const currentCallScore = result.preInterview.score;
   const callMarginOutOf100 = normalizeScoreOutOf100(result.call.margin, result.preInterview.maxScore);
   const scoreFallback = result.preInterview.status === "DATA_REQUIRED" ? "Needs cycle data" : "Not calculated";
-  const probabilityFallback = "Not estimated yet";
   const marginFallback = result.call.benchmarkValue == null ? "No benchmark" : "Not calculated";
   const modelCallBenchmark = result.call.benchmarkType === "MODEL" ? result.call.benchmarkValue : null;
   const modelCallGap = currentCallScore != null && modelCallBenchmark != null ? currentCallScore - modelCallBenchmark : null;
-  const probability = result.prediction.probability;
   const historicalReference = instituteHistoricalReference(result.institute);
   const historicalBenchmark = result.call.benchmarkType === "HISTORICAL" || result.call.benchmarkType === "OFFICIAL_RESULT"
     ? result.call.benchmarkValue
     : null;
   const historicalGap = currentCallScore != null && historicalBenchmark != null ? currentCallScore - historicalBenchmark : null;
-  const piComponent = result.final.components.find((component) => component.key === "pi" || /personal interview/i.test(component.label));
-  const nonPiComponents = result.final.components.filter((component) => component !== piComponent);
-  const nonPiTotal = nonPiComponents.length > 0 && nonPiComponents.every((component) => component.score != null)
-    ? nonPiComponents.reduce((sum, component) => sum + (component.score ?? 0), 0)
-    : null;
-  const initialPiPercent = Math.round((candidate.normalizedPi ?? (piComponent?.score != null && piComponent.maxScore > 0 ? piComponent.score / piComponent.maxScore : 0.75)) * 100);
   const cutoffText = (value: number | null) => value == null ? "Not applicable" : value.toFixed(2);
-  const callCriteria = [
-    { label: "Bachelor eligibility", detail: `${candidate.bachelorPercent.toFixed(2)}% against ${result.eligibility.bachelorRequired.toFixed(0)}% minimum`, passed: result.eligibility.bachelorPass },
-    { label: "CAT overall", detail: `${candidate.catOverallPercentile.toFixed(2)} percentile against ${cutoffText(result.eligibility.cutoff.overall)}`, passed: result.eligibility.cutoff.overall == null ? null : result.eligibility.overallPass },
-    { label: "CAT sectionals", detail: `VARC ${candidate.catVarcPercentile.toFixed(2)}/${cutoffText(result.eligibility.cutoff.varc)} · DILR ${candidate.catDilrPercentile.toFixed(2)}/${cutoffText(result.eligibility.cutoff.dilr)} · QA ${candidate.catQaPercentile.toFixed(2)}/${cutoffText(result.eligibility.cutoff.qa)}`, passed: result.eligibility.varcPass && result.eligibility.dilrPass && result.eligibility.qaPass },
-    { label: "Section score condition", detail: result.institute === "IIMB" ? "Positive raw score required in VARC, DILR and QA" : "Institute-specific section score condition", passed: result.eligibility.rawScoreGatePass },
-    { label: `${result.scoreLabel} boundary`, detail: result.call.benchmarkValue == null ? "No fixed public call boundary; applicant-pool ranking applies" : `${currentCallScore == null ? "Score unavailable" : formatScore(currentCallScore, 2)} against ${formatScore(result.call.benchmarkValue, 2)}`, passed: result.call.benchmarkValue == null || result.call.margin == null ? null : result.call.margin >= 0 },
-  ];
 
   const pipeline: Array<{ label: string; value: string; state: StepState }> = [
     { label: "Eligibility", value: result.eligibility.bachelorPass ? "Passed" : "Failed", state: result.eligibility.bachelorPass ? "pass" : "fail" },
@@ -161,8 +144,6 @@ export function InstituteResultsDashboard({ candidate, result, afterScore, navig
     ] : [
       { label: "Direct merit ranking", value: humanize(result.call.status), state: result.eligibility.passed ? "current" as StepState : "fail" as StepState },
     ]),
-    { label: "Final score", value: result.final.score == null ? humanize(result.final.status) : `${formatScore(result.final.score, 2)}/${result.final.maxScore}`, state: result.final.score == null ? "neutral" : "pass" },
-    { label: "Seat model", value: probability == null ? probabilityFallback : humanize(result.prediction.band ?? "BORDERLINE"), state: probability == null ? callNegative ? "fail" : "neutral" : "current" },
   ];
 
   return (
@@ -273,23 +254,6 @@ export function InstituteResultsDashboard({ candidate, result, afterScore, navig
             </section>
           </div>
 
-          <section className="panel final-panel" aria-labelledby="institute-final-heading">
-            <div className="final-top">
-              <div className="final-details">
-                <div className="section-heading"><div><h3 id="institute-final-heading">Final selection planning</h3><p>Official final-score layer; predictive benchmark kept separate</p></div><SourceBadge source={result.prediction.benchmarkType === "MODEL" ? "MODEL_ASSUMPTION" : "OFFICIAL_POLICY"} /></div>
-                <div className="metric-grid">
-                  <Metric label="Final composite score" value={result.final.score == null ? humanize(result.final.status) : `${formatScore(result.final.score, 2)} / ${result.final.maxScore}`} />
-                  <Metric label="Seat benchmark" value={result.prediction.benchmarkValue == null ? "Not configured" : formatScore(result.prediction.benchmarkValue, 2)} note={humanize(result.prediction.benchmarkType)} />
-                  <Metric label="Prediction band" value={result.prediction.band == null ? probabilityFallback : humanize(result.prediction.band)} />
-                  <Metric label="Expected seat chance" value={probability == null ? probabilityFallback : formatProbability(probability)} />
-                </div>
-                <div className="disclosure"><strong>Model estimate—not an admission guarantee.</strong> {result.prediction.disclaimer}</div>
-                <ComponentList components={result.final.components} />
-                <div className="generic-total"><span>Final-selection total</span><strong>{result.final.score == null ? humanize(result.final.status) : `${formatScore(result.final.score, 2)} / ${result.final.maxScore}`}</strong></div>
-              </div>
-            </div>
-          </section>
-
           <section className="panel detail-panel" aria-labelledby="institute-why-heading">
             <div className="section-heading"><div><h3 id="institute-why-heading">Why this result?</h3><p>Generated from the exact gate sequence</p></div><SourceBadge source="CALCULATED" /></div>
             <ol className="explain-list">{result.explanation.map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</ol>
@@ -389,37 +353,6 @@ export function InstituteResultsDashboard({ candidate, result, afterScore, navig
             </section>
           )}
 
-          {result.selectionStages.interview && (
-            <PiScoreSimulator
-              instituteName={result.instituteName}
-              simulatorKey={`${result.policyVersion}-${result.final.score ?? "none"}`}
-              initialPercent={initialPiPercent}
-              piMaxScore={piComponent?.maxScore ?? 0}
-              finalMaxScore={result.final.maxScore}
-              benchmarkLabel={result.prediction.benchmarkValue == null ? "No final-selection benchmark is configured, so a seat percentage cannot be estimated." : `Uses the active ${humanize(result.prediction.benchmarkType).toLowerCase()} final benchmark of ${formatScore(result.prediction.benchmarkValue, 2)}.`}
-              callPredictionLabel={callLabel}
-              callPredictionReason={result.call.reason}
-              callPredictionTone={callPredicted ? "positive" : callNegative ? "negative" : "neutral"}
-              callCriteria={callCriteria}
-              unavailableReason={!piComponent ? "The published/configured final formula does not provide a numeric PI weight that can be varied safely." : nonPiTotal == null ? "One or more non-PI final-score components are still unavailable." : undefined}
-              simulate={(piPercent) => {
-                const piPoints = piComponent == null ? 0 : piPercent / 100 * piComponent.maxScore;
-                const finalScore = piComponent == null || nonPiTotal == null ? null : nonPiTotal + piPoints;
-                const callGate = result.call.status === "PREDICTED_CALL";
-                const seatProbability = finalScore == null || result.prediction.benchmarkValue == null
-                  ? null
-                  : callGate
-                    ? 1 / (1 + Math.exp(-0.35 * (finalScore - result.prediction.benchmarkValue)))
-                    : 0;
-                return {
-                  piPoints,
-                  finalScore,
-                  seatProbability,
-                  band: seatProbability == null ? null : institutePredictionBand(seatProbability),
-                };
-              }}
-            />
-          )}
         </div>
       )}
 

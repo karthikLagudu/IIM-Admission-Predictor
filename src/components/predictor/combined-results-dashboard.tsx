@@ -346,7 +346,7 @@ export function CombinedResultsDashboard({
             <p>{activeSummary.programme} · Candidate-specific call and seat analysis</p>
             <div className="report-cover-status-row">
               <strong>{activeSummary.status}</strong>
-              <span>Mock data active</span>
+              <span>Model assumptions active</span>
             </div>
             <small>{activeSummary.note}</small>
           </div>

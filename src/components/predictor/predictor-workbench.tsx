@@ -5,25 +5,23 @@ import type { CandidateInput, IimaPolicyConfig } from "@/types/iima";
 import { IIMA_CAT_2025_POLICY, predictIimaAdmission } from "@/lib/iima";
 import { predictAllNonIimaInstitutes } from "@/lib/institutes";
 import { candidateInputSchema } from "@/lib/validation/iima";
-import { CandidateForm, cloneSample, createEmptyCandidate } from "./candidate-form";
+import { CandidateForm, createEmptyCandidate } from "./candidate-form";
 import { CombinedResultsDashboard, type CombinedPredictionResults } from "./combined-results-dashboard";
 
-const MOCK_DATA_TEST_MODE = false;
+const ENABLE_MODEL_ASSUMPTIONS = true;
 
 function calculateLocalResults(candidate: CandidateInput, policy: IimaPolicyConfig): CombinedPredictionResults {
   return {
     IIMA: predictIimaAdmission(candidate, policy),
-    institutes: predictAllNonIimaInstitutes(candidate, MOCK_DATA_TEST_MODE),
+    institutes: predictAllNonIimaInstitutes(candidate, ENABLE_MODEL_ASSUMPTIONS),
   };
 }
 
 export function PredictorWorkbench() {
-  const initialCandidate = MOCK_DATA_TEST_MODE ? cloneSample() : createEmptyCandidate();
+  const initialCandidate = createEmptyCandidate();
   const [candidate, setCandidate] = useState<CandidateInput>(initialCandidate);
   const policy: IimaPolicyConfig = IIMA_CAT_2025_POLICY;
-  const [results, setResults] = useState<CombinedPredictionResults | null>(() => (
-    MOCK_DATA_TEST_MODE ? calculateLocalResults(initialCandidate, IIMA_CAT_2025_POLICY) : null
-  ));
+  const [results, setResults] = useState<CombinedPredictionResults | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mobileStep, setMobileStep] = useState(0);

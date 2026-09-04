@@ -248,7 +248,6 @@ export function CandidateForm({
                 <option value="MALE">Male</option>
                 <option value="FEMALE">Female</option>
                 <option value="TRANSGENDER">Transgender</option>
-                <option value="OTHER">Other qualifying category</option>
               </select>
             </div>
             <div className={`field ${isMissing("dob") ? "field-missing" : ""}`}>
@@ -312,7 +311,7 @@ export function CandidateForm({
               <select id="stream" value={candidate.class12Stream} onChange={(event) => update("class12Stream", event.target.value as CandidateInput["class12Stream"])}>
                 <option value="SCIENCE">Science</option>
                 <option value="COMMERCE">Commerce</option>
-                <option value="ARTS_HUMANITIES">Arts / Humanities</option>
+                <option value="ARTS_HUMANITIES">Arts / Humanities and others</option>
               </select>
             </div>
             <div className={`field field-full ${isMissing("degree") ? "field-missing" : ""}`}>
@@ -327,6 +326,13 @@ export function CandidateForm({
                 ))}
               </select>
               {isMissing("degree") && <p className="field-missing-note">You missed this field.</p>}
+            </div>
+            <div className="field field-full">
+              <span>Study status</span>
+              <div className="inline-check">
+                <input id="final-year" type="checkbox" checked={candidate.finalYearStudent} onChange={(event) => update("finalYearStudent", event.target.checked)} />
+                <label htmlFor="final-year">Currently in the final year</label>
+              </div>
             </div>
             <div className={`field ${isMissing("bachelor") ? "field-missing" : ""}`}>
               <label htmlFor="bachelor">Bachelor / professional %</label>
@@ -364,13 +370,6 @@ export function CandidateForm({
                 <p className="form-help">Used only when the final CA/ICWA/CMA/CS course is complete; normalization data is still required.</p>
               </div>
             )}
-            <div className="field field-full">
-              <span>Study status</span>
-              <div className="inline-check">
-                <input id="final-year" type="checkbox" checked={candidate.finalYearStudent} onChange={(event) => update("finalYearStudent", event.target.checked)} />
-                <label htmlFor="final-year">Currently in the final year</label>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -379,7 +378,23 @@ export function CandidateForm({
           <div className="field-grid">
             <div className={`field field-full ${isMissing("workex") ? "field-missing" : ""}`}>
               <label htmlFor="workex">Eligible completed work-experience months</label>
-              <input id="workex" type="number" min="0" max="600" step="1" value={candidate.workExperienceMonths} aria-invalid={isMissing("workex")} onFocus={replaceZeroOnFocus} onChange={(event) => number("workExperienceMonths", event.target.value)} />
+              <input
+                id="workex"
+                type="number"
+                min="0"
+                max="600"
+                step="1"
+                value={candidate.workExperienceMonths}
+                aria-invalid={isMissing("workex")}
+                onFocus={replaceZeroOnFocus}
+                onKeyDown={(event) => {
+                  if (event.currentTarget.value === "0" && /^\d$/.test(event.key)) {
+                    event.preventDefault();
+                    number("workExperienceMonths", event.key);
+                  }
+                }}
+                onChange={(event) => number("workExperienceMonths", event.target.value)}
+              />
               {isMissing("workex") && <p className="field-missing-note">You missed this field.</p>}
               <p className="form-help"><span className="required-star" aria-hidden="true">*</span>{institute === "ALL" ? "The engines apply each institute's own official work-experience cut-off date." : institute === "IIMC" ? "Count only eligible full-time post-bachelor work completed by the official cut-off date." : "Counted as on the official work-experience cut-off date. Rating reaches its maximum at 36 months."}</p>
             </div>

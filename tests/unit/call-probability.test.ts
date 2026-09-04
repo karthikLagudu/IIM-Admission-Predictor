@@ -19,10 +19,17 @@ describe("interview-call chance", () => {
     expect(result.label).toBe("0.0%");
   });
 
-  it("uses a numeric planning estimate without a fixed benchmark", () => {
+  it("does not invent a percentage without a fixed benchmark", () => {
     const result = estimateInterviewCallChance({ eligible: true, score: 80, maxScore: 100, benchmark: null, status: "ELIGIBLE_FOR_RANKING" });
-    expect(result.probability).toBeCloseTo(0.86);
-    expect(result.label).toBe("86.0%");
+    expect(result.probability).toBeNull();
+    expect(result.label).toBe("Not enough data");
+  });
+
+  it("caps model-benchmark confidence to avoid false precision", () => {
+    const high = estimateInterviewCallChance({ eligible: true, score: 100, maxScore: 100, benchmark: 40, benchmarkType: "MODEL" });
+    const low = estimateInterviewCallChance({ eligible: true, score: 0, maxScore: 100, benchmark: 60, benchmarkType: "MODEL" });
+    expect(high.probability).toBeLessThanOrEqual(0.8);
+    expect(low.probability).toBeGreaterThanOrEqual(0.2);
   });
 
   it("shows zero call chance for direct-merit programmes without interviews", () => {

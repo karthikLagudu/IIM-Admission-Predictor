@@ -128,6 +128,7 @@ export function CombinedResultsDashboard({
     score: results.IIMA.compositeScore,
     maxScore: 1,
     benchmark: results.IIMA.applicableCallThreshold,
+    benchmarkType: "HISTORICAL",
   });
   const summaries: ResultSummary[] = [
     {
@@ -154,6 +155,7 @@ export function CombinedResultsDashboard({
         score: result.preInterview.score,
         maxScore: result.preInterview.maxScore,
         benchmark: result.call.benchmarkValue,
+        benchmarkType: result.call.benchmarkType,
         status: result.call.status,
         directMerit: result.selectionStages.directMerit,
       });

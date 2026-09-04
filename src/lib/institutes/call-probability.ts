@@ -1,8 +1,16 @@
-import type { InstituteCallStatus } from "@/types/institutes";
+import type { BenchmarkType, InstituteCallStatus } from "@/types/institutes";
 
 const CALL_CURVE_STEEPNESS = 16;
-const MODEL_FLOOR = 0.005;
-const MODEL_CEILING = 0.995;
+
+function evidenceCalibratedProbability(rawProbability: number, benchmarkType: BenchmarkType): number {
+  const calibration = benchmarkType === "OFFICIAL_RESULT"
+    ? { weight: 1, floor: 0.02, ceiling: 0.98 }
+    : benchmarkType === "HISTORICAL"
+      ? { weight: 0.8, floor: 0.05, ceiling: 0.95 }
+      : { weight: 0.55, floor: 0.2, ceiling: 0.8 };
+  const probability = 0.5 + (rawProbability - 0.5) * calibration.weight;
+  return Math.min(calibration.ceiling, Math.max(calibration.floor, probability));
+}
 
 export interface InterviewCallChance {
   probability: number | null;
@@ -15,6 +23,7 @@ export function estimateInterviewCallChance(args: {
   score: number | null | undefined;
   maxScore: number;
   benchmark: number | null | undefined;
+  benchmarkType?: BenchmarkType;
   status?: InstituteCallStatus;
   directMerit?: boolean;
 }): InterviewCallChance {
@@ -37,11 +46,14 @@ export function estimateInterviewCallChance(args: {
   if (args.score != null && args.benchmark != null && args.maxScore > 0) {
     const normalizedMargin = (args.score - args.benchmark) / args.maxScore;
     const rawProbability = 1 / (1 + Math.exp(-CALL_CURVE_STEEPNESS * normalizedMargin));
-    const probability = Math.min(MODEL_CEILING, Math.max(MODEL_FLOOR, rawProbability));
+    const benchmarkType = args.benchmarkType ?? "MODEL";
+    const probability = evidenceCalibratedProbability(rawProbability, benchmarkType);
     return {
       probability,
       label: `${(probability * 100).toFixed(1)}%`,
-      detail: "Model estimate from the profile's distance above or below the configured shortlist benchmark; it is not an official call probability.",
+      detail: benchmarkType === "MODEL"
+        ? "Conservative planning estimate around a model benchmark; uncertainty is deliberately pulled toward 50% because the actual shortlist boundary is unpublished."
+        : "Evidence-calibrated estimate from the profile's distance above or below the shortlist benchmark; it is not an official call probability.",
     };
   }
 
@@ -53,17 +65,9 @@ export function estimateInterviewCallChance(args: {
     };
   }
 
-  const normalizedScore = args.score != null && args.maxScore > 0
-    ? Math.min(1, Math.max(0, args.score / args.maxScore))
-    : null;
-  const probability = normalizedScore == null
-    ? args.status === "PREDICTED_CALL" ? 0.75 : 0.5
-    : Math.min(0.95, Math.max(0.5, 0.5 + 0.45 * normalizedScore));
   return {
-    probability,
-    label: `${(probability * 100).toFixed(1)}%`,
-    detail: normalizedScore == null
-      ? "Planning estimate used because the institute has not published a compatible fixed shortlist boundary."
-      : "Planning estimate from the normalized shortlist score because the institute has not published a compatible fixed shortlist boundary.",
+    probability: null,
+    label: "Not enough data",
+    detail: "Official minimums alone do not reveal the category-wise interview-call boundary, so a percentage is not shown.",
   };
 }

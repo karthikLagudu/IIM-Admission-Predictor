@@ -14,6 +14,17 @@ export function callStatusChanceBand(
   return "MEDIUM";
 }
 
+export function interviewCallChanceBand(args: {
+  probability: number | null | undefined;
+  status: InstituteCallStatus;
+  eligible: boolean;
+  directMerit?: boolean;
+}): ChanceBand {
+  if (args.directMerit || !args.eligible) return "LOW";
+  if (args.probability != null) return probabilityChanceBand(args.probability);
+  return callStatusChanceBand(args.status, args.eligible, args.directMerit);
+}
+
 export function probabilityChanceBand(probability: number | null | undefined): ChanceBand {
   if (probability != null && probability >= 0.7) return "HIGH";
   if (probability != null && probability >= 0.4) return "MEDIUM";

@@ -14,8 +14,9 @@ import {
 } from "@/lib/iima/historical-call-records";
 import { instituteHistoricalReference } from "@/lib/institutes/historical-references";
 import {
-  callStatusChanceBand,
   estimateInterviewCallChance,
+  interviewCallChanceBand,
+  probabilityChanceBand,
   type ChanceBand,
 } from "@/lib/institutes/call-probability";
 import { ResultsDashboard } from "./results-dashboard";
@@ -131,8 +132,12 @@ export function CombinedResultsDashboard({
       status: results.IIMA.callPrediction ? "CALL PREDICTED" : "LESS LIKELY",
       scoreLabel: "Pre-PI / shortlist score",
       score: results.IIMA.compositeScore == null ? "Not calculated" : formatScoreOutOf100(results.IIMA.compositeScore, 1),
-      callChanceBand: results.IIMA.callPrediction ? "HIGH" : "LOW",
-      callChance: results.IIMA.callPrediction ? "HIGH" : "LOW",
+      callChanceBand: iimaCallChance.probability == null
+        ? results.IIMA.callPrediction ? "HIGH" : "LOW"
+        : probabilityChanceBand(iimaCallChance.probability),
+      callChance: iimaCallChance.probability == null
+        ? results.IIMA.callPrediction ? "HIGH" : "LOW"
+        : probabilityChanceBand(iimaCallChance.probability),
       callChanceDetail: iimaCallChance.detail,
       tone: results.IIMA.callPrediction ? "positive" : "negative",
       note: results.IIMA.callPrediction ? "Observed-boundary planning model" : "An official hard gate or shortlist boundary was not cleared",
@@ -150,6 +155,12 @@ export function CombinedResultsDashboard({
         status: result.call.status,
         directMerit: result.selectionStages.directMerit,
       });
+      const callChanceBand = interviewCallChanceBand({
+        probability: callChance.probability,
+        status: result.call.status,
+        eligible: result.eligibility.passed,
+        directMerit: result.selectionStages.directMerit,
+      });
       return {
         key: result.institute,
         name: result.instituteName,
@@ -159,9 +170,9 @@ export function CombinedResultsDashboard({
         score: result.preInterview.score == null
           ? result.preInterview.status === "DATA_REQUIRED" ? "Needs cycle data" : "Not calculated"
           : formatScoreOutOf100(result.preInterview.score, result.preInterview.maxScore),
-        callChanceBand: callStatusChanceBand(result.call.status, result.eligibility.passed, result.selectionStages.directMerit),
-        callChance: callStatusChanceBand(result.call.status, result.eligibility.passed, result.selectionStages.directMerit),
-        callChanceDetail: result.call.reason || callChance.detail,
+        callChanceBand,
+        callChance: callChanceBand,
+        callChanceDetail: callChance.probability != null ? callChance.detail : result.call.reason || callChance.detail,
         tone: result.call.status === "NO_CALL" ? "negative" : result.call.status === "DATA_REQUIRED" ? "pending" : "positive",
         note: result.institute === "IIMB" && result.preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION")
           ? "Test model; synthetic normalization inputs"

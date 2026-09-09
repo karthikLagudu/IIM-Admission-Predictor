@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { estimateInterviewCallChance, probabilityChanceBand } from "@/lib/institutes/call-probability";
+import {
+  estimateInterviewCallChance,
+  interviewCallChanceBand,
+  probabilityChanceBand,
+} from "@/lib/institutes/call-probability";
 
 describe("interview-call chance", () => {
   it("classifies the summary band from interview-call probability", () => {
@@ -43,5 +47,21 @@ describe("interview-call chance", () => {
     const result = estimateInterviewCallChance({ eligible: true, score: 90, maxScore: 100, benchmark: null, directMerit: true });
     expect(result.probability).toBe(0);
     expect(result.label).toBe("0.0%");
+  });
+
+  it("uses a medium band for a borderline eligible profile", () => {
+    expect(interviewCallChanceBand({
+      probability: 0.5,
+      status: "PREDICTED_CALL",
+      eligible: true,
+    })).toBe("MEDIUM");
+  });
+
+  it("keeps official eligibility failures low regardless of a supplied probability", () => {
+    expect(interviewCallChanceBand({
+      probability: 0.6,
+      status: "NO_CALL",
+      eligible: false,
+    })).toBe("LOW");
   });
 });

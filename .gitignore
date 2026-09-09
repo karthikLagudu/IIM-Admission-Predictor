@@ -1,5 +1,9 @@
 node_modules
 .next
+.next-dev
+.next-e2e
+.next.stale-cache
+.vinext
 dist
 out
 .wrangler

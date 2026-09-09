@@ -16,7 +16,8 @@ const nextConfig: NextConfig = {
   } : {}),
   // Keep local hot-reload files separate from production builds so a build
   // cannot invalidate the browser's active development chunks.
-  distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
+  distDir: process.env.NEXT_DIST_DIR
+    ?? (process.env.NODE_ENV === "development" ? ".next-dev" : ".next"),
 };
 
 export default nextConfig;

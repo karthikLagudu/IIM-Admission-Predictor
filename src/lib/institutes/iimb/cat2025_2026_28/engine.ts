@@ -6,7 +6,6 @@ import type {
   InstituteScoreComponent,
   InstituteScoreResult,
 } from "@/types/institutes";
-import { calculateInstituteSeatPrediction } from "@/lib/institutes/prediction";
 import {
   IIMB_CAT_2025_CONFIG,
   IIMB_EMPTY_RUNTIME_DATA,
@@ -390,26 +389,10 @@ export function calculateFinalScore(
   return resultFromComponents(components, 100, missing);
 }
 
-export function predictSeat(
-  eligibility: InstituteEligibilityResult,
-  call: InstituteCallResult,
-  finalScore: InstituteScoreResult,
-  runtime: IimbCycleRuntimeData = IIMB_EMPTY_RUNTIME_DATA,
-) {
-  return calculateInstituteSeatPrediction({
-    eligibilityGate: eligibility.passed,
-    callGate: call.status === "PREDICTED_CALL",
-    finalScore: finalScore.score,
-    benchmark: runtime.finalBenchmark,
-    logisticSlope: runtime.logisticSlope,
-  });
-}
-
 export function explainResult(args: {
   eligibility: InstituteEligibilityResult;
   preInterview: InstituteScoreResult;
   call: InstituteCallResult;
-  final: InstituteScoreResult;
 }): string[] {
   const usesModelNormalization = args.preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION");
   const lines = args.eligibility.passed
@@ -423,8 +406,6 @@ export function explainResult(args: {
       : `Official pre-PI score: ${args.preInterview.score.toFixed(2)} / 100.`);
   }
   lines.push(args.call.reason);
-  if (args.final.status === "DATA_REQUIRED") lines.push("Final score remains incomplete until all post-PI and normalization inputs are available.");
-  if (args.final.score != null) lines.push(`Official post-PI composite: ${args.final.score.toFixed(2)} / 100.`);
   return lines;
 }
 
@@ -435,8 +416,6 @@ export function predictIimbAdmission(
   const eligibility = evaluateEligibility(candidate);
   const preInterview = calculatePreInterview(candidate, runtime);
   const call = evaluateInterviewCall(candidate, runtime, preInterview);
-  const final = calculateFinalScore(candidate, runtime);
-  const prediction = predictSeat(eligibility, call, final, runtime);
   const strengths: string[] = [];
   const gaps: string[] = [];
   const usesModelNormalization = preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION");
@@ -451,7 +430,7 @@ export function predictIimbAdmission(
     ? ["Replace the synthetic testing fixture with actual cycle normalization data before treating the result as a real-candidate estimate."]
     : preInterview.missingRuntimeData.length
     ? ["Provide the listed IIMB board, qualifying-pool and discipline normalization datasets through cycle configuration."]
-    : ["Use an actual call outcome or a clearly labelled benchmark before calculating seat probability."];
+    : ["Track the official IIMB shortlist release and registered communication channels for the actual call decision."];
   return {
     institute: "IIMB",
     instituteName: config.instituteName,
@@ -465,12 +444,10 @@ export function predictIimbAdmission(
     eligibility,
     preInterview,
     call,
-    final,
-    prediction,
     strengths,
     gaps,
     nextSteps,
-    explanation: explainResult({ eligibility, preInterview, call, final }),
+    explanation: explainResult({ eligibility, preInterview, call }),
   };
 }
 

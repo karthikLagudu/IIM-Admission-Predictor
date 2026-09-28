@@ -10,8 +10,7 @@ describe("IIMA regression contract after adding IIMB and IIMC", () => {
     expect(result.callRoute).toBe("STAGE_1");
     expect(result.applicableCallThreshold).toBe(0.6112);
     expect(result.callMargin).toBe(0.14858328173374624);
-    expect(result.finalSelection?.finalCompositeScore).toBe(0.7546130030959752);
-    expect(result.finalSelection?.seatProbability).toBe(0.8334365887089185);
-    expect(result.finalSelection?.predictionBand).toBe("STRONG");
+    expect(result.status).toBe("INTERVIEW_CALL_PREDICTED");
+    expect(result).not.toHaveProperty("finalSelection");
   });
 });

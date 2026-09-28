@@ -9,8 +9,8 @@ export default function HomePage() {
         <div className="shell cat-product-hero-grid">
           <div className="cat-product-copy">
             <h1>
-              <span className="cat-clear-word">Which IIM will you land?</span>
-              <span className="cat-gradient-word">Predict for yourself</span>
+              <span className="cat-clear-word">Which IIM may call you?</span>
+              <span className="cat-gradient-word">Check your interview-call chances</span>
             </h1>
             <p className="cat-product-lead">Enter your CAT score and academic profile to get clear, explainable estimates of interview calls across all 21 IIMs.</p>
             <div className="cat-product-actions">

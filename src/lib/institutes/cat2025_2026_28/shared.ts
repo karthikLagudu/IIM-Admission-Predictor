@@ -12,7 +12,6 @@ import type {
   InstituteSelectionStages,
   PredictionBenchmark,
 } from "@/types/institutes";
-import { calculateInstituteSeatPrediction } from "@/lib/institutes/prediction";
 
 export type RuntimeScalar = number | boolean | string | null;
 
@@ -32,7 +31,6 @@ export interface InstituteRuleEngine {
   calculatePreInterview(candidate: CandidateInput, cycleData?: InstituteCycleRuntimeData): InstituteScoreResult;
   evaluateInterviewCall(candidate: CandidateInput, cycleData?: InstituteCycleRuntimeData, preInterview?: InstituteScoreResult): InstituteCallResult;
   calculateFinalScore(candidate: CandidateInput, cycleData?: InstituteCycleRuntimeData): InstituteScoreResult;
-  predictSeat(candidate: CandidateInput, cycleData?: InstituteCycleRuntimeData): InstitutePredictionResult["prediction"];
   predict(candidate: CandidateInput, cycleData?: InstituteCycleRuntimeData): InstitutePredictionResult;
 }
 
@@ -272,43 +270,24 @@ export function createInstituteRuleEngine(definition: InstituteRuleDefinition): 
     evaluateEligibility(candidate).passed ? definition.calculateFinalScore(candidate, cycleData) : notReachedScore(definition.finalMax)
   );
 
-  const predictSeat = (candidate: CandidateInput, cycleData: InstituteCycleRuntimeData = EMPTY_CYCLE_RUNTIME) => {
-    const eligibility = evaluateEligibility(candidate);
-    const preInterview = calculatePreInterview(candidate, cycleData);
-    const call = evaluateInterviewCall(candidate, cycleData, preInterview);
-    const final = calculateFinalScore(candidate, cycleData);
-    return calculateInstituteSeatPrediction({
-      eligibilityGate: eligibility.passed,
-      callGate: call.status === "PREDICTED_CALL" || (definition.callBehavior === "DIRECT_MERIT" && eligibility.passed),
-      finalScore: final.score,
-      benchmark: cycleData.finalBenchmark,
-      logisticSlope: cycleData.logisticSlope,
-    });
-  };
-
   const predict = (candidate: CandidateInput, cycleData: InstituteCycleRuntimeData = EMPTY_CYCLE_RUNTIME): InstitutePredictionResult => {
     const eligibility = evaluateEligibility(candidate);
     const preInterview = calculatePreInterview(candidate, cycleData);
     const call = evaluateInterviewCall(candidate, cycleData, preInterview);
-    const final = calculateFinalScore(candidate, cycleData);
-    const prediction = predictSeat(candidate, cycleData);
     const strengths: string[] = [];
     const gaps: string[] = [];
     if (eligibility.passed) strengths.push(`All published ${definition.instituteName} eligibility and CAT minimums are satisfied.`);
     else gaps.push(...eligibility.failedRules);
     if (preInterview.score != null) strengths.push(`${definition.scoreLabel} is ${preInterview.score.toFixed(2)} / ${preInterview.maxScore}.`);
     if (preInterview.status === "DATA_REQUIRED") gaps.push(`The ${definition.scoreLabel.toLowerCase()} needs: ${preInterview.missingRuntimeData.join(", ")}.`);
-    if (final.status === "DATA_REQUIRED") gaps.push(`The final score needs: ${final.missingRuntimeData.join(", ")}.`);
-    if (call.benchmarkType === "MODEL") gaps.push("Testing estimate only: the active call boundary is a mock planning benchmark, not an official institute cutoff.");
+    if (call.benchmarkType === "MODEL") gaps.push("Testing estimate only: the active call boundary is a mock shortlist benchmark, not an official institute cutoff.");
     const nextSteps = gaps.length > 0
-      ? ["Review the listed failed gates or missing cycle fields before relying on later-stage predictions."]
-      : [definition.stages.interview ? "Prepare for the institute's interview stage and update the PI input when available." : "Track the institute's category merit list; this cycle has no interview stage."];
+      ? ["Review the listed failed call gates or missing shortlist data before relying on this call prediction."]
+      : [definition.stages.interview ? "Track the institute's official shortlist release and registered communication channels." : "Track the institute's category merit list; this cycle has no interview stage."];
     const explanation = [
       eligibility.passed ? "Published degree and CAT hard gates are satisfied." : "At least one published degree or CAT hard gate failed.",
       preInterview.score == null ? `${definition.scoreLabel} is not fully calculable.` : `${definition.scoreLabel}: ${preInterview.score.toFixed(2)} / ${preInterview.maxScore}.`,
       call.reason,
-      final.score == null ? "Final score is not fully calculable; unavailable values were kept null." : `Final score: ${final.score.toFixed(2)} / ${final.maxScore}.`,
-      prediction.probability == null ? "Seat probability is not shown without a defensible configured benchmark." : `Model seat probability: ${(prediction.probability * 100).toFixed(1)}%.`,
     ];
     return {
       institute: definition.key,
@@ -323,8 +302,6 @@ export function createInstituteRuleEngine(definition: InstituteRuleDefinition): 
       eligibility,
       preInterview,
       call,
-      final,
-      prediction,
       strengths,
       gaps,
       nextSteps,
@@ -332,7 +309,7 @@ export function createInstituteRuleEngine(definition: InstituteRuleDefinition): 
     };
   };
 
-  return { key: definition.key, evaluateEligibility, calculatePreInterview, evaluateInterviewCall, calculateFinalScore, predictSeat, predict };
+  return { key: definition.key, evaluateEligibility, calculatePreInterview, evaluateInterviewCall, calculateFinalScore, predict };
 }
 
 export function modelRuntime(args: {

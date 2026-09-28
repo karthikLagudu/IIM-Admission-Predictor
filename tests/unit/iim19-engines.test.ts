@@ -117,15 +117,15 @@ describe("CAT 2025 / 2026-28 multi-IIM registry", () => {
     const result = predictInstituteAdmission("IIMG", SAMPLE_CANDIDATE, true);
     expect(result.selectionStages).toEqual({ interview: false, wat: false, groupDiscussion: false, directMerit: true });
     expect(result.call.status).toBe("ELIGIBLE_FOR_RANKING");
-    expect(result.final.components.some((item) => /interview|WAT|group discussion/i.test(item.label))).toBe(false);
+    expect(result).not.toHaveProperty("final");
+    expect(result).not.toHaveProperty("prediction");
   });
 
-  it("keeps unavailable current-cycle inputs null outside mock mode", () => {
-    const runtimeDependent: NonIimaKey[] = ["IIMBG", "IIMI", "IIMKASHIPUR", "IIMK", "IIML", "IIMM", "IIMN", "IIMRAIPUR", "IIMRANCHI", "IIMROHTAK", "IIMSAMBALPUR", "IIMSHILLONG", "IIMSIRMAUR", "IIMTRICHY", "IIMUDAIPUR", "IIMV"];
-    for (const institute of runtimeDependent) {
+  it("returns call-only result payloads for every institute", () => {
+    for (const institute of NON_IIMA_INSTITUTE_KEYS) {
       const result = predictInstituteAdmission(institute, SAMPLE_CANDIDATE, false);
-      expect(result.final.score, institute).toBeNull();
-      expect(["DATA_REQUIRED", "NOT_REACHED"], institute).toContain(result.final.status);
+      expect(result, institute).not.toHaveProperty("final");
+      expect(result, institute).not.toHaveProperty("prediction");
     }
   });
 });
@@ -172,7 +172,7 @@ describe("published academic and work-experience boundaries", () => {
     expect([55, 55.01, 60.01, 70.01, 80.01, 90.01].map(iimMumbaiClass10Rating)).toEqual([1, 2, 3, 5, 8, 10]);
     expect(iimMumbaiRawProfile(SAMPLE_CANDIDATE)).toBeGreaterThan(0);
     const result = predictInstituteAdmission("IIMM", SAMPLE_CANDIDATE, false);
-    expect(result.final.score).toBeNull();
-    expect(result.final.missingRuntimeData.join(" ")).toContain("APWE");
+    expect(result.call.status).toBeDefined();
+    expect(result).not.toHaveProperty("final");
   });
 });

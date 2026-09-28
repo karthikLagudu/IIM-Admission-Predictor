@@ -176,8 +176,8 @@ export function CombinedResultsDashboard({
         tone: result.call.status === "NO_CALL" ? "negative" : result.call.status === "DATA_REQUIRED" ? "pending" : "positive",
         note: result.institute === "IIMB" && result.preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION")
           ? "Test model; synthetic normalization inputs"
-          : result.prediction.benchmarkType === "MODEL"
-            ? "Test model; official score with mock planning benchmarks"
+          : result.call.benchmarkType === "MODEL"
+            ? "Test model; official shortlist score with a mock call benchmark"
             : result.call.reason,
         callTiming: instituteCallTiming(result),
         callBasis: basis,

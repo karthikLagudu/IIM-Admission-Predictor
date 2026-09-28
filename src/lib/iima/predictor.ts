@@ -1,11 +1,8 @@
 import type {
   CandidateInput,
-  FinalSelectionResult,
   IimaPolicyConfig,
   IimaPredictionResult,
-  PredictionBand,
   PredictionStatus,
-  SensitivityScenario,
   Stage1PoolContext,
 } from "@/types/iima";
 import { calculateApplicationRating } from "./application-rating";
@@ -15,20 +12,8 @@ import { estimateCat2025OverallPercentile } from "./cat-percentile";
 import { IIMA_CAT_2025_POLICY, SOURCE_CLASSIFICATIONS } from "./constants";
 import { evaluateBasicEligibility, evaluateCatEligibility } from "./eligibility";
 import { buildPredictionDiagnostics } from "./diagnostics";
-import { calculateFinalCompositeScore, requiredNormalizedPi } from "./final-score";
-import { pooledPwdKey } from "./keys";
-import { calculateCalibratedSeatProbability, predictionBand } from "./probability";
 import { evaluateStage1 } from "./stage1";
 import { evaluateStage2 } from "./stage2";
-
-const emptySensitivity: SensitivityScenario[] = [];
-
-function statusForBand(band: PredictionBand): PredictionStatus {
-  if (band === "VERY_STRONG") return "VERY_STRONG_FINAL_CONVERSION_PROBABILITY";
-  if (band === "STRONG") return "STRONG_FINAL_CONVERSION_PROBABILITY";
-  if (band === "GOOD") return "GOOD_FINAL_CONVERSION_PROBABILITY";
-  return "BORDERLINE_FINAL_CONVERSION";
-}
 
 function rejectedAtBasic(
   candidate: CandidateInput,
@@ -50,78 +35,13 @@ function rejectedAtBasic(
     applicableCallThreshold: null,
     callMargin: null,
     requiredCatScaledScore: null,
-    finalSelection: null,
-    sensitivity: emptySensitivity,
     status: "NOT_ELIGIBLE",
     explanation: [
       "Basic eligibility failed.",
       ...basicEligibility.reasons,
-      "No call or seat probability is calculated after a failed hard gate.",
+      "An interview call cannot be predicted after a failed hard gate.",
     ],
     sourceClassifications: { ...SOURCE_CLASSIFICATIONS },
-  };
-}
-
-function buildFinalSelection(args: {
-  candidate: CandidateInput;
-  applicationRating: number;
-  eligibilityGate: boolean;
-  callGate: boolean;
-  policy: IimaPolicyConfig;
-}): FinalSelectionResult | null {
-  const { candidate, applicationRating, eligibilityGate, callGate, policy } = args;
-  if (candidate.normalizedPi == null || candidate.normalizedAwt == null) return null;
-  const normalizedAr = applicationRating / policy.arNormalizationDenominator;
-  const normalizedCat = candidate.catOverallScaledScore / policy.catNormalizationDenominator;
-  const finalCompositeScore = calculateFinalCompositeScore(
-    {
-      normalizedPi: candidate.normalizedPi,
-      normalizedAwt: candidate.normalizedAwt,
-      normalizedCat,
-      normalizedAr,
-    },
-    policy,
-  );
-  const benchmarkKey = pooledPwdKey(candidate);
-  const historicalBenchmark = policy.historicalFinalBenchmarks[benchmarkKey];
-  if (historicalBenchmark == null) throw new Error(`Missing benchmark for ${benchmarkKey}`);
-  const planningTarget = historicalBenchmark + policy.model.safetyMargin;
-  const requiredPi = requiredNormalizedPi({
-    target: planningTarget,
-    normalizedAwt: candidate.normalizedAwt,
-    normalizedCat,
-    normalizedAr,
-    policy,
-  });
-  const benchmarkSeries = policy.historicalFinalBenchmarkSeries[benchmarkKey];
-  if (!benchmarkSeries?.length) {
-    throw new Error(`Missing historical benchmark series for ${benchmarkKey}`);
-  }
-  const calibrated = calculateCalibratedSeatProbability({
-    eligibilityGate,
-    callGate,
-    finalCompositeScore,
-    benchmarks: benchmarkSeries,
-    safetyMargin: policy.model.safetyMargin,
-    logisticSlope: policy.model.logisticSlope,
-    recencyWeights: policy.model.benchmarkRecencyWeights,
-  });
-  const seatProbability = calibrated.probability;
-  return {
-    normalizedAr,
-    normalizedCat,
-    normalizedPi: candidate.normalizedPi,
-    normalizedAwt: candidate.normalizedAwt,
-    finalCompositeScore,
-    officialCurrentFinalCutoff: null,
-    historicalBenchmark,
-    planningTarget,
-    targetDifference: finalCompositeScore - planningTarget,
-    requiredNormalizedPi: requiredPi,
-    piGap: candidate.normalizedPi - requiredPi,
-    seatProbability,
-    predictionBand: predictionBand(seatProbability, policy),
-    calibration: calibrated.calibration,
   };
 }
 
@@ -159,8 +79,6 @@ function predictCore(
       applicableCallThreshold: null,
       callMargin: null,
       requiredCatScaledScore: null,
-      finalSelection: null,
-      sensitivity: emptySensitivity,
       status: "CAT_CUTOFF_FAILED",
       explanation: [
         "Basic eligibility is satisfied.",
@@ -215,20 +133,11 @@ function predictCore(
     candidate.catOverallScaledScore,
     policy,
   );
-  const finalSelection = buildFinalSelection({
-    candidate,
-    applicationRating: applicationRating.total,
-    eligibilityGate: basicEligibility.passed && catEligibility.catEligible,
-    callGate: callPrediction,
-    policy,
-  });
   let status: PredictionStatus;
   if (!callPrediction) {
     status = !academicConsistency.passed ? "ACADEMIC_GATE_FAILED" : "STAGE_2_NOT_QUALIFIED";
-  } else if (!finalSelection) {
-    status = "AWT_PI_CALL_PREDICTED";
   } else {
-    status = statusForBand(finalSelection.predictionBand);
+    status = "INTERVIEW_CALL_PREDICTED";
   }
 
   const explanation = [
@@ -240,18 +149,9 @@ function predictCore(
   ];
   if (stage2) explanation.push(stage2.reason);
   if (callPrediction) {
-    explanation.push(`AWT/PI call prediction: YES via ${callRoute === "STAGE_1" ? "Stage 1" : "Stage 2"}.`);
+    explanation.push(`Interview call prediction: YES via ${callRoute === "STAGE_1" ? "Stage 1" : "Stage 2"}.`);
   } else {
-    explanation.push("AWT/PI call prediction: NO. Final seat probability is hard-gated to 0%. ");
-  }
-  if (finalSelection) {
-    explanation.push(
-      `Final Composite Score is ${finalSelection.finalCompositeScore.toFixed(6)}.`,
-      "Official current final cutoff: Not published.",
-      `Historical benchmark is ${finalSelection.historicalBenchmark.toFixed(6)}; planning target is ${finalSelection.planningTarget.toFixed(6)}.`,
-      `The calibrated model blends ${finalSelection.calibration.cycles.length} completed cycles; its weighted target is ${finalSelection.calibration.weightedTarget.toFixed(6)}.`,
-      `Model probability is ${(finalSelection.seatProbability * 100).toFixed(1)}%, with a historical-cycle scenario range of ${(finalSelection.calibration.probabilityLow * 100).toFixed(1)}% to ${(finalSelection.calibration.probabilityHigh * 100).toFixed(1)}%. This is not an admission guarantee.`,
-    );
+    explanation.push("Interview call prediction: NO. The current profile does not clear an available shortlist route.");
   }
   return {
     policyVersion: policy.version,
@@ -268,81 +168,10 @@ function predictCore(
     applicableCallThreshold,
     callMargin,
     requiredCatScaledScore: requiredCat,
-    finalSelection,
-    sensitivity: emptySensitivity,
     status,
     explanation,
     sourceClassifications: { ...SOURCE_CLASSIFICATIONS },
   };
-}
-
-function withSensitivity(
-  base: IimaPredictionResult,
-  candidate: CandidateInput,
-  policy: IimaPolicyConfig,
-  poolContext?: Stage1PoolContext,
-): IimaPredictionResult {
-  if (!base.finalSelection) return base;
-  const scenarios: Array<{ key: string; label: string; candidate: CandidateInput }> = [
-    {
-      key: "cat-plus-5",
-      label: "CAT +5 scaled points",
-      candidate: {
-        ...candidate,
-        catOverallScaledScore: Math.min(
-          policy.catNormalizationDenominator,
-          candidate.catOverallScaledScore + 5,
-        ),
-      },
-    },
-    {
-      key: "cat-plus-10",
-      label: "CAT +10 scaled points",
-      candidate: {
-        ...candidate,
-        catOverallScaledScore: Math.min(
-          policy.catNormalizationDenominator,
-          candidate.catOverallScaledScore + 10,
-        ),
-      },
-    },
-    {
-      key: "pi-plus-005",
-      label: "PI +0.05 normalized",
-      candidate: { ...candidate, normalizedPi: Math.min(1, (candidate.normalizedPi ?? 0) + 0.05) },
-    },
-    {
-      key: "pi-plus-010",
-      label: "PI +0.10 normalized",
-      candidate: { ...candidate, normalizedPi: Math.min(1, (candidate.normalizedPi ?? 0) + 0.1) },
-    },
-    {
-      key: "awt-plus-005",
-      label: "AWT +0.05 normalized",
-      candidate: { ...candidate, normalizedAwt: Math.min(1, (candidate.normalizedAwt ?? 0) + 0.05) },
-    },
-    {
-      key: "workex-plus-6",
-      label: "Work experience +6 months",
-      candidate: {
-        ...candidate,
-        workExperienceMonths: Math.min(36, candidate.workExperienceMonths + 6),
-      },
-    },
-  ];
-  const sensitivity = scenarios.map((scenario): SensitivityScenario => {
-    const result = predictCore(scenario.candidate, policy, poolContext);
-    const final = result.finalSelection;
-    const probability = final?.seatProbability ?? 0;
-    return {
-      key: scenario.key,
-      label: scenario.label,
-      finalCompositeScore: final?.finalCompositeScore ?? null,
-      probability,
-      probabilityDelta: probability - base.finalSelection!.seatProbability,
-    };
-  });
-  return { ...base, sensitivity };
 }
 
 export function predictIimaAdmission(
@@ -350,12 +179,7 @@ export function predictIimaAdmission(
   policy: IimaPolicyConfig = IIMA_CAT_2025_POLICY,
   poolContext?: Stage1PoolContext,
 ): IimaPredictionResult {
-  const result = withSensitivity(
-    predictCore(candidate, policy, poolContext),
-    candidate,
-    policy,
-    poolContext,
-  );
+  const result = predictCore(candidate, policy, poolContext);
   return { ...result, diagnostics: buildPredictionDiagnostics(candidate, result, policy) };
 }
 
@@ -391,6 +215,4 @@ export const SAMPLE_CANDIDATE: CandidateInput = {
   positiveRawVarc: true,
   positiveRawDilr: true,
   positiveRawQa: true,
-  normalizedPi: 0.75,
-  normalizedAwt: 0.75,
 };

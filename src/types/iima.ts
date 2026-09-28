@@ -230,11 +230,7 @@ export type PredictionStatus =
   | "ACADEMIC_GATE_FAILED"
   | "STAGE_1_NOT_QUALIFIED"
   | "STAGE_2_NOT_QUALIFIED"
-  | "AWT_PI_CALL_PREDICTED"
-  | "BORDERLINE_FINAL_CONVERSION"
-  | "GOOD_FINAL_CONVERSION_PROBABILITY"
-  | "STRONG_FINAL_CONVERSION_PROBABILITY"
-  | "VERY_STRONG_FINAL_CONVERSION_PROBABILITY";
+  | "INTERVIEW_CALL_PREDICTED";
 
 export interface RequiredScoreResult {
   required: number;
@@ -242,44 +238,6 @@ export interface RequiredScoreResult {
   current: number;
   gap: number;
   achievable: boolean;
-}
-
-export interface FinalSelectionResult {
-  normalizedAr: number;
-  normalizedCat: number;
-  normalizedPi: number;
-  normalizedAwt: number;
-  finalCompositeScore: number;
-  officialCurrentFinalCutoff: null;
-  historicalBenchmark: number;
-  planningTarget: number;
-  targetDifference: number;
-  requiredNormalizedPi: number;
-  piGap: number;
-  seatProbability: number;
-  predictionBand: PredictionBand;
-  calibration: {
-    method: "RECENCY_WEIGHTED_ENSEMBLE";
-    confidence: "LIMITED";
-    weightedTarget: number;
-    probabilityLow: number;
-    probabilityHigh: number;
-    cycles: Array<{
-      batch: string;
-      benchmark: number;
-      planningTarget: number;
-      weight: number;
-      probability: number;
-    }>;
-  };
-}
-
-export interface SensitivityScenario {
-  key: string;
-  label: string;
-  finalCompositeScore: number | null;
-  probability: number;
-  probabilityDelta: number;
 }
 
 export interface PredictionInsight {
@@ -310,8 +268,6 @@ export interface IimaPredictionResult {
   applicableCallThreshold: number | null;
   callMargin: number | null;
   requiredCatScaledScore: RequiredScoreResult | null;
-  finalSelection: FinalSelectionResult | null;
-  sensitivity: SensitivityScenario[];
   status: PredictionStatus;
   explanation: string[];
   sourceClassifications: Record<string, SourceType>;

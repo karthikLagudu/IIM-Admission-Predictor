@@ -74,8 +74,6 @@ export const candidateInputSchema = z.object({
   positiveRawVarc: z.boolean(),
   positiveRawDilr: z.boolean(),
   positiveRawQa: z.boolean(),
-  normalizedPi: z.number().min(0).max(2).optional(),
-  normalizedAwt: z.number().min(0).max(2).optional(),
 }).superRefine((candidate, context) => {
   const calculatedOverall = Number((
     candidate.catVarcScaledScore

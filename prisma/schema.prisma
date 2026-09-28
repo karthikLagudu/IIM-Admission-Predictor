@@ -277,9 +277,6 @@ model PredictionResult {
   callPrediction      Boolean
   callRoute           String?
   compositeScore      Float?
-  finalCompositeScore Float?
-  seatProbability     Float
-  predictionBand      String?
   explanation         Json
   createdAt           DateTime      @default(now())
   predictionRun       PredictionRun @relation(fields: [predictionRunId], references: [id], onDelete: Cascade)

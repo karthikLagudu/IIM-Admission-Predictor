@@ -1,6 +1,6 @@
-# IIMA CAT 2025 Admission & Seat Predictor
+# CAT 2025 IIM Interview-Call Predictor
 
-Production-oriented Next.js application for IIM Ahmedabad PGP 2026–28 admissions through CAT 2025. It implements official gates and formulas as a deterministic rules engine, then applies an explicitly labelled historical/logistic model only because IIMA does not publish a fixed current final category-wise FCS cutoff.
+Production-oriented Next.js application that estimates CAT 2025 interview-call chances across all 21 IIMs for the 2026–28 intake. It applies institute-specific eligibility gates, CAT cutoffs, academic/profile rules, shortlist scores, and clearly labelled call benchmarks. It does not calculate or display final-seat probability.
 
 ## What is included
 
@@ -11,9 +11,8 @@ Production-oriented Next.js application for IIM Ahmedabad PGP 2026–28 admissio
 - C1–C6, academic consistency and observed CAT-2025 graduation filters
 - Separate Stage 1 and Stage 2 shortlist engines
 - Shortlist CS, required CAT scaled score and threshold gap
-- Official final FCS formula and required normalized PI solver
-- Three-cycle historical calibration, editable planning margin, gated logistic ensemble, scenario range and interpretation band
-- Sensitivity analysis and live CAT/PI/AWT simulator
+- Historical shortlist references and model call thresholds where an official current-cycle shortlist boundary is unavailable
+- High, medium, and low interview-call chance bands
 - Explanation panel and source/assumption classification
 - Versioned PostgreSQL configuration, degree mappings and immutable prediction snapshots
 - Zod API validation, Vitest rule coverage and Playwright E2E coverage
@@ -42,7 +41,7 @@ The calculation engine and predictor also run without a database. If `DATABASE_U
 
 ## Admin configuration
 
-Set a long random `ADMIN_TOKEN` in `.env`. Open `/admin`, enter the token and load the active policy. The complete JSON editor supports all rule groups, while quick controls expose the model safety margin and logistic slope. Recency weights and the three-cycle benchmark series are versioned in the same policy. The degree-mapping editor writes explicit degree-to-AC mappings.
+Set a long random `ADMIN_TOKEN` in `.env`. Open `/admin`, enter the token and load the active policy. The versioned policy stores eligibility, cutoff, academic-category, and shortlist configuration. The degree-mapping editor writes explicit degree-to-AC mappings.
 
 Saving a policy version does not update old predictions: each `PredictionRun` stores the complete candidate input, policy version, policy snapshot and result snapshot.
 
@@ -73,9 +72,7 @@ Saving a policy version does not update old predictions: each `PredictionRun` st
   "catOverallScaledScore": 150,
   "positiveRawVarc": true,
   "positiveRawDilr": true,
-  "positiveRawQa": true,
-  "normalizedPi": 0.75,
-  "normalizedAwt": 0.75
+  "positiveRawQa": true
 }
 ```
 
@@ -114,4 +111,4 @@ screenshots/             Verified desktop/mobile UI captures
 
 ## Important disclosure
 
-This tool does not guarantee admission and is not affiliated with IIM Ahmedabad. IIMA final admission depends on the actual candidate pool, category-wise merit, interview performance, reservation, seat availability and institute decisions. Historical FCS values, recency weights, the safety margin, logistic slope, probabilities and display bands are predictive inputs—not official IIMA cutoffs or categories. The probability range is a historical scenario range, not a formal confidence interval.
+This tool predicts interview-call chances only and is not affiliated with any IIM. Clearing published eligibility and CAT minimums does not guarantee a call because institutes can shortlist by category, profile score, and the current applicant pool. Historical or model shortlist thresholds and the displayed high/medium/low bands are predictive references, not official call letters or admission guarantees.

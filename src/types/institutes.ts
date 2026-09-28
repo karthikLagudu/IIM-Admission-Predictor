@@ -1,4 +1,4 @@
-import type { CandidateInput, PredictionBand, SourceType } from "./iima";
+import type { CandidateInput, SourceType } from "./iima";
 
 export type InstituteKey =
   | "IIMA"
@@ -92,14 +92,6 @@ export interface InstituteCallResult {
   reason: string;
 }
 
-export interface InstitutePredictionLayer {
-  probability: number | null;
-  band: PredictionBand | null;
-  benchmarkType: BenchmarkType;
-  benchmarkValue: number | null;
-  disclaimer: string;
-}
-
 export interface InstitutePredictionResult {
   institute: Exclude<InstituteKey, "IIMA">;
   instituteName: string;
@@ -113,8 +105,6 @@ export interface InstitutePredictionResult {
   eligibility: InstituteEligibilityResult;
   preInterview: InstituteScoreResult;
   call: InstituteCallResult;
-  final: InstituteScoreResult;
-  prediction: InstitutePredictionLayer;
   strengths: string[];
   gaps: string[];
   nextSteps: string[];

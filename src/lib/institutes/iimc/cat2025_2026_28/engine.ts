@@ -6,7 +6,6 @@ import type {
   InstituteScoreComponent,
   InstituteScoreResult,
 } from "@/types/institutes";
-import { calculateInstituteSeatPrediction } from "@/lib/institutes/prediction";
 import {
   IIMC_CAT_2025_CONFIG,
   IIMC_EMPTY_CYCLE_DATA,
@@ -173,34 +172,16 @@ export function calculateFinalScore(candidate: CandidateInput): InstituteScoreRe
   };
 }
 
-export function predictSeat(
-  eligibility: InstituteEligibilityResult,
-  call: InstituteCallResult,
-  finalScore: InstituteScoreResult,
-  cycleData: IimcCycleData = IIMC_EMPTY_CYCLE_DATA,
-) {
-  return calculateInstituteSeatPrediction({
-    eligibilityGate: eligibility.passed,
-    callGate: call.status === "PREDICTED_CALL",
-    finalScore: finalScore.score,
-    benchmark: cycleData.finalBenchmark,
-    logisticSlope: cycleData.logisticSlope,
-  });
-}
-
 export function explainResult(args: {
   eligibility: InstituteEligibilityResult;
   preInterview: InstituteScoreResult;
   call: InstituteCallResult;
-  final: InstituteScoreResult;
 }): string[] {
   const lines = args.eligibility.passed
     ? ["Official bachelor and CAT Stage-I minimums are satisfied."]
     : args.eligibility.failedRules;
   if (args.preInterview.score != null) lines.push(`Official PI/WAT shortlist score: ${args.preInterview.score.toFixed(2)} / 85.`);
   lines.push(args.call.reason);
-  if (args.final.score != null) lines.push(`Official final-selection composite: ${args.final.score.toFixed(2)} / 100.`);
-  if (args.final.status === "DATA_REQUIRED") lines.push("The final score needs the missing interview or academic-profile input; no missing value is treated as zero.");
   return lines;
 }
 
@@ -211,21 +192,18 @@ export function predictIimcAdmission(
   const eligibility = evaluateEligibility(candidate);
   const preInterview = calculatePreInterview(candidate);
   const call = evaluateInterviewCall(candidate, cycleData, preInterview);
-  const final = calculateFinalScore(candidate);
-  const prediction = predictSeat(eligibility, call, final, cycleData);
   const strengths: string[] = [];
   const gaps: string[] = [];
   if (eligibility.passed) strengths.push("All official IIMC bachelor and CAT Stage-I minimums are satisfied.");
   else gaps.push(...eligibility.failedRules);
   if (preInterview.score != null) strengths.push(`Official shortlist composite is ${preInterview.score.toFixed(2)} / 85.`);
   if (call.status === "ELIGIBLE_FOR_RANKING") gaps.push("The current category-wise Stage-II cutoff is not published in advance, so the application correctly stops at eligible for ranking.");
-  if (call.benchmarkType === "MODEL") gaps.push("Testing estimate only: the interview-call and final benchmarks are mock-mode planning assumptions, not published IIMC cutoffs.");
-  if (final.status === "DATA_REQUIRED") gaps.push("Final score needs the missing PI, WAT or academic-diversity input.");
+  if (call.benchmarkType === "MODEL") gaps.push("Testing estimate only: the interview-call benchmark is a mock-mode shortlist assumption, not a published IIMC cutoff.");
   const nextSteps = call.benchmarkType === "MODEL"
-    ? ["Use the percentage as a testing estimate only; replace the model benchmarks with an actual call outcome or verified cycle data when available."]
+      ? ["Use the call result as a testing estimate only; replace the model shortlist benchmark with verified cycle data when available."]
     : call.status === "ELIGIBLE_FOR_RANKING"
-      ? ["Use the actual interview-call outcome or add a clearly labelled current/historical benchmark before estimating a call or seat chance."]
-      : ["Address the listed hard-gate deficit before later-stage scoring matters."];
+      ? ["Use the actual interview-call outcome or a verified current/historical shortlist benchmark before deciding whether a call is likely."]
+      : ["Address the listed hard-gate deficit before shortlist scoring matters."];
   return {
     institute: "IIMC",
     instituteName: config.instituteName,
@@ -239,12 +217,10 @@ export function predictIimcAdmission(
     eligibility,
     preInterview,
     call,
-    final,
-    prediction,
     strengths,
     gaps,
     nextSteps,
-    explanation: explainResult({ eligibility, preInterview, call, final }),
+    explanation: explainResult({ eligibility, preInterview, call }),
   };
 }
 

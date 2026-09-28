@@ -168,8 +168,8 @@ export function buildPredictionDiagnostics(
       result.callRoute === "STAGE_1" ? "Stage 1" : "Stage 2",
       "HIGH",
     ));
-    nextSteps.push("Focus on AWT and PI preparation; PI carries 50% and AWT carries 10% of the official final composite score.");
-    nextSteps.push("Treat the predicted call as evidence-based planning, not an official call letter or admission guarantee.");
+    nextSteps.push("Track the official IIMA shortlist release and registered communication channels for the actual call decision.");
+    nextSteps.push("Treat this as an interview-call prediction, not an official call letter.");
   } else {
     if (result.requiredCatScaledScore) {
       if (result.requiredCatScaledScore.achievable && result.requiredCatScaledScore.gap < 0) {

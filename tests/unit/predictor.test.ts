@@ -21,21 +21,14 @@ describe("master prediction orchestrator", () => {
     expect(result.diagnostics?.nextSteps.join(" ")).toContain("Clear every failed");
   });
 
-  it("produces an explained Stage-1 call and final model", () => {
+  it("produces an explained Stage-1 interview call", () => {
     const result = predictIimaAdmission(SAMPLE_CANDIDATE);
     expect(result.callPrediction).toBe(true);
     expect(result.callRoute).toBe("STAGE_1");
-    expect(result.finalSelection?.officialCurrentFinalCutoff).toBeNull();
-    expect(result.finalSelection?.seatProbability).toBeGreaterThan(0);
-    expect(result.finalSelection?.calibration.cycles).toHaveLength(3);
-    expect(result.finalSelection?.calibration.probabilityLow).toBeLessThanOrEqual(
-      result.finalSelection?.seatProbability ?? 0,
-    );
-    expect(result.finalSelection?.calibration.probabilityHigh).toBeGreaterThanOrEqual(
-      result.finalSelection?.seatProbability ?? 0,
-    );
-    expect(result.sensitivity).toHaveLength(6);
-    expect(result.explanation.join(" ")).toContain("Not published");
+    expect(result.status).toBe("INTERVIEW_CALL_PREDICTED");
+    expect(result).not.toHaveProperty("finalSelection");
+    expect(result).not.toHaveProperty("sensitivity");
+    expect(result.explanation.join(" ")).toContain("Interview call prediction: YES");
     expect(result.diagnostics?.strengths.map((strength) => strength.title)).toContain("Interview call route qualified");
     expect(result.diagnostics?.gaps).toHaveLength(0);
   });
@@ -45,26 +38,24 @@ describe("master prediction orchestrator", () => {
       ...SAMPLE_CANDIDATE,
       bachelorPercent: 84,
       catOverallScaledScore: 160,
-      normalizedPi: undefined,
-      normalizedAwt: undefined,
     });
     expect(result.stage1?.predictedShortlist).toBe(false);
     expect(result.stage2?.predictedShortlist).toBe(true);
     expect(result.callRoute).toBe("STAGE_2");
-    expect(result.status).toBe("AWT_PI_CALL_PREDICTED");
+    expect(result.status).toBe("INTERVIEW_CALL_PREDICTED");
     expect(result.diagnostics?.gaps).toHaveLength(0);
     expect(result.diagnostics?.strengths.map((strength) => strength.title)).toContain("Stage 2 score cushion");
   });
 
-  it("hard-gates seat probability to zero without a call", () => {
+  it("returns a call-only negative result when no shortlist route clears", () => {
     const result = predictIimaAdmission({
       ...SAMPLE_CANDIDATE,
       bachelorPercent: 84,
       catOverallScaledScore: 80,
     });
     expect(result.callPrediction).toBe(false);
-    expect(result.finalSelection?.seatProbability).toBe(0);
-    expect(result.finalSelection?.calibration.probabilityHigh).toBe(0);
+    expect(result).not.toHaveProperty("finalSelection");
+    expect(result.explanation.join(" ")).toContain("Interview call prediction: NO");
     expect(result.diagnostics?.gaps.map((gap) => gap.title)).toContain("Stage 2 score deficit");
     expect(result.diagnostics?.nextSteps.join(" ")).toContain("CAT scaled points");
   });

@@ -103,7 +103,8 @@ describe("IIMB CAT 2025 / PGP 2026-28 engine", () => {
     expect(result.preInterview.components.some((component) => component.sourceType === "MODEL_ASSUMPTION")).toBe(true);
     expect(result.call.status).toBe("PREDICTED_CALL");
     expect(result.call.benchmarkType).toBe("MODEL");
-    expect(result.prediction.probability).not.toBeNull();
+    expect(result).not.toHaveProperty("prediction");
+    expect(result).not.toHaveProperty("final");
     expect(result.gaps.join(" ")).toContain("Testing estimate only");
   });
 });

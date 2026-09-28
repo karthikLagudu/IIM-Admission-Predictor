@@ -29,9 +29,11 @@ function instituteRow(page: Page, instituteName: string) {
 
 test("landing page opens the 21-IIM predictor", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Which IIM will you land? Predict for yourself" })).toBeVisible();
-  await page.getByRole("link", { name: "Predict my IIM calls" }).click();
-  await expect(page).toHaveURL(/\/predictor\/?$/);
+  await expect(page.getByRole("heading", { name: "Which IIM may call you? Check your interview-call chances" })).toBeVisible();
+  await Promise.all([
+    page.waitForURL(/\/predictor\/?$/, { timeout: 15_000 }),
+    page.getByRole("link", { name: "Predict my IIM calls" }).click(),
+  ]);
   await expect(page.getByRole("heading", { name: "Candidate profile" })).toBeVisible();
 });
 

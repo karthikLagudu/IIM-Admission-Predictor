@@ -559,7 +559,5 @@ export function createEmptyCandidate(): CandidateInput {
     iimbAutomaticPiQualification: "UNKNOWN",
     iimbWorkExperienceQuality: 1,
     iimcAcademicProfile: "1",
-    normalizedPi: 0.75,
-    normalizedAwt: 0.75,
   };
 }

@@ -85,9 +85,6 @@ export async function persistPrediction(args: {
           callPrediction: result.callPrediction,
           callRoute: result.callRoute,
           compositeScore: result.compositeScore,
-          finalCompositeScore: result.finalSelection?.finalCompositeScore,
-          seatProbability: result.finalSelection?.seatProbability ?? 0,
-          predictionBand: result.finalSelection?.predictionBand,
           explanation: jsonSafe(result.explanation),
         },
       });

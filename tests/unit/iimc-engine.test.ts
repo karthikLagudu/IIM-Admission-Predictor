@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { SAMPLE_CANDIDATE } from "@/lib/iima";
 import {
   IIMC_TEST_CYCLE_DATA,
-  calculateFinalScore,
   calculateIimcWorkExperience,
   calculatePreInterview,
   evaluateEligibility,
@@ -78,29 +77,21 @@ describe("IIMC CAT 2025 / MBA 2026-28 engine", () => {
     expect(result.benchmarkValue).toBeNull();
   });
 
-  it("calculates the final composite from CAT, PI, WAT, diversity and work experience", () => {
-    const result = calculateFinalScore(SAMPLE_CANDIDATE);
-    expect(result.status).toBe("CALCULATED");
-    expect(result.score).toBeCloseTo((150 / 204) * 30 + 0.75 * 48 + 0.75 * 8 + 8, 10);
-  });
-
-  it("does not show seat probability without a defensible benchmark and call gate", () => {
+  it("returns only call-stage fields when no Stage-II boundary is configured", () => {
     const result = predictIimcAdmission(SAMPLE_CANDIDATE);
-    expect(result.prediction.probability).toBeNull();
     expect(result.call.status).toBe("ELIGIBLE_FOR_RANKING");
+    expect(result).not.toHaveProperty("prediction");
+    expect(result).not.toHaveProperty("final");
   });
 
-  it("shows a clearly labelled model seat chance when mock-mode benchmarks are supplied", () => {
+  it("shows a clearly labelled model call when mock-mode shortlist data is supplied", () => {
     const result = predictIimcAdmission(SAMPLE_CANDIDATE, IIMC_TEST_CYCLE_DATA);
 
     expect(result.call.status).toBe("PREDICTED_CALL");
     expect(result.call.benchmarkType).toBe("MODEL");
     expect(result.call.benchmarkValue).toBe(62);
-    expect(result.prediction.benchmarkType).toBe("MODEL");
-    expect(result.prediction.benchmarkValue).toBe(68);
-    expect(result.prediction.probability).not.toBeNull();
-    expect(result.prediction.probability).toBeGreaterThan(0);
-    expect(result.prediction.probability).toBeLessThan(1);
-    expect(result.prediction.disclaimer).toMatch(/not an official admission probability/i);
+    expect(result).not.toHaveProperty("prediction");
+    expect(result).not.toHaveProperty("final");
+    expect(result.explanation.join(" ")).not.toMatch(/seat|final-selection/i);
   });
 });
